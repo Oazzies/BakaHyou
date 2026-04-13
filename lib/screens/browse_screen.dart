@@ -52,18 +52,29 @@ class _BrowseScreenState extends State<BrowseScreen> {
       backgroundColor: Color(0xFF0a0a0a),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 8.0),
+          padding: const EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            bottom: 8.0,
+          ),
           child: Column(
             children: [
               Padding(
                 padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 8.0),
                 child: MBSearchBar(
-                  onChanged: (_) {},
+                  onChanged: (text) {
+                    if (text.isEmpty) {
+                      setState(() {
+                        searchResults = [];
+                        error = null;
+                      });
+                    }
+                  },
                   onSubmitted: searchSeries,
                 ),
               ),
-              if (isLoading)
-                CircularProgressIndicator(),
+              if (isLoading) CircularProgressIndicator(),
               if (error != null)
                 Text(error!, style: TextStyle(color: Colors.red)),
               if (searchResults.isNotEmpty)
@@ -77,11 +88,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => SeriesDetailScreen(series: seriesObj),
+                              builder: (_) =>
+                                  SeriesDetailScreen(series: seriesObj),
                             ),
                           );
                         },
-                        child: EntryListItem(series: seriesObj)
+                        child: EntryListItem(series: seriesObj),
                       );
                     },
                   ),
