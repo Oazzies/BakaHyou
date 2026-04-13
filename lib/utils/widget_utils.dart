@@ -2,20 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WidgetUtils {
-  static Widget infoRow(String label, String value) {
-    if (value.isEmpty) return SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
   static Widget chipWrap(String label, List<String> items, {Color? color}) {
     if (items.isEmpty) return SizedBox.shrink();
     return Column(
@@ -24,7 +10,9 @@ class WidgetUtils {
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         Wrap(
           spacing: 8,
-          children: items.map((e) => Chip(label: Text(e), backgroundColor: color)).toList(),
+          children: items
+              .map((e) => Chip(label: Text(e), backgroundColor: color))
+              .toList(),
         ),
         const SizedBox(height: 8),
       ],
@@ -37,27 +25,40 @@ class WidgetUtils {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Links:', style: TextStyle(fontWeight: FontWeight.bold)),
-        ...links.map((l) {
-          if (l is String && Uri.tryParse(l)?.hasAbsolutePath == true) {
-            return InkWell(
-              onTap: () => launchUrl(Uri.parse(l)),
-              child: Text(l, style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
-            );
-          }
-          return Text(l.toString());
-        }),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
+        Wrap(
+          spacing: 8,
+          children: links.map<Widget>((l) {
+            if (l is String && Uri.tryParse(l)?.hasAbsolutePath == true) {
+              final uri = Uri.parse(l);
+              final domain = uri.host.replaceFirst('www.', '');
 
-  static Widget mapSection(String label, Map? map) {
-    if (map == null || map.isEmpty) return SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ...map.entries.map((e) => infoRow(e.key, e.value.toString())),
+              var prettyName = domain.split('.').first;
+              prettyName = prettyName[0].toUpperCase() + prettyName.substring(1);
+
+              final langMatch = RegExp(r'\/([a-z]{2})\/').firstMatch(uri.path);
+              if (langMatch != null) {
+                prettyName += ' ${langMatch.group(1)!.toUpperCase()}';
+              }
+
+              final faviconUrl = 'https://icons.duckduckgo.com/ip3/$domain.ico';
+
+              return ActionChip(
+                avatar: CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Image.network(
+                    faviconUrl,
+                    width: 20,
+                    height: 20,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.link),
+                  ),
+                ),
+                label: Text(prettyName),
+                onPressed: () => launchUrl(uri),
+              );
+            }
+            return const SizedBox.shrink();
+          }).toList(),
+        ),
         const SizedBox(height: 8),
       ],
     );
