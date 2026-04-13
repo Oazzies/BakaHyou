@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:mangabaka_app/widgets/mb_search_bar.dart';
 import 'package:mangabaka_app/widgets/entry_list_item.dart';
+import 'package:mangabaka_app/widgets/shortcut_button.dart';
 import 'package:mangabaka_app/services/series_search_service.dart';
 import 'package:mangabaka_app/screens/series_detail_screen.dart';
+import 'package:mangabaka_app/screens/browse_results_screen.dart';
 import 'package:mangabaka_app/models/series.dart';
+import 'package:mangabaka_app/widgets/shortcut_section.dart';
 
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({Key? key}) : super(key: key);
@@ -46,10 +50,54 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
   }
 
+  void _openMostPopular() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BrowseResultsScreen(
+          sortType: 'Most Popular',
+          sortBy: 'popularity_asc',
+        ),
+      ),
+    );
+  }
+
+  void _openRandom() {
+    final randomSeed = Random().nextDouble() * 2 - 1; // between -1 and 1
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BrowseResultsScreen(
+          sortType: 'Random',
+          sortBy: 'random',
+          randomSeed: randomSeed,
+        ),
+      ),
+    );
+  }
+
+  void _openResults(String header, String sortBy, {String? type}) {
+    num? randomSeed;
+    if (sortBy == 'random') {
+      randomSeed = Random().nextDouble() * 2 - 1;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BrowseResultsScreen(
+          sortType: header,
+          sortBy: sortBy,
+          type: type,
+          randomSeed: randomSeed,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0a0a0a),
+      backgroundColor: const Color(0xFF0a0a0a),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(
@@ -61,7 +109,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 8.0),
+                padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 8.0),
                 child: MBSearchBar(
                   onChanged: (text) {
                     if (text.isEmpty) {
@@ -74,9 +122,48 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   onSubmitted: searchSeries,
                 ),
               ),
-              if (isLoading) CircularProgressIndicator(),
+              if (searchResults.isEmpty && !isLoading && error == null)
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ShortcutSection(
+                          header: 'Manga / Manhwa / Manhua',
+                          onMostPopular: () => _openResults(
+                            'Most Popular',
+                            'popularity_asc',
+                            type: 'manga',
+                          ),
+                          onRandom: () =>
+                              _openResults('Random', 'random', type: 'manga'),
+                        ),
+                        ShortcutSection(
+                          header: 'Novels',
+                          onMostPopular: () => _openResults(
+                            'Most Popular',
+                            'popularity_asc',
+                            type: 'novel',
+                          ),
+                          onRandom: () =>
+                              _openResults('Random', 'random', type: 'novel'),
+                        ),
+                        ShortcutSection(
+                          header: 'OEL / Other',
+                          onMostPopular: () => _openResults(
+                            'Most Popular',
+                            'popularity_asc',
+                            type: 'oel',
+                          ),
+                          onRandom: () =>
+                              _openResults('Random', 'random', type: 'oel'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (isLoading) const CircularProgressIndicator(),
               if (error != null)
-                Text(error!, style: TextStyle(color: Colors.red)),
+                Text(error!, style: const TextStyle(color: Colors.red)),
               if (searchResults.isNotEmpty)
                 Expanded(
                   child: ListView.builder(
