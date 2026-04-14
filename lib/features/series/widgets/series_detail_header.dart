@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mangabaka_app/models/series.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/widgets/chips/type_chip.dart';
 import 'package:mangabaka_app/features/series/widgets/chips/status_chip.dart';
 import 'package:mangabaka_app/features/series/widgets/chips/licensed_chip.dart';

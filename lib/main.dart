@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mangabaka_app/screens/main_screen.dart';
+import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
 
 void main() {
 

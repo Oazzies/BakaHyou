@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/models/series.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
 import 'package:mangabaka_app/features/series/widgets/entry_list_item.dart';
 import 'package:mangabaka_app/features/series/services/series_search_service.dart';

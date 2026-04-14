@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mangabaka_app/models/series.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
 
 class SeriesSearchService {
   static const String _baseUrl = 'https://api.mangabaka.dev/v1/series/search';
