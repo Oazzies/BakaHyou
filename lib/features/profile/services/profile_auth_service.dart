@@ -120,6 +120,8 @@ class ProfileAuthService {
       },
     );
 
+    print("!!! PROFILE API CALL MADE!!!");
+
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       return MbProfile.fromMeResponse(body);
@@ -141,6 +143,17 @@ class ProfileAuthService {
     } else {
       throw Exception('Failed to fetch profile: ${res.statusCode} ${res.body}');
     }
+  }
+
+  Future<String> getValidAccessToken() async {
+    await _refreshIfNeeded();
+
+    final token = await _storage.read(key: _kAccessToken);
+    if (token == null || token.isEmpty) {
+      throw Exception('Not logged in');
+    }
+
+    return token;
   }
 
   Future<void> logout() async {
