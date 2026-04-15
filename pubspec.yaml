@@ -1,5 +1,5 @@
-name: mangabaka_app
-description: "A new Flutter project."
+name: bakahyou
+description: "BakaHyou is an app for MangaBaka"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -20,6 +20,7 @@ dependencies:
   url_launcher: ^6.3.2
   intl: ^0.20.2
   share_plus: ^13.0.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -33,5 +34,6 @@ flutter_icons:
   image_path: "assets/mangabaka512.png"
 
 flutter:
-
+  assets:
+    - .env
   uses-material-design: true
