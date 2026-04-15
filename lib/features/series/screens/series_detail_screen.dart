@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/utils/widget_utils.dart';
 import 'package:mangabaka_app/features/series/widgets/description_section.dart';
-import 'package:mangabaka_app/features/series/widgets/expandable_chip_wrap.dart';
 import 'package:mangabaka_app/features/series/widgets/series_detail_header.dart';
 
 class SeriesDetailScreen extends StatefulWidget {
@@ -39,6 +39,33 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     }
   }
 
+  void _shareLink() {
+    String? mangabakaLink;
+    for (var link in widget.series.links) {
+      if (link is String && link.contains('mangabaka')) {
+        mangabakaLink = link;
+        break;
+      }
+    }
+
+    if (mangabakaLink != null) {
+      final box = context.findRenderObject() as RenderBox?;
+      SharePlus.instance.share(
+        ShareParams(
+          uri: Uri.parse(mangabakaLink),
+          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No mangabaka link available'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +79,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           ),
           IconButton(
             icon: Icon(Icons.share),
-            onPressed: () {},
+            onPressed: _shareLink,
             tooltip: 'Share',
           ),
         ],
@@ -79,11 +106,6 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
               const SizedBox(height: 8),
               if (widget.series.publishers.isNotEmpty)
                 WidgetUtils.chipWrap('Publishers', widget.series.publishers),
-              const SizedBox(height: 8),
-              ExpandableChipWrap(label: 'Tags', items: widget.series.tags),
-              const SizedBox(height: 8),
-              if (widget.series.links.isNotEmpty)
-                WidgetUtils.linkList(widget.series.links),
             ],
           ),
         ),
