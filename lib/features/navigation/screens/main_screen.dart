@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/features/browse/screens/browse_screen.dart';
+import 'package:bakahyou/features/library/screens/library_screen.dart';
 import 'package:bakahyou/features/news/screens/news_screen.dart';
 import 'package:bakahyou/features/profile/screens/profile_screen.dart';
 
@@ -15,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     Placeholder(),
-    Placeholder(),
+    LibraryScreen(),
     BrowseScreen(),
     NewsScreen(),
     ProfileScreen(),
