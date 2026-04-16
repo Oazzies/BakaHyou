@@ -6,6 +6,8 @@ class SeriesService {
     final url = Uri.parse("https://api.mangabaka.dev/v1/series/$id");
     final response = await http.get(url, headers: {'User-Agent': 'BakaHyou/0.0 (oazziesmail@gmail.com)'},);
 
+    print("!!! SERIES ID API CALL MADE!!!");
+
     if(response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['data'];
