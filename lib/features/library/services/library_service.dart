@@ -21,7 +21,17 @@ class LibraryService {
     return _instance;
   }
 
-  /// Watches for changes in the local database and provides a stream of entries.
+  /// Watches a single library entry by series ID.
+  Stream<api.LibraryEntry?> watchEntryFromDb(String seriesId) {
+    return _db.libraryEntriesDao
+        .watchEntryWithSeries(seriesId)
+        .map(
+          (dbEntry) => dbEntry != null
+              ? DbToApiMapper.libraryEntryFromDb(dbEntry)
+              : null,
+        );
+  }
+
   Stream<List<api.LibraryEntry>> watchEntriesFromDb() {
     return _db.libraryEntriesDao.watchAllEntriesWithSeries().map(
       (dbEntries) => dbEntries.map(DbToApiMapper.libraryEntryFromDb).toList(),

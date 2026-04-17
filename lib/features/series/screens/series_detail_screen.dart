@@ -1,3 +1,5 @@
+import 'package:bakahyou/features/library/models/library_entry.dart';
+import 'package:bakahyou/features/library/services/library_service.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:bakahyou/features/series/models/series.dart';
@@ -17,12 +19,15 @@ class SeriesDetailScreen extends StatefulWidget {
 class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   late ScrollController _scrollController;
   bool _showTitle = false;
+  final LibraryService _libraryService = LibraryService();
+  Stream<LibraryEntry?>? _entryStream;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+    _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
   }
 
   @override
@@ -91,7 +96,18 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SeriesDetailHeader(series: widget.series),
+              StreamBuilder<LibraryEntry?>(
+                stream: _entryStream,
+                builder: (context, snapshot) {
+                  final entry = snapshot.data;
+                  return SeriesDetailHeader(
+                    series: widget.series,
+                    progressChapter: entry?.progressChapter,
+                    progressVolume: entry?.progressVolume,
+                    inLibrary: entry != null,
+                  );
+                },
+              ),
               const SizedBox(height: 38),
               if (widget.series.description.isNotEmpty)
                 DescriptionSection(description: widget.series.description),

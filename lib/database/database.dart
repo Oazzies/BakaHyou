@@ -27,7 +27,8 @@ class SeriesTable extends Table {
   TextColumn get finalVolume => text().nullable()();
   TextColumn get totalChapters => text().nullable()();
   TextColumn get lastUpdated => text().nullable()();
-  TextColumn get genres => text().withDefault(const Constant('[]'))(); // JSON array of genres
+  TextColumn get genres =>
+      text().withDefault(const Constant('[]'))(); // JSON array of genres
 
   @override
   Set<Column> get primaryKey => {id};
@@ -51,10 +52,7 @@ class LibraryEntryWithSeries {
   final LibraryEntriesTableData libraryEntry;
   final SeriesTableData series;
 
-  LibraryEntryWithSeries({
-    required this.libraryEntry,
-    required this.series,
-  });
+  LibraryEntryWithSeries({required this.libraryEntry, required this.series});
 }
 
 @DriftAccessor(tables: [SeriesTable])
@@ -65,8 +63,10 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
   Future<SeriesTableData?> getLatestUpdatedSeries() {
     return (select(seriesTable)
           ..orderBy([
-            (t) =>
-                OrderingTerm(expression: t.lastUpdated, mode: OrderingMode.desc)
+            (t) => OrderingTerm(
+              expression: t.lastUpdated,
+              mode: OrderingMode.desc,
+            ),
           ])
           ..limit(1))
         .getSingleOrNull();
@@ -103,7 +103,10 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
   }
 
   Future<void> insertLibraryEntry(
-      String id, String state, String seriesId) async {
+    String id,
+    String state,
+    String seriesId,
+  ) async {
     await into(db.libraryEntriesTable).insert(
       LibraryEntriesTableCompanion.insert(
         id: id,
@@ -114,20 +117,19 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
   }
 
   Future<LibraryEntryWithSeries?> watchEntryWithSeries(String entryId) {
-    return (select(db.libraryEntriesTable)
-            .join([
-              innerJoin(db.seriesTable,
-                  db.seriesTable.id.equalsExp(db.libraryEntriesTable.seriesId))
-            ]))
-        .getSingleOrNull()
-        .then(
-          (result) => result != null
-              ? LibraryEntryWithSeries(
-                  libraryEntry: result.readTable(db.libraryEntriesTable),
-                  series: result.readTable(db.seriesTable),
-                )
-              : null,
-        );
+    return (select(db.libraryEntriesTable).join([
+      innerJoin(
+        db.seriesTable,
+        db.seriesTable.id.equalsExp(db.libraryEntriesTable.seriesId),
+      ),
+    ])).getSingleOrNull().then(
+      (result) => result != null
+          ? LibraryEntryWithSeries(
+              libraryEntry: result.readTable(db.libraryEntriesTable),
+              series: result.readTable(db.seriesTable),
+            )
+          : null,
+    );
   }
 }
 
@@ -136,17 +138,40 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
     with _$LibraryEntriesDaoMixin {
   LibraryEntriesDao(AppDatabase db) : super(db);
 
+  Stream<LibraryEntryWithSeries?> watchEntryWithSeries(String seriesId) {
+    final query = select(libraryEntriesTable).join([
+      innerJoin(
+        seriesTable,
+        seriesTable.id.equalsExp(libraryEntriesTable.seriesId),
+      ),
+    ])..where(libraryEntriesTable.seriesId.equals(seriesId));
+
+    return query.watchSingleOrNull().map((row) {
+      if (row == null) return null;
+      return LibraryEntryWithSeries(
+        libraryEntry: row.readTable(libraryEntriesTable),
+        series: row.readTable(seriesTable),
+      );
+    });
+  }
+
   Stream<List<LibraryEntryWithSeries>> watchAllEntriesWithSeries() {
-    return (select(db.libraryEntriesTable).join([
-      innerJoin(db.seriesTable,
-          db.seriesTable.id.equalsExp(db.libraryEntriesTable.seriesId))
-    ])).watch().map((rows) {
-      return rows.map((row) {
-        return LibraryEntryWithSeries(
-          libraryEntry: row.readTable(db.libraryEntriesTable),
-          series: row.readTable(db.seriesTable),
-        );
-      }).toList();
+    final query = select(libraryEntriesTable).join([
+      innerJoin(
+        seriesTable,
+        seriesTable.id.equalsExp(libraryEntriesTable.seriesId),
+      ),
+    ]);
+
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => LibraryEntryWithSeries(
+              libraryEntry: row.readTable(libraryEntriesTable),
+              series: row.readTable(seriesTable),
+            ),
+          )
+          .toList();
     });
   }
 
@@ -155,25 +180,27 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
     await db.batch((batch) {
       batch.insertAll(
         db.libraryEntriesTable,
-        entries.map((e) => LibraryEntriesTableCompanion.insert(
-          id: e.id,
-          state: e.state,
-          note: Value(e.note),
-          progressChapter: Value(e.progressChapter),
-          progressVolume: Value(e.progressVolume),
-          numberOfRereads: Value(e.numberOfRereads),
-          seriesId: e.series.id,
-        )),
+        entries.map(
+          (e) => LibraryEntriesTableCompanion.insert(
+            id: e.id,
+            state: e.state,
+            note: Value(e.note),
+            progressChapter: Value(e.progressChapter),
+            progressVolume: Value(e.progressVolume),
+            numberOfRereads: Value(e.numberOfRereads),
+            seriesId: e.series.id,
+          ),
+        ),
         mode: InsertMode.insertOrReplace,
       );
     });
   }
 }
 
-@DriftDatabase(tables: [SeriesTable, LibraryEntriesTable], daos: [
-  SeriesDao,
-  LibraryEntriesDao,
-])
+@DriftDatabase(
+  tables: [SeriesTable, LibraryEntriesTable],
+  daos: [SeriesDao, LibraryEntriesDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase._() : super(_openConnection());
 

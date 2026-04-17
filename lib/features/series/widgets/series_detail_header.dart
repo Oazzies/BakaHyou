@@ -14,7 +14,17 @@ import 'package:bakahyou/features/series/widgets/id_chip.dart';
 
 class SeriesDetailHeader extends StatelessWidget {
   final Series series;
-  const SeriesDetailHeader({Key? key, required this.series}) : super(key: key);
+  final int? progressChapter;
+  final int? progressVolume;
+  final bool inLibrary;
+
+  const SeriesDetailHeader({
+    Key? key,
+    required this.series,
+    this.progressChapter,
+    this.progressVolume,
+    this.inLibrary = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -91,10 +101,18 @@ class SeriesDetailHeader extends StatelessWidget {
                   if (series.isLicensed == 'true') LicensedChip(),
                   if (series.finalVolume.isNotEmpty &&
                       series.finalVolume != 'null')
-                    VolumeChip(volume: series.finalVolume),
+                    VolumeChip(
+                      volume: series.finalVolume,
+                      progress: progressVolume,
+                      inLibrary: inLibrary,
+                    ),
                   if (series.totalChapters.isNotEmpty &&
                       series.totalChapters != 'null')
-                    ChaptersChip(chapters: series.totalChapters),
+                    ChaptersChip(
+                      chapters: series.totalChapters,
+                      progress: progressChapter,
+                      inLibrary: inLibrary,
+                    ),
                   if ((series.published?['start_date']?.toString().isNotEmpty ?? false) ||
                       (series.published?['end_date']?.toString().isNotEmpty ?? false))
                     DateRangeChip(
