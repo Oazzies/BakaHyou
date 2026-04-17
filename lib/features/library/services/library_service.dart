@@ -25,7 +25,11 @@ class LibraryService {
   Stream<api.LibraryEntry?> watchEntryFromDb(String seriesId) {
     return _db.libraryEntriesDao
         .watchEntryWithSeries(seriesId)
-        .map((dbEntry) => dbEntry != null ? DbToApiMapper.libraryEntryFromDb(dbEntry) : null);
+        .map(
+          (dbEntry) => dbEntry != null
+              ? DbToApiMapper.libraryEntryFromDb(dbEntry)
+              : null,
+        );
   }
 
   Stream<List<api.LibraryEntry>> watchEntriesFromDb() {
@@ -113,7 +117,7 @@ class LibraryService {
       body: jsonEncode({'state': state}),
     );
 
-    print("!!! UPDATE LIBRARY API CALL MADE!!!");
+    print("!!! UPDATE STATE LIBRARY API CALL MADE!!!");
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update library entry state: ${response.body}');
@@ -123,7 +127,7 @@ class LibraryService {
     await _db.libraryEntriesDao.updateEntryState(seriesId, state);
   }
 
-    Future<void> updateLibraryEntryRating(String seriesId, int rating) async {
+  Future<void> updateLibraryEntryRating(String seriesId, int rating) async {
     final token = await _auth.getValidAccessToken();
     if (token == null) {
       throw Exception('Not logged in');
@@ -140,10 +144,41 @@ class LibraryService {
       body: jsonEncode({'rating': rating}),
     );
 
+    print("!!! UPDATE RATING LIBRARY API CALL MADE!!!");
+
     if (response.statusCode != 200) {
-      throw Exception('Failed to update library entry rating: ${response.body}');
+      throw Exception(
+        'Failed to update library entry rating: ${response.body}',
+      );
     }
 
     await _db.libraryEntriesDao.updateEntryRating(seriesId, rating);
+  }
+
+    Future<void> createLibraryEntry(String seriesId, String state) async {
+    final token = await _auth.getValidAccessToken();
+    if (token == null) {
+      throw Exception('Not logged in');
+    }
+
+    final url =
+        Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'User-Agent': LibraryConstants.userAgent,
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'state': state}),
+    );
+
+    print("!!! CREATE LIBRARY API CALL MADE!!!");
+
+    if (response.statusCode == 201) {
+      await syncLibrary();
+    } else {
+      throw Exception('Failed to create library entry: ${response.body}');
+    }
   }
 }

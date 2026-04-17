@@ -102,9 +102,30 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     }
   }
 
+  Future<void> _addSeriesToLibrary() async {
+    try {
+      await _libraryService.createLibraryEntry(
+        widget.series.id,
+        'plan_to_read',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to library')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to add to library: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: _showTitle ? Text(widget.series.title) : null,
         backgroundColor: Colors.transparent,
@@ -190,6 +211,20 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
             );
           },
         ),
+      ),
+      floatingActionButton: StreamBuilder<LibraryEntry?>(
+        stream: _entryStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active &&
+              snapshot.data == null) {
+            return FloatingActionButton.extended(
+              onPressed: _addSeriesToLibrary,
+              label: const Text('Add to Library'),
+              icon: const Icon(Icons.add),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

@@ -45,8 +45,7 @@ class StateSelectionSection extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
               itemHeight: 48,
-              menuMaxHeight:
-                  MediaQuery.of(context).size.height * 0.7, 
+              menuMaxHeight: MediaQuery.of(context).size.height * 0.7,
               onChanged: (value) {
                 if (value != null && value != currentState) {
                   onStateChanged(value);
@@ -76,7 +75,9 @@ class StateSelectionSection extends StatelessWidget {
                         color: _getColorForState(tab.key),
                       ),
                       const SizedBox(width: 8),
-                      Text(tab.label),
+                      Flexible(
+                        child: Text(tab.label, overflow: TextOverflow.ellipsis),
+                      ),
                     ],
                   );
                 }).toList();
