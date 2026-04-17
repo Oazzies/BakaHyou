@@ -14,11 +14,11 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  runApp(const MyApp());
+  runApp(const BakaHyouApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BakaHyouApp extends StatelessWidget {
+  const BakaHyouApp({super.key});
 
   @override
   Widget build(BuildContext context) {
