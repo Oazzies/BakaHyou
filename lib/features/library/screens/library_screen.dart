@@ -1,3 +1,4 @@
+import 'package:bakahyou/features/series/services/series_id_service.dart';
 import 'package:flutter/material.dart';
 import 'package:bakahyou/features/browse/widgets/mb_search_bar.dart';
 import 'package:bakahyou/features/library/models/library_entry.dart';
@@ -70,12 +71,12 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   void _setupStreamAndSync() {
-  setState(() {
-    _entriesStream = _libraryService.watchEntriesFromDb();
-  });
-  // Only sync if it's the first time; otherwise use cached data
-  _libraryService.performInitialSyncIfNeeded();
-}
+    setState(() {
+      _entriesStream = _libraryService.watchEntriesFromDb();
+    });
+    // Only sync if it's the first time; otherwise use cached data
+    _libraryService.performInitialSyncIfNeeded();
+  }
 
   Future<void> _loginAndReload() async {
     try {
@@ -113,54 +114,48 @@ class _LibraryScreenState extends State<LibraryScreen>
     return TabBar(
       controller: _tabController,
       isScrollable: true,
-      tabs: LibraryScreenConstants.tabs.map((t) => Tab(text: t.label)).toList(),
-      indicatorColor: LibraryScreenConstants.accentColor,
-      labelColor: LibraryScreenConstants.accentColor,
-      unselectedLabelColor: Colors.white,
+      tabAlignment: TabAlignment.start,
+      tabs: LibraryScreenConstants.tabs
+          .map((tab) => Tab(text: tab.label))
+          .toList(),
     );
   }
 
   Widget _buildBody() {
     if (!_loggedIn) return _buildLoginPrompt();
-    if (_entriesStream == null)
+    if (_entriesStream == null) {
       return const Center(child: CircularProgressIndicator());
+    }
 
     return StreamBuilder<List<LibraryEntry>>(
       stream: _entriesStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: LibraryScreenConstants.errorColor),
             ),
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('Your library is empty. Start by adding some series!'),
-          );
+          return const Center(child: Text('Your library is empty.'));
         }
 
-        final allEntries = snapshot.data!;
-        return RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: LibraryScreenConstants.accentColor,
-          child: TabBarView(
-            controller: _tabController,
-            children: LibraryScreenConstants.tabs.map((tab) {
-              final filterHelper = LibraryFilterHelper(
-                allEntries: allEntries,
-                query: _query,
-              );
-              final items = filterHelper.getByTab(tab.key);
-              return _buildTabContent(items, tab.key);
-            }).toList(),
-          ),
+        final filterHelper = LibraryFilterHelper(
+          allEntries: snapshot.data!,
+          query: _query,
+        );
+
+        return TabBarView(
+          controller: _tabController,
+          children: LibraryScreenConstants.tabs.map((tab) {
+            final items = filterHelper.getByTab(tab.key);
+            return _buildTabContent(items, tab.key);
+          }).toList(),
         );
       },
     );
@@ -173,56 +168,79 @@ class _LibraryScreenState extends State<LibraryScreen>
         children: [
           const Text(
             'You are not logged in.',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(fontSize: 18, color: Colors.white),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _loginAndReload,
             style: ElevatedButton.styleFrom(
               backgroundColor: LibraryScreenConstants.accentColor,
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             ),
-            child: const Text('Login with MangaBaka'),
+            child: const Text(
+              'Login with MangaBaka',
+              style: TextStyle(fontSize: 16, color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
 
-    Widget _buildTabContent(List<LibraryEntry> items, String tabKey) {
+  Widget _buildTabContent(List<LibraryEntry> items, String tabKey) {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'No entries in this list.',
-          style: TextStyle(color: Colors.grey[400]),
+          'No entries in this category.',
+          style: TextStyle(color: Colors.grey[600]),
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: LibraryScreenConstants.accentColor,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: ListView.builder(
-          controller: _scrollControllers[tabKey],
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final entry = items[index];
-            return GestureDetector(
-              onTap: () => _navigateToSeriesDetail(entry.series),
-              child: EntryListItem(series: entry.series),
-            );
-          },
-        ),
+      child: ListView.builder(
+        controller: _scrollControllers[tabKey],
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final entry = items[index];
+          return GestureDetector(
+            onTap: () => _navigateToSeriesDetail(entry.series),
+            child: EntryListItem(series: entry.series),
+          );
+        },
       ),
     );
   }
 
-  void _navigateToSeriesDetail(api.Series series) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SeriesDetailScreen(series: series),
-      ),
+  Future<void> _navigateToSeriesDetail(api.Series series) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
+
+    try {
+      final fullSeries = await SeriesService.fetchSeries(series.id);
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); 
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => SeriesDetailScreen(series: fullSeries),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load details: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
