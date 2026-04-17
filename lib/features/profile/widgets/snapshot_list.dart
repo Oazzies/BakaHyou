@@ -1,0 +1,80 @@
+import 'package:bakahyou/features/library/models/library_entry.dart';
+import 'package:bakahyou/features/profile/widgets/snapshot_list_item.dart';
+import 'package:flutter/material.dart';
+
+class SnapshotList extends StatefulWidget {
+  final String title;
+  final List<LibraryEntry> entries;
+  final VoidCallback onFetchMore;
+  final bool hasMore;
+
+  const SnapshotList({
+    super.key,
+    required this.title,
+    required this.entries,
+    required this.onFetchMore,
+    required this.hasMore,
+  });
+
+  @override
+  State<SnapshotList> createState() => _SnapshotListState();
+}
+
+class _SnapshotListState extends State<SnapshotList> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      widget.onFetchMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 180,
+          child: ListView.separated(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.hasMore
+                ? widget.entries.length + 1
+                : widget.entries.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              if (index >= widget.entries.length) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final entry = widget.entries[index];
+              return SnapshotListItem(series: entry.series);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}

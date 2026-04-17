@@ -1,5 +1,8 @@
 import 'package:bakahyou/database/database.dart';
+import 'package:bakahyou/features/library/models/library_entry.dart';
+import 'package:bakahyou/features/profile/services/snapshot_service.dart';
 import 'package:bakahyou/features/profile/services/statistics_service.dart';
+import 'package:bakahyou/features/profile/widgets/snapshot_list.dart';
 import 'package:bakahyou/features/profile/widgets/statistic_card.dart';
 import 'package:flutter/material.dart';
 import '../models/mb_profile.dart';
@@ -15,21 +18,36 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileAuthService _auth = ProfileAuthService();
   late final StatisticsService _statisticsService;
+  late final SnapshotService _snapshotService;
 
   bool _loading = true;
   String? _error;
   MbProfile? _profile;
 
+  // Statistics
   int _totalSeries = 0;
   int _chaptersRead = 0;
   int _volumesRead = 0;
   double _completionRate = 0.0;
   int _totalRereads = 0;
 
+  // Snapshot lists
+  final List<LibraryEntry> _recentlyChanged = [];
+  final List<LibraryEntry> _recentlyAdded = [];
+
+  // Snapshot state
+  bool _isLoadingChanged = false;
+  bool _isLoadingAdded = false;
+  bool _hasMoreChanged = true;
+  bool _hasMoreAdded = true;
+  int _pageChanged = 1;
+  int _pageAdded = 1;
+
   @override
   void initState() {
     super.initState();
     _statisticsService = StatisticsService(AppDatabase());
+    _snapshotService = SnapshotService();
     _bootstrap();
   }
 
@@ -42,34 +60,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final loggedIn = await _auth.hasSession();
       if (!loggedIn) {
-        setState(() {
-          _profile = null;
-          _loading = false;
-        });
+        setState(() => _loading = false);
         return;
       }
 
       final profile = await _auth.fetchProfile();
-      final totalSeries = await _statisticsService.getTotalSeries();
-      final chaptersRead = await _statisticsService.getChaptersRead();
-      final volumesRead = await _statisticsService.getVolumesRead();
-      final completionRate = await _statisticsService.getCompletionRate();
-      final totalRereads = await _statisticsService.getTotalRereads();
-
       setState(() {
         _profile = profile;
-        _totalSeries = totalSeries;
-        _chaptersRead = chaptersRead;
-        _volumesRead = volumesRead;
-        _completionRate = completionRate;
-        _totalRereads = totalRereads;
-        _loading = false;
       });
+
+      await _fetchStatistics();
+      await Future.wait([
+        _fetchRecentlyChanged(initial: true),
+        _fetchRecentlyAdded(initial: true),
+      ]);
+
+      setState(() => _loading = false);
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = 'Failed to load profile: $e';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _fetchStatistics() async {
+    final totalSeries = await _statisticsService.getTotalSeries();
+    final chaptersRead = await _statisticsService.getChaptersRead();
+    final volumesRead = await _statisticsService.getVolumesRead();
+    final completionRate = await _statisticsService.getCompletionRate();
+    final totalRereads = await _statisticsService.getTotalRereads();
+    setState(() {
+      _totalSeries = totalSeries;
+      _chaptersRead = chaptersRead;
+      _volumesRead = volumesRead;
+      _completionRate = completionRate;
+      _totalRereads = totalRereads;
+    });
+  }
+
+  Future<void> _fetchRecentlyChanged({bool initial = false}) async {
+    if (_isLoadingChanged || !_hasMoreChanged) return;
+    setState(() => _isLoadingChanged = true);
+
+    try {
+      final entries = await _snapshotService.fetchSnapshot(
+        sortBy: 'updated_at_desc',
+        page: _pageChanged,
+      );
+      setState(() {
+        if (initial) _recentlyChanged.clear();
+        _recentlyChanged.addAll(entries);
+        _pageChanged++;
+        _hasMoreChanged = entries.isNotEmpty;
+        _isLoadingChanged = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingChanged = false);
+    }
+  }
+
+  Future<void> _fetchRecentlyAdded({bool initial = false}) async {
+    if (_isLoadingAdded || !_hasMoreAdded) return;
+    setState(() => _isLoadingAdded = true);
+
+    try {
+      final entries = await _snapshotService.fetchSnapshot(
+        sortBy: 'created_at_desc',
+        page: _pageAdded,
+      );
+      setState(() {
+        if (initial) _recentlyAdded.clear();
+        _recentlyAdded.addAll(entries);
+        _pageAdded++;
+        _hasMoreAdded = entries.isNotEmpty;
+        _isLoadingAdded = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingAdded = false);
     }
   }
 
@@ -84,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _bootstrap();
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = 'Login failed: $e';
         _loading = false;
       });
     }
@@ -94,12 +162,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _auth.logout();
     setState(() {
       _profile = null;
-      _error = null;
       _totalSeries = 0;
       _chaptersRead = 0;
       _volumesRead = 0;
-      _completionRate = 0.0;
+      _completionRate = 0;
       _totalRereads = 0;
+      _recentlyChanged.clear();
+      _recentlyAdded.clear();
     });
   }
 
@@ -107,85 +176,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final username = _profile?.nickname?.isNotEmpty == true
         ? _profile!.nickname
-        : (_profile?.preferredUsername?.isNotEmpty == true
-              ? _profile!.preferredUsername
-              : null);
+        : _profile?.preferredUsername;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0a0a0a),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : _profile == null
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 28,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('Login'),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                    ],
-                  ],
-                )
-              : SingleChildScrollView(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(child: Text(_error!))
+          : _profile == null
+          ? _buildLoginPrompt()
+          : RefreshIndicator(
+              onRefresh: _bootstrap,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${username ?? 'User'} Profile',
+                        'Welcome, ${username ?? 'User'}!',
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 28,
-                          letterSpacing: 0.5,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 24),
                       const Text(
                         'At a Glance',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
                           fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'A quick snapshot of ${username ?? 'your'} reading habits, ratings, and collection size.',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'A quick overview of your reading statistics.',
+                        style: TextStyle(color: Colors.white70),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           StatisticCard(
-                            icon: Icons.library_books,
+                            icon: Icons.book,
                             label: 'Total Series',
-                            value: _totalSeries.toString(),
+                            value: '$_totalSeries',
                           ),
                           const SizedBox(width: 16),
                           StatisticCard(
-                            icon: Icons.menu_book,
+                            icon: Icons.article,
                             label: 'Chapters Read',
-                            value: _chaptersRead.toString(),
+                            value: '$_chaptersRead',
                           ),
                         ],
                       ),
@@ -193,14 +233,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         children: [
                           StatisticCard(
-                            icon: Icons.book,
+                            icon: Icons.library_books,
                             label: 'Volumes Read',
-                            value: _volumesRead.toString(),
+                            value: '$_volumesRead',
                           ),
                           const SizedBox(width: 16),
                           StatisticCard(
-                            icon: Icons.percent,
-                            label: 'Completion Rate',
+                            icon: Icons.check_circle,
+                            label: 'Completion',
                             value: '${_completionRate.toStringAsFixed(1)}%',
                           ),
                         ],
@@ -209,21 +249,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         children: [
                           StatisticCard(
-                            icon: Icons.repeat,
+                            icon: Icons.replay,
                             label: 'Total Rereads',
-                            value: _totalRereads.toString(),
+                            value: '$_totalRereads',
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      ElevatedButton(
-                        onPressed: _logout,
-                        child: const Text('Logout'),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Library Snapshot',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Two quick ways to scan what has been added lately, what is rated highest, and what has seen recent reading progress.',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 16),
+                      SnapshotList(
+                        title: 'Recently Changed',
+                        entries: _recentlyChanged,
+                        hasMore: _hasMoreChanged,
+                        onFetchMore: _fetchRecentlyChanged,
+                      ),
+                      const SizedBox(height: 16),
+                      SnapshotList(
+                        title: 'Recently Added',
+                        entries: _recentlyAdded,
+                        hasMore: _hasMoreAdded,
+                        onFetchMore: _fetchRecentlyAdded,
+                      ),
+                      const SizedBox(height: 32),
+                      if (_profile != null)
+                        Center(
+                          child: ElevatedButton.icon(
+                            onPressed: _logout,
+                            icon: const Icon(Icons.logout),
+                            label: const Text('Logout'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-        ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildLoginPrompt() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 16),
+          const Text(
+            'Login with MangaBaka to see your profile.',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _login,
+            icon: const Icon(Icons.login),
+            label: const Text('Login with MangaBaka'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
