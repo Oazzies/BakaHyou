@@ -3,6 +3,7 @@ import 'package:bakahyou/features/library/services/library_service.dart';
 import 'package:bakahyou/features/series/widgets/state_selection_section.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/utils/widget_utils.dart';
 import 'package:bakahyou/features/series/widgets/description_section.dart';
@@ -74,6 +75,61 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     }
   }
 
+  void _showDeleteConfirmationDialog() {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFF23232a),
+        title: const Text(
+          'Delete from Library',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this series from your library?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white),
+            ),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+          TextButton(
+            child: Text('Confirm', style: TextStyle(color: Colors.red[400])),
+            onPressed: () async {
+              // First, pop the dialog.
+              Navigator.of(dialogContext).pop(); 
+              
+              try {
+                await _libraryService.deleteEntry(widget.series.id);
+                
+                // Then, if the widget is still mounted, pop the detail screen.
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
   Future<void> _onStateChanged(String newState) async {
     try {
       await _libraryService.updateLibraryEntryState(widget.series.id, newState);
@@ -133,8 +189,24 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         title: _showTitle ? Text(widget.series.title) : null,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.share), onPressed: _shareLink),
+          StreamBuilder<LibraryEntry?>(
+            stream: _entryStream,
+            builder: (context, snapshot) {
+              if (snapshot.data != null) {
+                return IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: _showDeleteConfirmationDialog,
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
       body: SafeArea(

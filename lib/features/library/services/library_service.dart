@@ -181,4 +181,31 @@ class LibraryService {
       throw Exception('Failed to create library entry: ${response.body}');
     }
   }
+
+    /// Deletes a library entry by series ID from both the API and local DB.
+  Future<void> deleteEntry(String seriesId) async {
+    final token = await _auth.getValidAccessToken();
+    if (token == null) {
+      throw Exception('Not authenticated');
+    }
+
+    final url = '${LibraryConstants.baseUrl}/$seriesId';
+    final response = await http.delete(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'User-Agent': LibraryConstants.userAgent,
+      },
+    );
+    
+    print("!!! DELETE LIBRARY API CALL MADE!!!");
+
+    if (response.statusCode == 200 || response.statusCode == 404) {
+      // Also delete from local DB
+      await _db.libraryEntriesDao.deleteEntry(seriesId);
+    } else {
+      // Handle other status codes, like 401, 403, etc.
+      throw Exception('Failed to delete library entry: ${response.body}');
+    }
+  }
 }

@@ -206,6 +206,10 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
     return (update(libraryEntriesTable)..where((t) => t.seriesId.equals(seriesId)))
         .write(LibraryEntriesTableCompanion(rating: Value(newRating)));
   }
+  
+    Future<void> deleteEntry(String seriesId) {
+    return (delete(libraryEntriesTable)..where((tbl) => tbl.seriesId.equals(seriesId))).go();
+  }
 }
 
 @DriftDatabase(
