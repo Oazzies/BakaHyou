@@ -30,11 +30,11 @@ Go to the [releases](https://github.com/Oazzies/BakaHyou/releases) page.
 <details open="">
 <summary><h3>Implemented</h3></summary>
 
-* Series with info
-* Library
+* Series with info (Titles, Chips, Description, etc)
+* Library (Adding, Editing, Deleting)
 * Browsing
 * Seeing news
-* Basic Statistics
+* Basic Statistics (At a Glance, Library Snapshot)
 
 </details>
 
