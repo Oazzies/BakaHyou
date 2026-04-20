@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class MBSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onTap;
 
   const MBSearchBar({
     Key? key,
     required this.onChanged,
     this.onSubmitted,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -47,6 +49,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onTap: widget.onTap,
       controller: _controller,
       focusNode: _focusNode,
       decoration: InputDecoration(

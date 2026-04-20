@@ -1,9 +1,38 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bakahyou/features/series/models/series.dart';
+import 'package:bakahyou/features/browse/models/series_filter.dart';
 
 class SeriesSearchService {
   static const String _baseUrl = 'https://api.mangabaka.dev/v1/series/search';
+
+  Future<List<Series>> searchSeries(SeriesFilter filter) async {
+    final uri = Uri.parse(_baseUrl).replace(
+      queryParameters: filter.toQueryParameters().map(
+            (key, value) => MapEntry(
+              key,
+              value is List ? value.join(',') : value.toString(),
+            ),
+          ),
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {'User-Agent': 'BakaHyou/0.0 (oazziesmail@gmail.com)'},
+    );
+
+    print("!!! SEARCH API CALL MADE!!!");
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final List data = json['data'] ?? [];
+      return data
+          .map((item) => Series.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to search series');
+    }
+  }
 
   Future<List<Series>> searchSeriesByName(
     String query, {
