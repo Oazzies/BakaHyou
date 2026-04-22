@@ -54,16 +54,75 @@ class _MBSearchBarState extends State<MBSearchBar> {
         hintText: "Search for something",
         hintStyle: const TextStyle(color: Colors.white),
         prefixIcon: const Icon(Icons.search, color: Colors.white),
-        suffixIcon: _controller.text.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: IconButton(
+        suffixIcon: Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (_controller.text.isNotEmpty) ...[
+                IconButton(
                   icon: const Icon(Icons.clear, color: Colors.white),
                   onPressed: _clear,
                   constraints: const BoxConstraints(),
                 ),
-              )
-            : null,
+                const SizedBox(width: 4),
+              ],
+              IconButton(
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    useSafeArea: true,
+                    backgroundColor: AppConstants.secondaryBackground,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (context) {
+                      return SizedBox(
+                        height: MediaQuery.of(context).size.height,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white30,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                "Filters",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const Expanded(
+                              child: Center(
+                                child: Text(
+                                  "Basic setup for now",
+                                  style: TextStyle(color: Colors.white54),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+        ),
         filled: true,
         fillColor: AppConstants.secondaryBackground,
         border: OutlineInputBorder(
