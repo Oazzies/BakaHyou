@@ -9,9 +9,11 @@ import 'package:bakahyou/features/profile/models/mb_profile.dart';
 
 class ProfileAuthService {
   final _logger = LoggingService.logger;
-  static const _authorizationEndpoint = 'https://mangabaka.org/auth/oauth2/authorize';
+  static const _authorizationEndpoint =
+      'https://mangabaka.org/auth/oauth2/authorize';
   static const _tokenEndpoint = 'https://mangabaka.org/auth/oauth2/token';
-  static const _endSessionEndpoint = 'https://mangabaka.org/auth/oauth2/end-session';
+  static const _endSessionEndpoint =
+      'https://mangabaka.org/auth/oauth2/end-session';
   static const _meEndpoint = 'https://api.mangabaka.dev/v1/me';
   static const _userInfoEndpoint = 'https://mangabaka.org/auth/oauth2/userinfo';
 
@@ -47,7 +49,8 @@ class ProfileAuthService {
     try {
       if (_clientId.isEmpty || _redirectUri.isEmpty) {
         throw Exception(
-            'Missing BAKAHYOU_CLIENT_ID or BAKAHYOU_REDIRECT_URI in .env');
+          'Missing BAKAHYOU_CLIENT_ID or BAKAHYOU_REDIRECT_URI in .env',
+        );
       }
 
       final response = await _appAuth.authorizeAndExchangeCode(
@@ -78,8 +81,9 @@ class ProfileAuthService {
       await _storage.write(key: _kAccessToken, value: response.accessToken);
       await _storage.write(key: _kRefreshToken, value: response.refreshToken);
       await _storage.write(key: _kIdToken, value: response.idToken);
-      final exp =
-          response.accessTokenExpirationDateTime?.toUtc().toIso8601String();
+      final exp = response.accessTokenExpirationDateTime
+          ?.toUtc()
+          .toIso8601String();
       if (exp != null) {
         await _storage.write(key: _kAccessTokenExp, value: exp);
       }
@@ -97,9 +101,9 @@ class ProfileAuthService {
       final exp = DateTime.tryParse(expRaw);
       if (exp == null) return;
 
-      if (DateTime.now()
-          .toUtc()
-          .isBefore(exp.subtract(const Duration(minutes: 1)))) {
+      if (DateTime.now().toUtc().isBefore(
+        exp.subtract(const Duration(minutes: 1)),
+      )) {
         return;
       }
 
@@ -117,7 +121,7 @@ class ProfileAuthService {
             'profile',
             'library.read',
             'library.write',
-            'offline_access'
+            'offline_access',
           ],
         ),
       );
@@ -164,13 +168,14 @@ class ProfileAuthService {
           return MbProfile.fromUserInfo(body);
         } else {
           _logger.severe(
-              'Failed to fetch profile from userinfo endpoint: ${userinfoRes.statusCode} ${userinfoRes.body}');
-          throw Exception(
-              'Failed to fetch profile: ${userinfoRes.statusCode}');
+            'Failed to fetch profile from userinfo endpoint: ${userinfoRes.statusCode} ${userinfoRes.body}',
+          );
+          throw Exception('Failed to fetch profile: ${userinfoRes.statusCode}');
         }
       } else {
-        _logger
-            .severe('Failed to fetch profile from me endpoint: ${res.statusCode} ${res.body}');
+        _logger.severe(
+          'Failed to fetch profile from me endpoint: ${res.statusCode} ${res.body}',
+        );
         throw Exception('Failed to fetch profile: ${res.statusCode}');
       }
     } catch (e) {

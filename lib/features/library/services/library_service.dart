@@ -36,13 +36,10 @@ class LibraryService {
               ? DbToApiMapper.libraryEntryFromDb(dbEntry)
               : null,
         )
-        .handleError(
-          (error, stackTrace) {
-            _logger.severe('Error watching entry from db: $error\n$stackTrace');
-            return null;
-          },
-          test: (error) => true,
-        );
+        .handleError((error, stackTrace) {
+          _logger.severe('Error watching entry from db: $error\n$stackTrace');
+          return null;
+        }, test: (error) => true);
   }
 
   Stream<List<api.LibraryEntry>> watchEntriesFromDb() {
@@ -52,13 +49,10 @@ class LibraryService {
           (dbEntries) =>
               dbEntries.map(DbToApiMapper.libraryEntryFromDb).toList(),
         )
-        .handleError(
-          (error, stackTrace) {
-            _logger.severe('Error watching entries from db: $error\n$stackTrace');
-            return [];
-          },
-          test: (error) => true,
-        );
+        .handleError((error, stackTrace) {
+          _logger.severe('Error watching entries from db: $error\n$stackTrace');
+          return [];
+        }, test: (error) => true);
   }
 
   /// Performs initial sync only once on first app load.
@@ -112,22 +106,26 @@ class LibraryService {
     );
 
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'User-Agent': LibraryConstants.userAgent,
-        },
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Library fetch timed out'),
-      );
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'User-Agent': LibraryConstants.userAgent,
+            },
+          )
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () => throw TimeoutException('Library fetch timed out'),
+          );
 
       if (response.statusCode == 429) {
         _logger.warning(
-            'Rate limited fetching library page $page. Retrying after delay...');
+          'Rate limited fetching library page $page. Retrying after delay...',
+        );
         await Future.delayed(
-            const Duration(seconds: AppConstants.rateLimitRetryDelaySeconds));
+          const Duration(seconds: AppConstants.rateLimitRetryDelaySeconds),
+        );
         return _fetchPage(token, page);
       }
 
@@ -141,7 +139,8 @@ class LibraryService {
 
       if (response.statusCode != 200) {
         _logger.severe(
-            'Failed to fetch library page. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to fetch library page. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to fetch library page',
           statusCode: response.statusCode,
@@ -151,10 +150,12 @@ class LibraryService {
       }
 
       try {
-        final data = (jsonDecode(response.body)['data'] as List<dynamic>? ?? const []);
+        final data =
+            (jsonDecode(response.body)['data'] as List<dynamic>? ?? const []);
         return data
-            .map((item) =>
-                api.LibraryEntry.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       } catch (e, st) {
         _logger.severe('Failed to parse library page: $e\n$st');
@@ -218,18 +219,21 @@ class LibraryService {
 
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'User-Agent': LibraryConstants.userAgent,
-        },
-        body: jsonEncode({'state': state}),
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Update state request timed out'),
-      );
+      final response = await http
+          .put(
+            url,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+              'User-Agent': LibraryConstants.userAgent,
+            },
+            body: jsonEncode({'state': state}),
+          )
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Update state request timed out'),
+          );
 
       if (response.statusCode == 401) {
         throw AuthException(
@@ -240,7 +244,8 @@ class LibraryService {
 
       if (response.statusCode != 200) {
         _logger.severe(
-            'Failed to update entry state. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to update entry state. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to update entry state',
           statusCode: response.statusCode,
@@ -286,21 +291,23 @@ class LibraryService {
   Future<void> updateLibraryEntryRating(String seriesId, int rating) async {
     final token = await _auth.getValidAccessToken();
 
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'User-Agent': LibraryConstants.userAgent,
-        },
-        body: jsonEncode({'rating': rating}),
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Update rating request timed out'),
-      );
+      final response = await http
+          .put(
+            url,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+              'User-Agent': LibraryConstants.userAgent,
+            },
+            body: jsonEncode({'rating': rating}),
+          )
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Update rating request timed out'),
+          );
 
       if (response.statusCode == 401) {
         throw AuthException(
@@ -311,7 +318,8 @@ class LibraryService {
 
       if (response.statusCode != 200) {
         _logger.severe(
-            'Failed to update entry rating. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to update entry rating. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to update entry rating',
           statusCode: response.statusCode,
@@ -356,21 +364,23 @@ class LibraryService {
   Future<void> createLibraryEntry(String seriesId, String state) async {
     final token = await _auth.getValidAccessToken();
 
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'User-Agent': LibraryConstants.userAgent,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'state': state}),
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Create entry request timed out'),
-      );
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'User-Agent': LibraryConstants.userAgent,
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({'state': state}),
+          )
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Create entry request timed out'),
+          );
 
       if (response.statusCode == 401) {
         throw AuthException(
@@ -383,7 +393,8 @@ class LibraryService {
         await syncLibrary();
       } else {
         _logger.severe(
-            'Failed to create library entry. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to create library entry. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to create library entry',
           statusCode: response.statusCode,
@@ -428,16 +439,19 @@ class LibraryService {
 
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'User-Agent': LibraryConstants.userAgent,
-        },
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Delete entry request timed out'),
-      );
+      final response = await http
+          .delete(
+            url,
+            headers: {
+              'Authorization': 'Bearer $token',
+              'User-Agent': LibraryConstants.userAgent,
+            },
+          )
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Delete entry request timed out'),
+          );
 
       if (response.statusCode == 401) {
         throw AuthException(
@@ -451,7 +465,8 @@ class LibraryService {
         await _db.libraryEntriesDao.deleteEntry(seriesId);
       } else {
         _logger.severe(
-            'Failed to delete entry. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to delete entry. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to delete library entry',
           statusCode: response.statusCode,

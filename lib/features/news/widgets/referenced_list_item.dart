@@ -5,7 +5,7 @@ import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
 class ReferencedListItem extends StatelessWidget {
   final Series series;
 
-  const ReferencedListItem({Key? key, required this.series}) : super(key: key);
+  const ReferencedListItem({super.key, required this.series});
 
   @override
   Widget build(BuildContext context) {

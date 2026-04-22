@@ -8,7 +8,7 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 class NewsListItem extends StatelessWidget {
   final News news;
 
-  const NewsListItem({Key? key, required this.news}) : super(key: key);
+  const NewsListItem({super.key, required this.news});
 
   String _formatDate(String date) {
     if (date.isEmpty) return '';

@@ -10,8 +10,8 @@ class ShortcutSection extends StatelessWidget {
     required this.header,
     required this.onMostPopular,
     required this.onRandom,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

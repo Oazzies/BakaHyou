@@ -6,10 +6,10 @@ class RatingIconButton extends StatelessWidget {
   final Function(int) onRatingChanged;
 
   const RatingIconButton({
-    Key? key,
+    super.key,
     required this.currentRating,
     required this.onRatingChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

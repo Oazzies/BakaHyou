@@ -18,8 +18,8 @@ class BrowseResultsScreen extends StatefulWidget {
     required this.sortBy,
     this.type,
     this.randomSeed,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<BrowseResultsScreen> createState() => _BrowseResultsScreenState();

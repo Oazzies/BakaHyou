@@ -78,7 +78,7 @@ class LibraryEntryWithSeries {
 @DriftAccessor(tables: [SeriesTable])
 class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
   final _logger = LoggingService.logger;
-  SeriesDao(AppDatabase db) : super(db);
+  SeriesDao(super.db);
 
   // Gets the most recently updated series from the database.
   Future<SeriesTableData?> getLatestUpdatedSeries() async {
@@ -86,9 +86,9 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
       return await (select(seriesTable)
             ..orderBy([
               (t) => OrderingTerm(
-                    expression: t.lastUpdated,
-                    mode: OrderingMode.desc,
-                  )
+                expression: t.lastUpdated,
+                mode: OrderingMode.desc,
+              ),
             ])
             ..limit(1))
           .getSingleOrNull();
@@ -118,7 +118,9 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
               artists: Value(json.encode(s.artists)),
               description: s.description,
               year: Value(s.year),
-              published: Value(s.published != null ? json.encode(s.published) : null),
+              published: Value(
+                s.published != null ? json.encode(s.published) : null,
+              ),
               status: Value(s.status),
               isLicensed: Value(s.isLicensed),
               hasAnime: Value(s.hasAnime),
@@ -133,50 +135,63 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
               genres: Value(json.encode(s.genres)),
               tags: Value(json.encode(s.tags)),
               lastUpdated: Value(s.lastUpdated),
-              relationships: Value(s.relationships != null ? json.encode(s.relationships) : null),
+              relationships: Value(
+                s.relationships != null ? json.encode(s.relationships) : null,
+              ),
               source: Value(s.source != null ? json.encode(s.source) : null),
             ),
           ),
           onConflict: DoUpdate(
             (old) => SeriesTableCompanion.custom(
               state: const CustomExpression<String>('excluded.state'),
-              mergedWith: const CustomExpression<String>('excluded.merged_with'),
+              mergedWith: const CustomExpression<String>(
+                'excluded.merged_with',
+              ),
               title: const CustomExpression<String>('excluded.title'),
-              nativeTitle:
-                  const CustomExpression<String>('excluded.native_title'),
-              romanizedTitle:
-                  const CustomExpression<String>('excluded.romanized_title'),
-              secondaryTitles:
-                  const CustomExpression<String>('excluded.secondary_titles'),
+              nativeTitle: const CustomExpression<String>(
+                'excluded.native_title',
+              ),
+              romanizedTitle: const CustomExpression<String>(
+                'excluded.romanized_title',
+              ),
+              secondaryTitles: const CustomExpression<String>(
+                'excluded.secondary_titles',
+              ),
               coverUrl: const CustomExpression<String>('excluded.cover_url'),
               authors: const CustomExpression<String>('excluded.authors'),
               artists: const CustomExpression<String>('excluded.artists'),
-              description:
-                  const CustomExpression<String>('excluded.description'),
+              description: const CustomExpression<String>(
+                'excluded.description',
+              ),
               year: const CustomExpression<String>('excluded.year'),
               published: const CustomExpression<String>('excluded.published'),
               status: const CustomExpression<String>('excluded.status'),
-              isLicensed:
-                  const CustomExpression<String>('excluded.is_licensed'),
+              isLicensed: const CustomExpression<String>(
+                'excluded.is_licensed',
+              ),
               hasAnime: const CustomExpression<String>('excluded.has_anime'),
               anime: const CustomExpression<String>('excluded.anime'),
-              contentRating:
-                  const CustomExpression<String>('excluded.content_rating'),
+              contentRating: const CustomExpression<String>(
+                'excluded.content_rating',
+              ),
               type: const CustomExpression<String>('excluded.type'),
               rating: const CustomExpression<String>('excluded.rating'),
-              finalVolume:
-                  const CustomExpression<String>('excluded.final_volume'),
-              totalChapters:
-                  const CustomExpression<String>('excluded.total_chapters'),
+              finalVolume: const CustomExpression<String>(
+                'excluded.final_volume',
+              ),
+              totalChapters: const CustomExpression<String>(
+                'excluded.total_chapters',
+              ),
               links: const CustomExpression<String>('excluded.links'),
-              publishers:
-                  const CustomExpression<String>('excluded.publishers'),
+              publishers: const CustomExpression<String>('excluded.publishers'),
               genres: const CustomExpression<String>('excluded.genres'),
               tags: const CustomExpression<String>('excluded.tags'),
-              lastUpdated:
-                  const CustomExpression<String>('excluded.last_updated'),
-              relationships:
-                  const CustomExpression<String>('excluded.relationships'),
+              lastUpdated: const CustomExpression<String>(
+                'excluded.last_updated',
+              ),
+              relationships: const CustomExpression<String>(
+                'excluded.relationships',
+              ),
               source: const CustomExpression<String>('excluded.source'),
             ),
           ),
@@ -214,16 +229,14 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
           db.seriesTable,
           db.seriesTable.id.equalsExp(db.libraryEntriesTable.seriesId),
         ),
-      ]))
-          .getSingleOrNull()
-          .then(
-            (result) => result != null
-                ? LibraryEntryWithSeries(
-                    libraryEntry: result.readTable(db.libraryEntriesTable),
-                    series: result.readTable(db.seriesTable),
-                  )
-                : null,
-          );
+      ])).getSingleOrNull().then(
+        (result) => result != null
+            ? LibraryEntryWithSeries(
+                libraryEntry: result.readTable(db.libraryEntriesTable),
+                series: result.readTable(db.seriesTable),
+              )
+            : null,
+      );
     } catch (e) {
       _logger.severe('Failed to watch entry with series: $e');
       throw Exception('Failed to watch entry with series.');
@@ -235,7 +248,7 @@ class SeriesDao extends DatabaseAccessor<AppDatabase> with _$SeriesDaoMixin {
 class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
     with _$LibraryEntriesDaoMixin {
   final _logger = LoggingService.logger;
-  LibraryEntriesDao(AppDatabase db) : super(db);
+  LibraryEntriesDao(super.db);
 
   Stream<LibraryEntryWithSeries?> watchEntryWithSeries(String seriesId) {
     try {
@@ -244,8 +257,7 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
           seriesTable,
           seriesTable.id.equalsExp(libraryEntriesTable.seriesId),
         ),
-      ])
-        ..where(libraryEntriesTable.seriesId.equals(seriesId));
+      ])..where(libraryEntriesTable.seriesId.equals(seriesId));
 
       return query.watchSingleOrNull().map((row) {
         if (row == null) return null;
@@ -335,9 +347,9 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> deleteEntry(String seriesId) async {
     try {
-      await (delete(libraryEntriesTable)
-            ..where((tbl) => tbl.seriesId.equals(seriesId)))
-          .go();
+      await (delete(
+        libraryEntriesTable,
+      )..where((tbl) => tbl.seriesId.equals(seriesId))).go();
     } catch (e) {
       _logger.severe('Failed to delete entry: $e');
       throw Exception('Failed to delete entry.');
@@ -360,14 +372,14 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase() => _instance;
 
   static LazyDatabase _openConnection() {
-    final _logger = LoggingService.logger;
+    final logger = LoggingService.logger;
     return LazyDatabase(() async {
       try {
         final dbFolder = await getApplicationDocumentsDirectory();
         final file = File(p.join(dbFolder.path, 'manga_db.sqlite'));
         return NativeDatabase(file);
       } catch (e) {
-        _logger.severe('Failed to open database connection: $e');
+        logger.severe('Failed to open database connection: $e');
         throw Exception('Failed to open database connection.');
       }
     });

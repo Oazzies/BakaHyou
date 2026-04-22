@@ -25,16 +25,11 @@ abstract class AppException implements Exception {
 /// Network-related exceptions
 class NetworkException extends AppException {
   NetworkException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// API response exceptions (4xx, 5xx)
@@ -43,76 +38,51 @@ class ApiException extends AppException {
   final String? responseBody;
 
   ApiException({
-    required String message,
+    required super.message,
     required this.statusCode,
     this.responseBody,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// JSON parsing exceptions
 class ParseException extends AppException {
   ParseException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// Database exceptions
 class DatabaseException extends AppException {
   DatabaseException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// Authentication exceptions
 class AuthException extends AppException {
   AuthException({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }
 
 /// Generic application exception
 class AppError extends AppException {
   AppError({
-    required String message,
-    String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
-  }) : super(
-    message: message,
-    code: code,
-    originalError: originalError,
-    stackTrace: stackTrace,
-  );
+    required super.message,
+    super.code,
+    super.originalError,
+    super.stackTrace,
+  });
 }

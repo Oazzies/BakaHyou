@@ -9,7 +9,8 @@ class ContentRatingChip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (rating.isEmpty) return SizedBox.shrink();
 
-    final formatted = rating[0].toUpperCase() + rating.substring(1).toLowerCase();
+    final formatted =
+        rating[0].toUpperCase() + rating.substring(1).toLowerCase();
 
     Color color;
     IconData icon;
@@ -20,11 +21,11 @@ class ContentRatingChip extends StatelessWidget {
         break;
       case 'erotica':
         color = const Color(0xFFF8617B);
-        icon = Icons.whatshot; 
+        icon = Icons.whatshot;
         break;
       case 'pornographic':
         color = const Color(0xFFE8003E);
-        icon = Icons.whatshot; 
+        icon = Icons.whatshot;
         break;
       case 'safe':
         color = const Color(0xFF6CD292);
@@ -41,10 +42,7 @@ class ContentRatingChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 4),
-          Text(
-            formatted,
-            style: TextStyle(color: color),
-          ),
+          Text(formatted, style: TextStyle(color: color)),
         ],
       ),
     );

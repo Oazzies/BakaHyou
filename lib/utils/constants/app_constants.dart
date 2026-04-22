@@ -24,7 +24,7 @@ class AppConstants {
   static const Color borderColor = Color(0xFF3f3f46);
   static const Color successColor = Color(0xFF81e6ca);
   static const Color warningColor = Color(0xFFffc83e);
-  
+
   // ============ UI Spacing ============
   static const double horizontalPadding = 16.0;
   static const double verticalPadding = 16.0;

@@ -6,7 +6,7 @@ import 'package:bakahyou/features/profile/screens/profile_screen.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -52,31 +52,31 @@ class _MainScreenState extends State<MainScreen> {
             onDestinationSelected: _onItemTapped,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: "Home",
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.library_books_outlined),
-                  selectedIcon: Icon(Icons.library_books),
-                  label: "Library",
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.explore_outlined),
-                  selectedIcon: Icon(Icons.explore),
-                  label: "Browse",
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.article_outlined),
-                  selectedIcon: Icon(Icons.article),
-                  label: "News",
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: "Profile",
-                ),
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: "Home",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.library_books_outlined),
+                selectedIcon: Icon(Icons.library_books),
+                label: "Library",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.explore_outlined),
+                selectedIcon: Icon(Icons.explore),
+                label: "Browse",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.article_outlined),
+                selectedIcon: Icon(Icons.article),
+                label: "News",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person),
+                label: "Profile",
+              ),
             ],
           ),
         ),

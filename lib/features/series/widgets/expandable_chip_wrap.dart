@@ -9,8 +9,8 @@ class ExpandableChipWrap extends StatefulWidget {
     required this.label,
     required this.items,
     this.color,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<ExpandableChipWrap> createState() => _ExpandableChipWrapState();
@@ -35,7 +35,9 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
         Text(widget.label, style: const TextStyle(fontWeight: FontWeight.bold)),
         Wrap(
           spacing: 8,
-          children: expanded || !showExpand ? chips : chips.take(maxChips).toList(),
+          children: expanded || !showExpand
+              ? chips
+              : chips.take(maxChips).toList(),
         ),
         if (showExpand)
           Align(

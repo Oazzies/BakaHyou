@@ -10,7 +10,8 @@ class StatusChip extends StatelessWidget {
     if (status.isEmpty) return SizedBox.shrink();
 
     final lower = status.toLowerCase();
-    final formatted = status[0].toUpperCase() + status.substring(1).toLowerCase();
+    final formatted =
+        status[0].toUpperCase() + status.substring(1).toLowerCase();
 
     Color? bgColor;
     IconData? icon;

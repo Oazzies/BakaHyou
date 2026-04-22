@@ -15,7 +15,7 @@ import 'package:bakahyou/utils/di/service_locator.dart';
 class SeriesDetailScreen extends StatefulWidget {
   final Series series;
 
-  const SeriesDetailScreen({Key? key, required this.series}) : super(key: key);
+  const SeriesDetailScreen({super.key, required this.series});
 
   @override
   State<SeriesDetailScreen> createState() => _SeriesDetailScreenState();
@@ -79,67 +79,69 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   }
 
   void _showDeleteConfirmationDialog() {
-  showDialog(
-    context: context,
-    builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        backgroundColor: AppConstants.tertiaryBackground,
-        title: const Text(
-          'Delete from Library',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Are you sure you want to delete this series from your library?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white),
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppConstants.tertiaryBackground,
+          title: const Text(
+            'Delete from Library',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this series from your library?',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
             ),
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-            },
-          ),
-          TextButton(
-            child: Text('Confirm', style: TextStyle(color: Colors.red[400])),
-            onPressed: () async {
-              // First, pop the dialog.
-              Navigator.of(dialogContext).pop(); 
-              
-              try {
-                await _libraryService.deleteEntry(widget.series.id);
-                
-                // Then, if the widget is still mounted, pop the detail screen.
-                if (mounted) {
-                  Navigator.of(context).pop();
+            TextButton(
+              child: Text('Confirm', style: TextStyle(color: Colors.red[400])),
+              onPressed: () async {
+                // First, pop the dialog.
+                Navigator.of(dialogContext).pop();
+
+                try {
+                  await _libraryService.deleteEntry(widget.series.id);
+
+                  // Then, if the widget is still mounted, pop the detail screen.
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _onStateChanged(String newState) async {
     try {
       await _libraryService.updateLibraryEntryState(widget.series.id, newState);
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Library status updated!')));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating status: ${e.toString()}')),
       );
@@ -152,10 +154,12 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         widget.series.id,
         newRating,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Rating updated!')));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating rating: ${e.toString()}')),
       );

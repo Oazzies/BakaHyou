@@ -72,11 +72,17 @@ class Series {
       title: json['title'] ?? '',
       nativeTitle: json['native_title'] ?? '',
       romanizedTitle: json['romanized_title'] ?? '',
-      secondaryTitles: (json['secondary_titles'] as Map?)?.values.map((e) => e.toString()).toList() ?? [],
+      secondaryTitles:
+          (json['secondary_titles'] as Map?)?.values
+              .map((e) => e.toString())
+              .toList() ??
+          [],
       coverUrl: JsonUtils.getCover(json),
       authors: (json['authors'] as List?)?.cast<String>() ?? [],
       artists: (json['artists'] as List?)?.cast<String>() ?? [],
-      description: (json['description'] ?? '').replaceAll('<br>', '\n').replaceAll(RegExp(r'<.*?>'), ''),
+      description: (json['description'] ?? '')
+          .replaceAll('<br>', '\n')
+          .replaceAll(RegExp(r'<.*?>'), ''),
       year: json['year']?.toString() ?? '',
       published: (json['published'] as Map?)?.cast<String, dynamic>(),
       status: json['status'] ?? '',
@@ -89,7 +95,12 @@ class Series {
       finalVolume: json['final_volume']?.toString() ?? '',
       totalChapters: json['total_chapters']?.toString() ?? '',
       links: (json['links'] as List?) ?? [],
-      publishers: (json['publishers'] as List?)?.map((p) => p['name']?.toString() ?? '').where((e) => e.isNotEmpty).toList() ?? [],
+      publishers:
+          (json['publishers'] as List?)
+              ?.map((p) => p['name']?.toString() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList() ??
+          [],
       genres: (json['genres'] as List?)?.cast<String>() ?? [],
       tags: (json['tags'] as List?)?.cast<String>() ?? [],
       lastUpdated: json['last_updated_at'] ?? '',

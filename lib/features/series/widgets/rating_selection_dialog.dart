@@ -6,10 +6,10 @@ class RatingSelectionDialog extends StatefulWidget {
   final Function(int) onRatingChanged;
 
   const RatingSelectionDialog({
-    Key? key,
+    super.key,
     required this.initialRating,
     required this.onRatingChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<RatingSelectionDialog> createState() => _RatingSelectionDialogState();
@@ -36,8 +36,14 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            _currentRating.toInt() == 0 ? 'Unrated' : _currentRating.toInt().toString(),
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            _currentRating.toInt() == 0
+                ? 'Unrated'
+                : _currentRating.toInt().toString(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Slider(
             value: _currentRating,

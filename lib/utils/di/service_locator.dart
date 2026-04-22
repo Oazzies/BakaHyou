@@ -10,24 +10,16 @@ final getIt = GetIt.instance;
 /// Configures all service dependencies using GetIt
 void setupServiceLocator() {
   // Logging Service (singleton)
-  getIt.registerSingleton<LoggingService>(
-    LoggingService(),
-  );
+  getIt.registerSingleton<LoggingService>(LoggingService());
 
   // Database (singleton)
-  getIt.registerSingleton<AppDatabase>(
-    AppDatabase(),
-  );
+  getIt.registerSingleton<AppDatabase>(AppDatabase());
 
   // Authentication Service (singleton)
-  getIt.registerSingleton<ProfileAuthService>(
-    ProfileAuthService(),
-  );
+  getIt.registerSingleton<ProfileAuthService>(ProfileAuthService());
 
   // Series Services (lazy singletons - created on first use)
-  getIt.registerLazySingleton<SeriesSearchService>(
-    () => SeriesSearchService(),
-  );
+  getIt.registerLazySingleton<SeriesSearchService>(() => SeriesSearchService());
 
   // Library Service (singleton to maintain state)
   getIt.registerSingleton<LibraryService>(

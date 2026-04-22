@@ -5,7 +5,7 @@ class VolumeChip extends StatelessWidget {
   final String volume;
   final int? progress;
   final bool inLibrary;
-  
+
   const VolumeChip({
     required this.volume,
     this.progress,

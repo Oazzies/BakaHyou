@@ -30,7 +30,10 @@ class RatingChip extends StatelessWidget {
         children: [
           Icon(Icons.star, size: 18, color: Colors.white),
           const SizedBox(width: 4),
-          Text('${avg.toStringAsFixed(1)} / 100', style: const TextStyle(color: Colors.white)),
+          Text(
+            '${avg.toStringAsFixed(1)} / 100',
+            style: const TextStyle(color: Colors.white),
+          ),
         ],
       ),
     );

@@ -11,7 +11,8 @@ class StatisticsService {
   Future<int> getTotalSeries() async {
     try {
       final count = drift.countAll();
-      final query = _db.selectOnly(_db.libraryEntriesTable)..addColumns([count]);
+      final query = _db.selectOnly(_db.libraryEntriesTable)
+        ..addColumns([count]);
       final result = await query.getSingle();
       return result.read(count) ?? 0;
     } catch (e) {
@@ -47,8 +48,9 @@ class StatisticsService {
   Future<double> getCompletionRate() async {
     try {
       final totalCount = drift.countAll();
-      final completedCount =
-          drift.countAll(filter: _db.libraryEntriesTable.state.equals('completed'));
+      final completedCount = drift.countAll(
+        filter: _db.libraryEntriesTable.state.equals('completed'),
+      );
 
       final queryTotal = _db.selectOnly(_db.libraryEntriesTable)
         ..addColumns([totalCount]);

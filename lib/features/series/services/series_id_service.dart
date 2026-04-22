@@ -13,13 +13,13 @@ class SeriesService {
   static Future<Series> fetchSeries(String id) async {
     try {
       final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id");
-      final response = await http.get(
-        url,
-        headers: {'User-Agent': AppConstants.userAgent},
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Series fetch request timed out'),
-      );
+      final response = await http
+          .get(url, headers: {'User-Agent': AppConstants.userAgent})
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Series fetch request timed out'),
+          );
 
       if (response.statusCode == 200) {
         try {
@@ -43,7 +43,8 @@ class SeriesService {
         );
       } else {
         _logger.severe(
-            'Failed to fetch series. Status: ${response.statusCode}, Body: ${response.body}');
+          'Failed to fetch series. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to fetch series',
           statusCode: response.statusCode,

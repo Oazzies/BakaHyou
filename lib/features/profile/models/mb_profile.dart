@@ -19,7 +19,9 @@ class MbProfile {
     return MbProfile(
       id: data['id']?.toString() ?? '',
       role: data['role']?.toString() ?? '',
-      scopes: (data['scopes'] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
+      scopes: (data['scopes'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
       nickname: data['nickname']?.toString(),
       preferredUsername: data['preferred_username']?.toString(),
     );
@@ -30,7 +32,9 @@ class MbProfile {
     return MbProfile(
       id: json['sub']?.toString() ?? '',
       role: 'user',
-      scopes: (json['scope'] is String) ? (json['scope'] as String).split(' ') : <String>[],
+      scopes: (json['scope'] is String)
+          ? (json['scope'] as String).split(' ')
+          : <String>[],
       nickname: json['nickname']?.toString(),
       preferredUsername: json['preferred_username']?.toString(),
     );

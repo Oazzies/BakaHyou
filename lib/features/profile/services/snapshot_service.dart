@@ -9,7 +9,8 @@ class SnapshotService {
   final _logger = LoggingService.logger;
   final ProfileAuthService _auth;
 
-  SnapshotService({ProfileAuthService? auth}) : _auth = auth ?? ProfileAuthService();
+  SnapshotService({ProfileAuthService? auth})
+    : _auth = auth ?? ProfileAuthService();
 
   Future<List<LibraryEntry>> fetchSnapshot({
     required String sortBy,
@@ -32,9 +33,11 @@ class SnapshotService {
 
       if (response.statusCode != 200) {
         _logger.severe(
-            'Failed to fetch library snapshot: ${response.statusCode} ${response.body}');
+          'Failed to fetch library snapshot: ${response.statusCode} ${response.body}',
+        );
         throw Exception(
-            'Failed to fetch library snapshot: ${response.statusCode}');
+          'Failed to fetch library snapshot: ${response.statusCode}',
+        );
       }
 
       final data = (jsonDecode(response.body)['data'] as List<dynamic>? ?? []);

@@ -5,11 +5,7 @@ class EntryListItem extends StatelessWidget {
   final Series series;
   final int? ranking;
 
-  const EntryListItem({
-    Key? key,
-    required this.series,
-    this.ranking,
-  }) : super(key: key);
+  const EntryListItem({super.key, required this.series, this.ranking});
 
   String capitalize(String s) =>
       s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
@@ -26,7 +22,9 @@ class EntryListItem extends StatelessWidget {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(8),
+                  ),
                   child: series.coverUrl.isNotEmpty
                       ? Image.network(
                           series.coverUrl,
@@ -38,7 +36,11 @@ class EntryListItem extends StatelessWidget {
                               width: 80,
                               height: double.infinity,
                               color: Colors.grey[900],
-                              child: const Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.white54,
+                                size: 40,
+                              ),
                             );
                           },
                         )
@@ -46,7 +48,11 @@ class EntryListItem extends StatelessWidget {
                           width: 80,
                           height: double.infinity,
                           color: Colors.grey[900],
-                          child: const Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                            size: 40,
+                          ),
                         ),
                 ),
                 Expanded(
@@ -57,7 +63,8 @@ class EntryListItem extends StatelessWidget {
                       children: [
                         Text(
                           series.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 fontSize: 16,
@@ -68,10 +75,8 @@ class EntryListItem extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${capitalize(series.type)} - ${capitalize(series.status)} - ${series.year}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.white70, fontSize: 14),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -81,7 +86,8 @@ class EntryListItem extends StatelessWidget {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: series.genres.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final genre = series.genres[index];
                               final genreLabel = genre.isNotEmpty
@@ -96,8 +102,14 @@ class EntryListItem extends StatelessWidget {
                                   ),
                                 ),
                                 backgroundColor: Colors.transparent,
-                                side: const BorderSide(color: Colors.white70, width: 0.8),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                side: const BorderSide(
+                                  color: Colors.white70,
+                                  width: 0.8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 2,
+                                ),
                                 visualDensity: VisualDensity.compact,
                               );
                             },

@@ -12,12 +12,14 @@ void main() async {
   LoggingService.setup();
   await dotenv.load();
   setupServiceLocator();
-  
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarContrastEnforced: false,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   runApp(const BakaHyouApp());
 }

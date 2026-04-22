@@ -50,10 +50,7 @@ class _SnapshotListState extends State<SnapshotList> {
       children: [
         Text(
           widget.title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         SizedBox(

@@ -19,12 +19,12 @@ class SeriesDetailHeader extends StatelessWidget {
   final bool inLibrary;
 
   const SeriesDetailHeader({
-    Key? key,
+    super.key,
     required this.series,
     this.progressChapter,
     this.progressVolume,
     this.inLibrary = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +51,8 @@ class SeriesDetailHeader extends StatelessWidget {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Clipboard.setData(
-                        ClipboardData(text: series.title),
-                      ),
+                      onTap: () =>
+                          Clipboard.setData(ClipboardData(text: series.title)),
                       child: Text(
                         series.title,
                         style: Theme.of(context).textTheme.headlineSmall,
@@ -113,16 +112,16 @@ class SeriesDetailHeader extends StatelessWidget {
                       progress: progressChapter,
                       inLibrary: inLibrary,
                     ),
-                  if ((series.published?['start_date']?.toString().isNotEmpty ?? false) ||
-                      (series.published?['end_date']?.toString().isNotEmpty ?? false))
+                  if ((series.published?['start_date']?.toString().isNotEmpty ??
+                          false) ||
+                      (series.published?['end_date']?.toString().isNotEmpty ??
+                          false))
                     DateRangeChip(
                       start: series.published?['start_date']?.toString() ?? '',
                       end: series.published?['end_date']?.toString() ?? '',
                     ),
                   if (series.hasAnime == 'true') HasAnimeChip(),
-                  RatingChip(
-                    sources: (series.source?.values.toList() ?? []),
-                  ),
+                  RatingChip(sources: (series.source?.values.toList() ?? [])),
                   if ([
                     'suggestive',
                     'erotica',

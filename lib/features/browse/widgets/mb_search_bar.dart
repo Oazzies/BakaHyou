@@ -10,12 +10,12 @@ class MBSearchBar extends StatefulWidget {
   final ValueChanged<SearchFilters>? onFilterApplied;
 
   const MBSearchBar({
-    Key? key,
+    super.key,
     required this.onChanged,
     this.onSubmitted,
     this.initialFilters,
     this.onFilterApplied,
-  }) : super(key: key);
+  });
 
   @override
   State<MBSearchBar> createState() => _MBSearchBarState();

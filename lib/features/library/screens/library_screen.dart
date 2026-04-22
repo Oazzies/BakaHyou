@@ -12,7 +12,7 @@ import 'package:bakahyou/features/series/models/series.dart' as api;
 import 'package:bakahyou/utils/di/service_locator.dart';
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({Key? key}) : super(key: key);
+  const LibraryScreen({super.key});
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -56,7 +56,9 @@ class _LibraryScreenState extends State<LibraryScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _scrollControllers.values.forEach((c) => c.dispose());
+    for (var c in _scrollControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -226,7 +228,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       final fullSeries = await SeriesService.fetchSeries(series.id);
       if (!mounted) return;
 
-      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
 
       Navigator.of(context).push(
         MaterialPageRoute(

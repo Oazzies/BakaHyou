@@ -223,7 +223,7 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
                     children: [
                       _buildSectionTitle('Sort By'),
                       DropdownButtonFormField<String>(
-                        value: _filters.sortBy,
+                        initialValue: _filters.sortBy,
                         dropdownColor: AppConstants.tertiaryBackground,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(

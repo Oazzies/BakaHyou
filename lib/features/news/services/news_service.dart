@@ -30,7 +30,8 @@ class NewsService {
             .toList();
       } else {
         _logger.severe(
-            'Failed to load news: ${response.statusCode} ${response.body}');
+          'Failed to load news: ${response.statusCode} ${response.body}',
+        );
         throw Exception('Failed to load news: ${response.statusCode}');
       }
     } catch (e) {

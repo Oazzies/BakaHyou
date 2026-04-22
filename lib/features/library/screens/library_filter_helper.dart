@@ -6,17 +6,16 @@ class LibraryFilterHelper {
   final List<LibraryEntry> allEntries;
   final String query;
 
-  LibraryFilterHelper({
-    required this.allEntries,
-    required this.query,
-  });
+  LibraryFilterHelper({required this.allEntries, required this.query});
 
   List<LibraryEntry> getFilteredByQuery() {
     if (query.isEmpty) return allEntries;
 
     return allEntries
-        .where((entry) =>
-            entry.series.title.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (entry) =>
+              entry.series.title.toLowerCase().contains(query.toLowerCase()),
+        )
         .toList();
   }
 

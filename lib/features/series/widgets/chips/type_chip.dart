@@ -8,9 +8,8 @@ class TypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (type.isEmpty) return SizedBox.shrink();
-    final formattedType = type[0].toUpperCase() + type.substring(1).toLowerCase();
-    return ChipBase(
-      label: Text(formattedType),
-    );
+    final formattedType =
+        type[0].toUpperCase() + type.substring(1).toLowerCase();
+    return ChipBase(label: Text(formattedType));
   }
 }

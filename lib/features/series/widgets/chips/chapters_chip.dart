@@ -5,7 +5,7 @@ class ChaptersChip extends StatelessWidget {
   final String chapters;
   final int? progress;
   final bool inLibrary;
-  
+
   const ChaptersChip({
     required this.chapters,
     this.progress,

@@ -5,7 +5,7 @@ import 'package:bakahyou/features/news/widgets/news_list.item.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class NewsScreen extends StatefulWidget {
-  const NewsScreen({Key? key}) : super(key: key);
+  const NewsScreen({super.key});
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -50,7 +50,10 @@ class _NewsScreenState extends State<NewsScreen> {
     });
 
     try {
-      final newNews = await _newsService.fetchNews(page: _currentPage, limit: 10);
+      final newNews = await _newsService.fetchNews(
+        page: _currentPage,
+        limit: 10,
+      );
       setState(() {
         if (initial) {
           _newsList.clear();

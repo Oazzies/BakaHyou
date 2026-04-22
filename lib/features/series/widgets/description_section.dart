@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 class DescriptionSection extends StatefulWidget {
   final String description;
-  const DescriptionSection({required this.description});
+  const DescriptionSection({super.key, required this.description});
 
   @override
   State<DescriptionSection> createState() => DescriptionSectionState();

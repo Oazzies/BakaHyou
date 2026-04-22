@@ -10,7 +10,11 @@ class StateNormalizer {
   };
 
   static String normalize(String raw) {
-    final normalized = raw.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    final normalized = raw
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
     return _stateMap[normalized] ?? normalized;
   }
 }
