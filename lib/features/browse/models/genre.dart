@@ -5,9 +5,6 @@ class Genre {
   Genre({required this.label, required this.value});
 
   factory Genre.fromJson(Map<String, dynamic> json) {
-    return Genre(
-      label: json['label'] ?? '',
-      value: json['value'] ?? '',
-    );
+    return Genre(label: json['label'] ?? '', value: json['value'] ?? '');
   }
 }

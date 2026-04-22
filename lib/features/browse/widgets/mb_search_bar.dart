@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/features/browse/models/search_filters.dart';
+import 'package:bakahyou/features/browse/widgets/search_filter_bottom_sheet.dart';
 
 class MBSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String>? onSubmitted;
+  final SearchFilters? initialFilters;
+  final ValueChanged<SearchFilters>? onFilterApplied;
 
   const MBSearchBar({
     Key? key,
     required this.onChanged,
     this.onSubmitted,
+    this.initialFilters,
+    this.onFilterApplied,
   }) : super(key: key);
 
   @override
@@ -18,10 +24,12 @@ class MBSearchBar extends StatefulWidget {
 class _MBSearchBarState extends State<MBSearchBar> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  late SearchFilters _currentFilters;
 
   @override
   void initState() {
     super.initState();
+    _currentFilters = widget.initialFilters ?? SearchFilters();
     _controller.addListener(() => setState(() {}));
     _focusNode.addListener(_onFocusChange);
   }
@@ -41,7 +49,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
 
   void _onFocusChange() {
     if (!_focusNode.hasFocus) {
-      setState(() {}); 
+      setState(() {});
     }
   }
 
@@ -69,7 +77,12 @@ class _MBSearchBarState extends State<MBSearchBar> {
                 const SizedBox(width: 4),
               ],
               IconButton(
-                icon: const Icon(Icons.filter_list, color: Colors.white),
+                icon: Icon(
+                  Icons.filter_list,
+                  color: _currentFilters.toMap().isNotEmpty
+                      ? AppConstants.accentColor
+                      : Colors.white,
+                ),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -77,43 +90,21 @@ class _MBSearchBarState extends State<MBSearchBar> {
                     useSafeArea: true,
                     backgroundColor: AppConstants.secondaryBackground,
                     shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
                     ),
                     builder: (context) {
-                      return SizedBox(
-                        height: MediaQuery.of(context).size.height,
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 12),
-                            Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.white30,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Text(
-                                "Filters",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const Expanded(
-                              child: Center(
-                                child: Text(
-                                  "Basic setup for now",
-                                  style: TextStyle(color: Colors.white54),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      return SearchFilterBottomSheet(
+                        initialFilters: _currentFilters,
+                        onApply: (filters) {
+                          setState(() {
+                            _currentFilters = filters;
+                          });
+                          if (widget.onFilterApplied != null) {
+                            widget.onFilterApplied!(filters);
+                          }
+                        },
                       );
                     },
                   );
@@ -137,7 +128,10 @@ class _MBSearchBarState extends State<MBSearchBar> {
           borderRadius: BorderRadius.circular(40),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 20,
+        ),
       ),
       style: const TextStyle(color: Colors.white),
       onChanged: widget.onChanged,

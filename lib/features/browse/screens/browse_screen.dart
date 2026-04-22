@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:bakahyou/features/browse/widgets/mb_search_bar.dart';
-import 'package:bakahyou/features/series/widgets/entry_list_item.dart';
+import 'package:bakahyou/features/browse/widgets/browse_content.dart';
 import 'package:bakahyou/features/series/services/series_search_service.dart';
 import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
 import 'package:bakahyou/features/browse/screens/browse_results_screen.dart';
 import 'package:bakahyou/features/series/models/series.dart';
-import 'package:bakahyou/features/browse/widgets/shortcut_section.dart';
+import 'package:bakahyou/features/browse/models/search_filters.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 
 class BrowseScreen extends StatefulWidget {
-  const BrowseScreen({Key? key}) : super(key: key);
+  const BrowseScreen({super.key});
 
   @override
   State<BrowseScreen> createState() => _BrowseScreenState();
@@ -30,6 +30,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String _currentSearchQuery = '';
   int _currentPage = 1;
   bool _hasMore = true;
+  SearchFilters _currentFilters = SearchFilters();
 
   @override
   void initState() {
@@ -58,16 +59,23 @@ class _BrowseScreenState extends State<BrowseScreen> {
   }
 
   void _onScroll() {
-    final isNearEnd = _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - AppConstants.scrollThresholdPx;
+    final isNearEnd =
+        _scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent -
+            AppConstants.scrollThresholdPx;
 
-    if (isNearEnd && _hasMore && !_isLoadingMore && _currentSearchQuery.isNotEmpty) {
+    if (isNearEnd &&
+        _hasMore &&
+        !_isLoadingMore &&
+        (_currentSearchQuery.isNotEmpty ||
+            _currentFilters.toMap().isNotEmpty)) {
       _loadMoreResults();
     }
   }
 
-  Future<void> _searchSeries(String text) async {
-    if (text.trim().isEmpty) {
+  Future<void> _searchSeries() async {
+    // If there is no query and no filters, reset
+    if (_currentSearchQuery.trim().isEmpty && _currentFilters.toMap().isEmpty) {
       _resetSearchState();
       return;
     }
@@ -76,7 +84,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
       _isLoading = true;
       _error = null;
       _searchResults = [];
-      _currentSearchQuery = text;
       _currentPage = 1;
       _hasMore = true;
       _isLoadingMore = false;
@@ -97,9 +104,15 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   Future<void> _fetchSearchResults() async {
     try {
+      final extraParams = {
+        'page': _currentPage,
+        'limit': AppConstants.defaultPageLimit,
+        ..._currentFilters.toMap(),
+      };
+
       final newResults = await _searchService.searchSeriesByName(
         _currentSearchQuery,
-        extraParams: {'page': _currentPage, 'limit': AppConstants.defaultPageLimit},
+        extraParams: extraParams,
       );
 
       setState(() {
@@ -143,135 +156,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => SeriesDetailScreen(series: series),
-      ),
+      MaterialPageRoute(builder: (_) => SeriesDetailScreen(series: series)),
     );
-  }
-
-  Widget _buildShortcutSections() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          ShortcutSection(
-            header: 'Manga / Manhwa / Manhua',
-            onMostPopular: () => _navigateToBrowseResults(
-              'Most Popular',
-              'popularity_asc',
-              type: 'manga',
-            ),
-            onRandom: () => _navigateToBrowseResults(
-              'Random',
-              'random',
-              type: 'manga',
-            ),
-          ),
-          ShortcutSection(
-            header: 'Novels',
-            onMostPopular: () => _navigateToBrowseResults(
-              'Most Popular',
-              'popularity_asc',
-              type: 'novel',
-            ),
-            onRandom: () => _navigateToBrowseResults(
-              'Random',
-              'random',
-              type: 'novel',
-            ),
-          ),
-          ShortcutSection(
-            header: 'OEL / Other',
-            onMostPopular: () => _navigateToBrowseResults(
-              'Most Popular',
-              'popularity_asc',
-              type: 'oel',
-            ),
-            onRandom: () => _navigateToBrowseResults(
-              'Random',
-              'random',
-              type: 'oel',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return const Expanded(
-      child: Center(child: CircularProgressIndicator()),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Expanded(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _searchSeries(_currentSearchQuery),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResultsList() {
-    return Expanded(
-      child: ListView.builder(
-        controller: _scrollController,
-        itemCount: _searchResults.length + (_isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == _searchResults.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          final series = _searchResults[index];
-          return InkWell(
-            onTap: () => _navigateToDetail(series),
-            child: EntryListItem(series: series),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    // Show shortcuts when no search
-    if (_searchResults.isEmpty && !_isLoading && _error == null) {
-      return Expanded(child: _buildShortcutSections());
-    }
-
-    // Show loading spinner
-    if (_isLoading && _searchResults.isEmpty) {
-      return _buildLoadingState();
-    }
-
-    // Show error
-    if (_error != null && _searchResults.isEmpty) {
-      return _buildErrorState();
-    }
-
-    // Show search results
-    if (_searchResults.isNotEmpty) {
-      return _buildResultsList();
-    }
-
-    return const SizedBox.shrink();
   }
 
   @override
@@ -291,15 +177,35 @@ class _BrowseScreenState extends State<BrowseScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: MBSearchBar(
+                  initialFilters: _currentFilters,
                   onChanged: (text) {
-                    if (text.isEmpty) {
+                    _currentSearchQuery = text;
+                    if (text.isEmpty && _currentFilters.toMap().isEmpty) {
                       _resetSearchState();
                     }
                   },
-                  onSubmitted: _searchSeries,
+                  onSubmitted: (text) {
+                    _currentSearchQuery = text;
+                    _searchSeries();
+                  },
+                  onFilterApplied: (filters) {
+                    setState(() {
+                      _currentFilters = filters;
+                    });
+                    _searchSeries();
+                  },
                 ),
               ),
-              _buildContent(),
+              BrowseContent(
+                searchResults: _searchResults,
+                isLoading: _isLoading,
+                isLoadingMore: _isLoadingMore,
+                error: _error,
+                scrollController: _scrollController,
+                onRetry: _searchSeries,
+                onNavigateToDetail: _navigateToDetail,
+                onNavigateToResults: _navigateToBrowseResults,
+              ),
             ],
           ),
         ),

@@ -59,8 +59,10 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   }
 
   void _onScroll() {
-    final isNearEnd = _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - AppConstants.scrollThresholdPx;
+    final isNearEnd =
+        _scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent -
+            AppConstants.scrollThresholdPx;
 
     if (isNearEnd && _hasMore && !_isLoading) {
       _fetchResults(initial: false);
@@ -126,9 +128,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => SeriesDetailScreen(series: series),
-      ),
+      MaterialPageRoute(builder: (_) => SeriesDetailScreen(series: series)),
     );
   }
 
@@ -138,10 +138,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
 
   Widget _buildEmptyState() {
     return const Center(
-      child: Text(
-        'No results found.',
-        style: TextStyle(color: Colors.white),
-      ),
+      child: Text('No results found.', style: TextStyle(color: Colors.white)),
     );
   }
 

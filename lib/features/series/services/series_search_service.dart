@@ -11,6 +11,46 @@ class SeriesSearchService {
   static const String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
   final _logger = LoggingService.logger;
 
+  Future<List<Map<String, dynamic>>> getGenres() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppConstants.baseApiUrl}/genres'),
+            headers: {'User-Agent': AppConstants.userAgent},
+          )
+          .timeout(const Duration(seconds: AppConstants.networkTimeoutSeconds));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(json['data'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      _logger.warning('Failed to fetch genres: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTags() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${AppConstants.baseApiUrl}/tags'),
+            headers: {'User-Agent': AppConstants.userAgent},
+          )
+          .timeout(const Duration(seconds: AppConstants.networkTimeoutSeconds));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(json['data'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      _logger.warning('Failed to fetch tags: $e');
+      return [];
+    }
+  }
+
   Future<List<Series>> searchSeriesByName(
     String query, {
     String? sortBy,
@@ -26,18 +66,24 @@ class SeriesSearchService {
     }
     if (extraParams != null) {
       extraParams.forEach((key, value) {
-        url += '&$key=$value';
+        if (value is List) {
+          for (var item in value) {
+            url += '&$key=${Uri.encodeComponent(item.toString())}';
+          }
+        } else {
+          url += '&$key=${Uri.encodeComponent(value.toString())}';
+        }
       });
     }
 
     try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'User-Agent': AppConstants.userAgent},
-      ).timeout(
-        const Duration(seconds: AppConstants.networkTimeoutSeconds),
-        onTimeout: () => throw TimeoutException('Series search request timed out'),
-      );
+      final response = await http
+          .get(Uri.parse(url), headers: {'User-Agent': AppConstants.userAgent})
+          .timeout(
+            const Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Series search request timed out'),
+          );
 
       if (response.statusCode == 200) {
         try {
@@ -56,7 +102,8 @@ class SeriesSearchService {
         }
       } else {
         _logger.severe(
-            'Series search failed. Status: ${response.statusCode}, Body: ${response.body}');
+          'Series search failed. Status: ${response.statusCode}, Body: ${response.body}',
+        );
         throw ApiException(
           message: 'Failed to search series',
           statusCode: response.statusCode,
