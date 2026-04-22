@@ -41,22 +41,24 @@ Go to the [releases](https://github.com/Oazzies/BakaHyou/releases) page.
 <details open="">
     <summary><h3>Upcoming</h3></summary>
 
-* A LOT of UI/UX improvements
-* On Boarding
-* Home Page (Discover, Current, Activity)
-* Optional Notifications for various things
-* Customization (List styles, App styles, Preferences, etc)
-* Better responsiveness
+* Home Page (Discover(Waiting on Discover API), Current, Activity)
+
+* More browse shortcuts(Recommendations, etc)
+
+* Multiple series covers
 * Collections
 * Works
-* Multiple series covers
-* Recommendations
 * Better Tags Display
-* Language Support
-* Filtering
-* Content Rating Preferences
+
 * More Statistics
-* More browse shortcuts
+
+* Customization (List styles, App styles, Preferences, etc)
+* Language Support
+* Content Rating Preferences
+
+* On Boarding
+* Optional Notifications for various things
+* A LOT of UI/UX improvements
 
 </details>
 
