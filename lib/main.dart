@@ -6,6 +6,7 @@ import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() async {
   setupServiceLocator();
   
   await ThemeManager().init();
+  await SettingsManager().init();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

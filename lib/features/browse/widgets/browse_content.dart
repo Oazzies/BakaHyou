@@ -3,6 +3,7 @@ import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/features/series/widgets/entry_list_item.dart';
 import 'package:bakahyou/features/browse/widgets/browse_shortcuts.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 class BrowseContent extends StatelessWidget {
   final List<Series> searchResults;
@@ -53,21 +54,53 @@ class BrowseContent extends StatelessWidget {
 
   Widget _buildResultsList() {
     return Expanded(
-      child: ListView.builder(
-        controller: scrollController,
-        itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == searchResults.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator()),
+      child: ListenableBuilder(
+        listenable: SettingsManager(),
+        builder: (context, _) {
+          final isGrid = SettingsManager().currentListStyle == AppListStyle.grid;
+
+          if (isGrid) {
+            return GridView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == searchResults.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final series = searchResults[index];
+                return InkWell(
+                  onTap: () => onNavigateToDetail(series),
+                  child: EntryListItem(series: series),
+                );
+              },
             );
           }
 
-          final series = searchResults[index];
-          return InkWell(
-            onTap: () => onNavigateToDetail(series),
-            child: EntryListItem(series: series),
+          return ListView.builder(
+            controller: scrollController,
+            itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == searchResults.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              final series = searchResults[index];
+              return InkWell(
+                onTap: () => onNavigateToDetail(series),
+                child: EntryListItem(series: series),
+              );
+            },
           );
         },
       ),

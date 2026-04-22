@@ -11,6 +11,7 @@ import 'package:bakahyou/features/series/widgets/entry_list_item.dart';
 import 'package:bakahyou/features/series/models/series.dart' as api;
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -203,15 +204,43 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      child: ListView.builder(
-        controller: _scrollControllers[tabKey],
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final entry = items[index];
-          return GestureDetector(
-            onTap: () => _navigateToSeriesDetail(entry.series),
-            child: EntryListItem(series: entry.series),
+      child: ListenableBuilder(
+        listenable: SettingsManager(),
+        builder: (context, _) {
+          final isGrid = SettingsManager().currentListStyle == AppListStyle.grid;
+
+          if (isGrid) {
+            return GridView.builder(
+              controller: _scrollControllers[tabKey],
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final entry = items[index];
+                return GestureDetector(
+                  onTap: () => _navigateToSeriesDetail(entry.series),
+                  child: EntryListItem(series: entry.series),
+                );
+              },
+            );
+          }
+
+          return ListView.builder(
+            controller: _scrollControllers[tabKey],
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final entry = items[index];
+              return GestureDetector(
+                onTap: () => _navigateToSeriesDetail(entry.series),
+                child: EntryListItem(series: entry.series),
+              );
+            },
           );
         },
       ),
