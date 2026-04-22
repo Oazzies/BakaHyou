@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class StatisticCard extends StatelessWidget {
   final IconData icon;
@@ -18,7 +19,7 @@ class StatisticCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF18181B),
+          color: AppConstants.secondaryBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

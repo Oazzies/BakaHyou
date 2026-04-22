@@ -1,5 +1,6 @@
-import 'package:bakahyou/features/library/models/library_entry.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/features/library/services/library_service.dart';
+import 'package:bakahyou/features/library/models/library_entry.dart';
 import 'package:bakahyou/features/series/widgets/state_selection_section.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -9,6 +10,7 @@ import 'package:bakahyou/utils/widget_utils.dart';
 import 'package:bakahyou/features/series/widgets/description_section.dart';
 import 'package:bakahyou/features/series/widgets/series_detail_header.dart';
 import 'package:bakahyou/features/series/widgets/rating_icon_button.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 class SeriesDetailScreen extends StatefulWidget {
   final Series series;
@@ -22,7 +24,7 @@ class SeriesDetailScreen extends StatefulWidget {
 class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   late ScrollController _scrollController;
   bool _showTitle = false;
-  final LibraryService _libraryService = LibraryService();
+  late final LibraryService _libraryService;
   Stream<LibraryEntry?>? _entryStream;
   bool _isAdding = false;
 
@@ -30,6 +32,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _libraryService = getIt<LibraryService>();
     _scrollController.addListener(_onScroll);
     _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
   }
@@ -80,7 +83,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     context: context,
     builder: (BuildContext dialogContext) {
       return AlertDialog(
-        backgroundColor: const Color(0xFF23232a),
+        backgroundColor: AppConstants.tertiaryBackground,
         title: const Text(
           'Delete from Library',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

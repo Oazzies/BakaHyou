@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class RatingSelectionDialog extends StatefulWidget {
   final int initialRating;
@@ -26,7 +27,7 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF23232a),
+      backgroundColor: AppConstants.tertiaryBackground,
       title: const Text(
         'Set Your Rating',
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

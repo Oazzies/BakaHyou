@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class ShortcutButton extends StatelessWidget {
   final IconData icon;
@@ -15,7 +16,7 @@ class ShortcutButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF18181B),
+      color: AppConstants.secondaryBackground,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onPressed,

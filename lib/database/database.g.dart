@@ -58,6 +58,17 @@ class $SeriesTableTable extends SeriesTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _mergedWithMeta = const VerificationMeta(
+    'mergedWith',
+  );
+  @override
+  late final GeneratedColumn<String> mergedWith = GeneratedColumn<String>(
+    'merged_with',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -89,6 +100,18 @@ class $SeriesTableTable extends SeriesTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _secondaryTitlesMeta = const VerificationMeta(
+    'secondaryTitles',
+  );
+  @override
+  late final GeneratedColumn<String> secondaryTitles = GeneratedColumn<String>(
+    'secondary_titles',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _coverUrlMeta = const VerificationMeta(
     'coverUrl',
   );
@@ -99,6 +122,30 @@ class $SeriesTableTable extends SeriesTable
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorsMeta = const VerificationMeta(
+    'authors',
+  );
+  @override
+  late final GeneratedColumn<String> authors = GeneratedColumn<String>(
+    'authors',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _artistsMeta = const VerificationMeta(
+    'artists',
+  );
+  @override
+  late final GeneratedColumn<String> artists = GeneratedColumn<String>(
+    'artists',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
   );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
@@ -120,10 +167,52 @@ class $SeriesTableTable extends SeriesTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _publishedMeta = const VerificationMeta(
+    'published',
+  );
+  @override
+  late final GeneratedColumn<String> published = GeneratedColumn<String>(
+    'published',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
     'status',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isLicensedMeta = const VerificationMeta(
+    'isLicensed',
+  );
+  @override
+  late final GeneratedColumn<String> isLicensed = GeneratedColumn<String>(
+    'is_licensed',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasAnimeMeta = const VerificationMeta(
+    'hasAnime',
+  );
+  @override
+  late final GeneratedColumn<String> hasAnime = GeneratedColumn<String>(
+    'has_anime',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _animeMeta = const VerificationMeta('anime');
+  @override
+  late final GeneratedColumn<String> anime = GeneratedColumn<String>(
+    'anime',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -180,16 +269,27 @@ class $SeriesTableTable extends SeriesTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
-    'lastUpdated',
-  );
+  static const VerificationMeta _linksMeta = const VerificationMeta('links');
   @override
-  late final GeneratedColumn<String> lastUpdated = GeneratedColumn<String>(
-    'last_updated',
+  late final GeneratedColumn<String> links = GeneratedColumn<String>(
+    'links',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _publishersMeta = const VerificationMeta(
+    'publishers',
+  );
+  @override
+  late final GeneratedColumn<String> publishers = GeneratedColumn<String>(
+    'publishers',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
   );
   static const VerificationMeta _genresMeta = const VerificationMeta('genres');
   @override
@@ -201,24 +301,78 @@ class $SeriesTableTable extends SeriesTable
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
+  @override
+  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
+    'tags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
+  static const VerificationMeta _lastUpdatedMeta = const VerificationMeta(
+    'lastUpdated',
+  );
+  @override
+  late final GeneratedColumn<String> lastUpdated = GeneratedColumn<String>(
+    'last_updated',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _relationshipsMeta = const VerificationMeta(
+    'relationships',
+  );
+  @override
+  late final GeneratedColumn<String> relationships = GeneratedColumn<String>(
+    'relationships',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     state,
+    mergedWith,
     title,
     nativeTitle,
     romanizedTitle,
+    secondaryTitles,
     coverUrl,
+    authors,
+    artists,
     description,
     year,
+    published,
     status,
+    isLicensed,
+    hasAnime,
+    anime,
     contentRating,
     type,
     rating,
     finalVolume,
     totalChapters,
-    lastUpdated,
+    links,
+    publishers,
     genres,
+    tags,
+    lastUpdated,
+    relationships,
+    source,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -241,6 +395,12 @@ class $SeriesTableTable extends SeriesTable
       context.handle(
         _stateMeta,
         state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('merged_with')) {
+      context.handle(
+        _mergedWithMeta,
+        mergedWith.isAcceptableOrUnknown(data['merged_with']!, _mergedWithMeta),
       );
     }
     if (data.containsKey('title')) {
@@ -269,6 +429,15 @@ class $SeriesTableTable extends SeriesTable
         ),
       );
     }
+    if (data.containsKey('secondary_titles')) {
+      context.handle(
+        _secondaryTitlesMeta,
+        secondaryTitles.isAcceptableOrUnknown(
+          data['secondary_titles']!,
+          _secondaryTitlesMeta,
+        ),
+      );
+    }
     if (data.containsKey('cover_url')) {
       context.handle(
         _coverUrlMeta,
@@ -276,6 +445,18 @@ class $SeriesTableTable extends SeriesTable
       );
     } else if (isInserting) {
       context.missing(_coverUrlMeta);
+    }
+    if (data.containsKey('authors')) {
+      context.handle(
+        _authorsMeta,
+        authors.isAcceptableOrUnknown(data['authors']!, _authorsMeta),
+      );
+    }
+    if (data.containsKey('artists')) {
+      context.handle(
+        _artistsMeta,
+        artists.isAcceptableOrUnknown(data['artists']!, _artistsMeta),
+      );
     }
     if (data.containsKey('description')) {
       context.handle(
@@ -294,10 +475,34 @@ class $SeriesTableTable extends SeriesTable
         year.isAcceptableOrUnknown(data['year']!, _yearMeta),
       );
     }
+    if (data.containsKey('published')) {
+      context.handle(
+        _publishedMeta,
+        published.isAcceptableOrUnknown(data['published']!, _publishedMeta),
+      );
+    }
     if (data.containsKey('status')) {
       context.handle(
         _statusMeta,
         status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('is_licensed')) {
+      context.handle(
+        _isLicensedMeta,
+        isLicensed.isAcceptableOrUnknown(data['is_licensed']!, _isLicensedMeta),
+      );
+    }
+    if (data.containsKey('has_anime')) {
+      context.handle(
+        _hasAnimeMeta,
+        hasAnime.isAcceptableOrUnknown(data['has_anime']!, _hasAnimeMeta),
+      );
+    }
+    if (data.containsKey('anime')) {
+      context.handle(
+        _animeMeta,
+        anime.isAcceptableOrUnknown(data['anime']!, _animeMeta),
       );
     }
     if (data.containsKey('content_rating')) {
@@ -339,6 +544,30 @@ class $SeriesTableTable extends SeriesTable
         ),
       );
     }
+    if (data.containsKey('links')) {
+      context.handle(
+        _linksMeta,
+        links.isAcceptableOrUnknown(data['links']!, _linksMeta),
+      );
+    }
+    if (data.containsKey('publishers')) {
+      context.handle(
+        _publishersMeta,
+        publishers.isAcceptableOrUnknown(data['publishers']!, _publishersMeta),
+      );
+    }
+    if (data.containsKey('genres')) {
+      context.handle(
+        _genresMeta,
+        genres.isAcceptableOrUnknown(data['genres']!, _genresMeta),
+      );
+    }
+    if (data.containsKey('tags')) {
+      context.handle(
+        _tagsMeta,
+        tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta),
+      );
+    }
     if (data.containsKey('last_updated')) {
       context.handle(
         _lastUpdatedMeta,
@@ -348,10 +577,19 @@ class $SeriesTableTable extends SeriesTable
         ),
       );
     }
-    if (data.containsKey('genres')) {
+    if (data.containsKey('relationships')) {
       context.handle(
-        _genresMeta,
-        genres.isAcceptableOrUnknown(data['genres']!, _genresMeta),
+        _relationshipsMeta,
+        relationships.isAcceptableOrUnknown(
+          data['relationships']!,
+          _relationshipsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
       );
     }
     return context;
@@ -371,6 +609,10 @@ class $SeriesTableTable extends SeriesTable
         DriftSqlType.string,
         data['${effectivePrefix}state'],
       ),
+      mergedWith: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}merged_with'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -383,9 +625,21 @@ class $SeriesTableTable extends SeriesTable
         DriftSqlType.string,
         data['${effectivePrefix}romanized_title'],
       ),
+      secondaryTitles: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}secondary_titles'],
+      )!,
       coverUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}cover_url'],
+      )!,
+      authors: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}authors'],
+      )!,
+      artists: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}artists'],
       )!,
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -395,9 +649,25 @@ class $SeriesTableTable extends SeriesTable
         DriftSqlType.string,
         data['${effectivePrefix}year'],
       ),
+      published: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}published'],
+      ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
+      ),
+      isLicensed: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}is_licensed'],
+      ),
+      hasAnime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}has_anime'],
+      ),
+      anime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}anime'],
       ),
       contentRating: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -419,14 +689,34 @@ class $SeriesTableTable extends SeriesTable
         DriftSqlType.string,
         data['${effectivePrefix}total_chapters'],
       ),
-      lastUpdated: attachedDatabase.typeMapping.read(
+      links: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}last_updated'],
-      ),
+        data['${effectivePrefix}links'],
+      )!,
+      publishers: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}publishers'],
+      )!,
       genres: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}genres'],
       )!,
+      tags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tags'],
+      )!,
+      lastUpdated: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_updated'],
+      ),
+      relationships: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}relationships'],
+      ),
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      ),
     );
   }
 
@@ -439,37 +729,63 @@ class $SeriesTableTable extends SeriesTable
 class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
   final String id;
   final String? state;
+  final String? mergedWith;
   final String title;
   final String? nativeTitle;
   final String? romanizedTitle;
+  final String secondaryTitles;
   final String coverUrl;
+  final String authors;
+  final String artists;
   final String description;
   final String? year;
+  final String? published;
   final String? status;
+  final String? isLicensed;
+  final String? hasAnime;
+  final String? anime;
   final String? contentRating;
   final String? type;
   final String? rating;
   final String? finalVolume;
   final String? totalChapters;
-  final String? lastUpdated;
+  final String links;
+  final String publishers;
   final String genres;
+  final String tags;
+  final String? lastUpdated;
+  final String? relationships;
+  final String? source;
   const SeriesTableData({
     required this.id,
     this.state,
+    this.mergedWith,
     required this.title,
     this.nativeTitle,
     this.romanizedTitle,
+    required this.secondaryTitles,
     required this.coverUrl,
+    required this.authors,
+    required this.artists,
     required this.description,
     this.year,
+    this.published,
     this.status,
+    this.isLicensed,
+    this.hasAnime,
+    this.anime,
     this.contentRating,
     this.type,
     this.rating,
     this.finalVolume,
     this.totalChapters,
-    this.lastUpdated,
+    required this.links,
+    required this.publishers,
     required this.genres,
+    required this.tags,
+    this.lastUpdated,
+    this.relationships,
+    this.source,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -478,6 +794,9 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     if (!nullToAbsent || state != null) {
       map['state'] = Variable<String>(state);
     }
+    if (!nullToAbsent || mergedWith != null) {
+      map['merged_with'] = Variable<String>(mergedWith);
+    }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || nativeTitle != null) {
       map['native_title'] = Variable<String>(nativeTitle);
@@ -485,13 +804,28 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     if (!nullToAbsent || romanizedTitle != null) {
       map['romanized_title'] = Variable<String>(romanizedTitle);
     }
+    map['secondary_titles'] = Variable<String>(secondaryTitles);
     map['cover_url'] = Variable<String>(coverUrl);
+    map['authors'] = Variable<String>(authors);
+    map['artists'] = Variable<String>(artists);
     map['description'] = Variable<String>(description);
     if (!nullToAbsent || year != null) {
       map['year'] = Variable<String>(year);
     }
+    if (!nullToAbsent || published != null) {
+      map['published'] = Variable<String>(published);
+    }
     if (!nullToAbsent || status != null) {
       map['status'] = Variable<String>(status);
+    }
+    if (!nullToAbsent || isLicensed != null) {
+      map['is_licensed'] = Variable<String>(isLicensed);
+    }
+    if (!nullToAbsent || hasAnime != null) {
+      map['has_anime'] = Variable<String>(hasAnime);
+    }
+    if (!nullToAbsent || anime != null) {
+      map['anime'] = Variable<String>(anime);
     }
     if (!nullToAbsent || contentRating != null) {
       map['content_rating'] = Variable<String>(contentRating);
@@ -508,10 +842,19 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     if (!nullToAbsent || totalChapters != null) {
       map['total_chapters'] = Variable<String>(totalChapters);
     }
+    map['links'] = Variable<String>(links);
+    map['publishers'] = Variable<String>(publishers);
+    map['genres'] = Variable<String>(genres);
+    map['tags'] = Variable<String>(tags);
     if (!nullToAbsent || lastUpdated != null) {
       map['last_updated'] = Variable<String>(lastUpdated);
     }
-    map['genres'] = Variable<String>(genres);
+    if (!nullToAbsent || relationships != null) {
+      map['relationships'] = Variable<String>(relationships);
+    }
+    if (!nullToAbsent || source != null) {
+      map['source'] = Variable<String>(source);
+    }
     return map;
   }
 
@@ -521,6 +864,9 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
       state: state == null && nullToAbsent
           ? const Value.absent()
           : Value(state),
+      mergedWith: mergedWith == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mergedWith),
       title: Value(title),
       nativeTitle: nativeTitle == null && nullToAbsent
           ? const Value.absent()
@@ -528,12 +874,27 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
       romanizedTitle: romanizedTitle == null && nullToAbsent
           ? const Value.absent()
           : Value(romanizedTitle),
+      secondaryTitles: Value(secondaryTitles),
       coverUrl: Value(coverUrl),
+      authors: Value(authors),
+      artists: Value(artists),
       description: Value(description),
       year: year == null && nullToAbsent ? const Value.absent() : Value(year),
+      published: published == null && nullToAbsent
+          ? const Value.absent()
+          : Value(published),
       status: status == null && nullToAbsent
           ? const Value.absent()
           : Value(status),
+      isLicensed: isLicensed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isLicensed),
+      hasAnime: hasAnime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hasAnime),
+      anime: anime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(anime),
       contentRating: contentRating == null && nullToAbsent
           ? const Value.absent()
           : Value(contentRating),
@@ -547,10 +908,19 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
       totalChapters: totalChapters == null && nullToAbsent
           ? const Value.absent()
           : Value(totalChapters),
+      links: Value(links),
+      publishers: Value(publishers),
+      genres: Value(genres),
+      tags: Value(tags),
       lastUpdated: lastUpdated == null && nullToAbsent
           ? const Value.absent()
           : Value(lastUpdated),
-      genres: Value(genres),
+      relationships: relationships == null && nullToAbsent
+          ? const Value.absent()
+          : Value(relationships),
+      source: source == null && nullToAbsent
+          ? const Value.absent()
+          : Value(source),
     );
   }
 
@@ -562,20 +932,33 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     return SeriesTableData(
       id: serializer.fromJson<String>(json['id']),
       state: serializer.fromJson<String?>(json['state']),
+      mergedWith: serializer.fromJson<String?>(json['mergedWith']),
       title: serializer.fromJson<String>(json['title']),
       nativeTitle: serializer.fromJson<String?>(json['nativeTitle']),
       romanizedTitle: serializer.fromJson<String?>(json['romanizedTitle']),
+      secondaryTitles: serializer.fromJson<String>(json['secondaryTitles']),
       coverUrl: serializer.fromJson<String>(json['coverUrl']),
+      authors: serializer.fromJson<String>(json['authors']),
+      artists: serializer.fromJson<String>(json['artists']),
       description: serializer.fromJson<String>(json['description']),
       year: serializer.fromJson<String?>(json['year']),
+      published: serializer.fromJson<String?>(json['published']),
       status: serializer.fromJson<String?>(json['status']),
+      isLicensed: serializer.fromJson<String?>(json['isLicensed']),
+      hasAnime: serializer.fromJson<String?>(json['hasAnime']),
+      anime: serializer.fromJson<String?>(json['anime']),
       contentRating: serializer.fromJson<String?>(json['contentRating']),
       type: serializer.fromJson<String?>(json['type']),
       rating: serializer.fromJson<String?>(json['rating']),
       finalVolume: serializer.fromJson<String?>(json['finalVolume']),
       totalChapters: serializer.fromJson<String?>(json['totalChapters']),
-      lastUpdated: serializer.fromJson<String?>(json['lastUpdated']),
+      links: serializer.fromJson<String>(json['links']),
+      publishers: serializer.fromJson<String>(json['publishers']),
       genres: serializer.fromJson<String>(json['genres']),
+      tags: serializer.fromJson<String>(json['tags']),
+      lastUpdated: serializer.fromJson<String?>(json['lastUpdated']),
+      relationships: serializer.fromJson<String?>(json['relationships']),
+      source: serializer.fromJson<String?>(json['source']),
     );
   }
   @override
@@ -584,52 +967,86 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'state': serializer.toJson<String?>(state),
+      'mergedWith': serializer.toJson<String?>(mergedWith),
       'title': serializer.toJson<String>(title),
       'nativeTitle': serializer.toJson<String?>(nativeTitle),
       'romanizedTitle': serializer.toJson<String?>(romanizedTitle),
+      'secondaryTitles': serializer.toJson<String>(secondaryTitles),
       'coverUrl': serializer.toJson<String>(coverUrl),
+      'authors': serializer.toJson<String>(authors),
+      'artists': serializer.toJson<String>(artists),
       'description': serializer.toJson<String>(description),
       'year': serializer.toJson<String?>(year),
+      'published': serializer.toJson<String?>(published),
       'status': serializer.toJson<String?>(status),
+      'isLicensed': serializer.toJson<String?>(isLicensed),
+      'hasAnime': serializer.toJson<String?>(hasAnime),
+      'anime': serializer.toJson<String?>(anime),
       'contentRating': serializer.toJson<String?>(contentRating),
       'type': serializer.toJson<String?>(type),
       'rating': serializer.toJson<String?>(rating),
       'finalVolume': serializer.toJson<String?>(finalVolume),
       'totalChapters': serializer.toJson<String?>(totalChapters),
-      'lastUpdated': serializer.toJson<String?>(lastUpdated),
+      'links': serializer.toJson<String>(links),
+      'publishers': serializer.toJson<String>(publishers),
       'genres': serializer.toJson<String>(genres),
+      'tags': serializer.toJson<String>(tags),
+      'lastUpdated': serializer.toJson<String?>(lastUpdated),
+      'relationships': serializer.toJson<String?>(relationships),
+      'source': serializer.toJson<String?>(source),
     };
   }
 
   SeriesTableData copyWith({
     String? id,
     Value<String?> state = const Value.absent(),
+    Value<String?> mergedWith = const Value.absent(),
     String? title,
     Value<String?> nativeTitle = const Value.absent(),
     Value<String?> romanizedTitle = const Value.absent(),
+    String? secondaryTitles,
     String? coverUrl,
+    String? authors,
+    String? artists,
     String? description,
     Value<String?> year = const Value.absent(),
+    Value<String?> published = const Value.absent(),
     Value<String?> status = const Value.absent(),
+    Value<String?> isLicensed = const Value.absent(),
+    Value<String?> hasAnime = const Value.absent(),
+    Value<String?> anime = const Value.absent(),
     Value<String?> contentRating = const Value.absent(),
     Value<String?> type = const Value.absent(),
     Value<String?> rating = const Value.absent(),
     Value<String?> finalVolume = const Value.absent(),
     Value<String?> totalChapters = const Value.absent(),
-    Value<String?> lastUpdated = const Value.absent(),
+    String? links,
+    String? publishers,
     String? genres,
+    String? tags,
+    Value<String?> lastUpdated = const Value.absent(),
+    Value<String?> relationships = const Value.absent(),
+    Value<String?> source = const Value.absent(),
   }) => SeriesTableData(
     id: id ?? this.id,
     state: state.present ? state.value : this.state,
+    mergedWith: mergedWith.present ? mergedWith.value : this.mergedWith,
     title: title ?? this.title,
     nativeTitle: nativeTitle.present ? nativeTitle.value : this.nativeTitle,
     romanizedTitle: romanizedTitle.present
         ? romanizedTitle.value
         : this.romanizedTitle,
+    secondaryTitles: secondaryTitles ?? this.secondaryTitles,
     coverUrl: coverUrl ?? this.coverUrl,
+    authors: authors ?? this.authors,
+    artists: artists ?? this.artists,
     description: description ?? this.description,
     year: year.present ? year.value : this.year,
+    published: published.present ? published.value : this.published,
     status: status.present ? status.value : this.status,
+    isLicensed: isLicensed.present ? isLicensed.value : this.isLicensed,
+    hasAnime: hasAnime.present ? hasAnime.value : this.hasAnime,
+    anime: anime.present ? anime.value : this.anime,
     contentRating: contentRating.present
         ? contentRating.value
         : this.contentRating,
@@ -639,13 +1056,23 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     totalChapters: totalChapters.present
         ? totalChapters.value
         : this.totalChapters,
-    lastUpdated: lastUpdated.present ? lastUpdated.value : this.lastUpdated,
+    links: links ?? this.links,
+    publishers: publishers ?? this.publishers,
     genres: genres ?? this.genres,
+    tags: tags ?? this.tags,
+    lastUpdated: lastUpdated.present ? lastUpdated.value : this.lastUpdated,
+    relationships: relationships.present
+        ? relationships.value
+        : this.relationships,
+    source: source.present ? source.value : this.source,
   );
   SeriesTableData copyWithCompanion(SeriesTableCompanion data) {
     return SeriesTableData(
       id: data.id.present ? data.id.value : this.id,
       state: data.state.present ? data.state.value : this.state,
+      mergedWith: data.mergedWith.present
+          ? data.mergedWith.value
+          : this.mergedWith,
       title: data.title.present ? data.title.value : this.title,
       nativeTitle: data.nativeTitle.present
           ? data.nativeTitle.value
@@ -653,12 +1080,23 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
       romanizedTitle: data.romanizedTitle.present
           ? data.romanizedTitle.value
           : this.romanizedTitle,
+      secondaryTitles: data.secondaryTitles.present
+          ? data.secondaryTitles.value
+          : this.secondaryTitles,
       coverUrl: data.coverUrl.present ? data.coverUrl.value : this.coverUrl,
+      authors: data.authors.present ? data.authors.value : this.authors,
+      artists: data.artists.present ? data.artists.value : this.artists,
       description: data.description.present
           ? data.description.value
           : this.description,
       year: data.year.present ? data.year.value : this.year,
+      published: data.published.present ? data.published.value : this.published,
       status: data.status.present ? data.status.value : this.status,
+      isLicensed: data.isLicensed.present
+          ? data.isLicensed.value
+          : this.isLicensed,
+      hasAnime: data.hasAnime.present ? data.hasAnime.value : this.hasAnime,
+      anime: data.anime.present ? data.anime.value : this.anime,
       contentRating: data.contentRating.present
           ? data.contentRating.value
           : this.contentRating,
@@ -670,10 +1108,19 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
       totalChapters: data.totalChapters.present
           ? data.totalChapters.value
           : this.totalChapters,
+      links: data.links.present ? data.links.value : this.links,
+      publishers: data.publishers.present
+          ? data.publishers.value
+          : this.publishers,
+      genres: data.genres.present ? data.genres.value : this.genres,
+      tags: data.tags.present ? data.tags.value : this.tags,
       lastUpdated: data.lastUpdated.present
           ? data.lastUpdated.value
           : this.lastUpdated,
-      genres: data.genres.present ? data.genres.value : this.genres,
+      relationships: data.relationships.present
+          ? data.relationships.value
+          : this.relationships,
+      source: data.source.present ? data.source.value : this.source,
     );
   }
 
@@ -682,119 +1129,197 @@ class SeriesTableData extends DataClass implements Insertable<SeriesTableData> {
     return (StringBuffer('SeriesTableData(')
           ..write('id: $id, ')
           ..write('state: $state, ')
+          ..write('mergedWith: $mergedWith, ')
           ..write('title: $title, ')
           ..write('nativeTitle: $nativeTitle, ')
           ..write('romanizedTitle: $romanizedTitle, ')
+          ..write('secondaryTitles: $secondaryTitles, ')
           ..write('coverUrl: $coverUrl, ')
+          ..write('authors: $authors, ')
+          ..write('artists: $artists, ')
           ..write('description: $description, ')
           ..write('year: $year, ')
+          ..write('published: $published, ')
           ..write('status: $status, ')
+          ..write('isLicensed: $isLicensed, ')
+          ..write('hasAnime: $hasAnime, ')
+          ..write('anime: $anime, ')
           ..write('contentRating: $contentRating, ')
           ..write('type: $type, ')
           ..write('rating: $rating, ')
           ..write('finalVolume: $finalVolume, ')
           ..write('totalChapters: $totalChapters, ')
+          ..write('links: $links, ')
+          ..write('publishers: $publishers, ')
+          ..write('genres: $genres, ')
+          ..write('tags: $tags, ')
           ..write('lastUpdated: $lastUpdated, ')
-          ..write('genres: $genres')
+          ..write('relationships: $relationships, ')
+          ..write('source: $source')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     id,
     state,
+    mergedWith,
     title,
     nativeTitle,
     romanizedTitle,
+    secondaryTitles,
     coverUrl,
+    authors,
+    artists,
     description,
     year,
+    published,
     status,
+    isLicensed,
+    hasAnime,
+    anime,
     contentRating,
     type,
     rating,
     finalVolume,
     totalChapters,
-    lastUpdated,
+    links,
+    publishers,
     genres,
-  );
+    tags,
+    lastUpdated,
+    relationships,
+    source,
+  ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SeriesTableData &&
           other.id == this.id &&
           other.state == this.state &&
+          other.mergedWith == this.mergedWith &&
           other.title == this.title &&
           other.nativeTitle == this.nativeTitle &&
           other.romanizedTitle == this.romanizedTitle &&
+          other.secondaryTitles == this.secondaryTitles &&
           other.coverUrl == this.coverUrl &&
+          other.authors == this.authors &&
+          other.artists == this.artists &&
           other.description == this.description &&
           other.year == this.year &&
+          other.published == this.published &&
           other.status == this.status &&
+          other.isLicensed == this.isLicensed &&
+          other.hasAnime == this.hasAnime &&
+          other.anime == this.anime &&
           other.contentRating == this.contentRating &&
           other.type == this.type &&
           other.rating == this.rating &&
           other.finalVolume == this.finalVolume &&
           other.totalChapters == this.totalChapters &&
+          other.links == this.links &&
+          other.publishers == this.publishers &&
+          other.genres == this.genres &&
+          other.tags == this.tags &&
           other.lastUpdated == this.lastUpdated &&
-          other.genres == this.genres);
+          other.relationships == this.relationships &&
+          other.source == this.source);
 }
 
 class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
   final Value<String> id;
   final Value<String?> state;
+  final Value<String?> mergedWith;
   final Value<String> title;
   final Value<String?> nativeTitle;
   final Value<String?> romanizedTitle;
+  final Value<String> secondaryTitles;
   final Value<String> coverUrl;
+  final Value<String> authors;
+  final Value<String> artists;
   final Value<String> description;
   final Value<String?> year;
+  final Value<String?> published;
   final Value<String?> status;
+  final Value<String?> isLicensed;
+  final Value<String?> hasAnime;
+  final Value<String?> anime;
   final Value<String?> contentRating;
   final Value<String?> type;
   final Value<String?> rating;
   final Value<String?> finalVolume;
   final Value<String?> totalChapters;
-  final Value<String?> lastUpdated;
+  final Value<String> links;
+  final Value<String> publishers;
   final Value<String> genres;
+  final Value<String> tags;
+  final Value<String?> lastUpdated;
+  final Value<String?> relationships;
+  final Value<String?> source;
   final Value<int> rowid;
   const SeriesTableCompanion({
     this.id = const Value.absent(),
     this.state = const Value.absent(),
+    this.mergedWith = const Value.absent(),
     this.title = const Value.absent(),
     this.nativeTitle = const Value.absent(),
     this.romanizedTitle = const Value.absent(),
+    this.secondaryTitles = const Value.absent(),
     this.coverUrl = const Value.absent(),
+    this.authors = const Value.absent(),
+    this.artists = const Value.absent(),
     this.description = const Value.absent(),
     this.year = const Value.absent(),
+    this.published = const Value.absent(),
     this.status = const Value.absent(),
+    this.isLicensed = const Value.absent(),
+    this.hasAnime = const Value.absent(),
+    this.anime = const Value.absent(),
     this.contentRating = const Value.absent(),
     this.type = const Value.absent(),
     this.rating = const Value.absent(),
     this.finalVolume = const Value.absent(),
     this.totalChapters = const Value.absent(),
-    this.lastUpdated = const Value.absent(),
+    this.links = const Value.absent(),
+    this.publishers = const Value.absent(),
     this.genres = const Value.absent(),
+    this.tags = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.relationships = const Value.absent(),
+    this.source = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SeriesTableCompanion.insert({
     required String id,
     this.state = const Value.absent(),
+    this.mergedWith = const Value.absent(),
     required String title,
     this.nativeTitle = const Value.absent(),
     this.romanizedTitle = const Value.absent(),
+    this.secondaryTitles = const Value.absent(),
     required String coverUrl,
+    this.authors = const Value.absent(),
+    this.artists = const Value.absent(),
     required String description,
     this.year = const Value.absent(),
+    this.published = const Value.absent(),
     this.status = const Value.absent(),
+    this.isLicensed = const Value.absent(),
+    this.hasAnime = const Value.absent(),
+    this.anime = const Value.absent(),
     this.contentRating = const Value.absent(),
     this.type = const Value.absent(),
     this.rating = const Value.absent(),
     this.finalVolume = const Value.absent(),
     this.totalChapters = const Value.absent(),
-    this.lastUpdated = const Value.absent(),
+    this.links = const Value.absent(),
+    this.publishers = const Value.absent(),
     this.genres = const Value.absent(),
+    this.tags = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.relationships = const Value.absent(),
+    this.source = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -803,39 +1328,65 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
   static Insertable<SeriesTableData> custom({
     Expression<String>? id,
     Expression<String>? state,
+    Expression<String>? mergedWith,
     Expression<String>? title,
     Expression<String>? nativeTitle,
     Expression<String>? romanizedTitle,
+    Expression<String>? secondaryTitles,
     Expression<String>? coverUrl,
+    Expression<String>? authors,
+    Expression<String>? artists,
     Expression<String>? description,
     Expression<String>? year,
+    Expression<String>? published,
     Expression<String>? status,
+    Expression<String>? isLicensed,
+    Expression<String>? hasAnime,
+    Expression<String>? anime,
     Expression<String>? contentRating,
     Expression<String>? type,
     Expression<String>? rating,
     Expression<String>? finalVolume,
     Expression<String>? totalChapters,
-    Expression<String>? lastUpdated,
+    Expression<String>? links,
+    Expression<String>? publishers,
     Expression<String>? genres,
+    Expression<String>? tags,
+    Expression<String>? lastUpdated,
+    Expression<String>? relationships,
+    Expression<String>? source,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (state != null) 'state': state,
+      if (mergedWith != null) 'merged_with': mergedWith,
       if (title != null) 'title': title,
       if (nativeTitle != null) 'native_title': nativeTitle,
       if (romanizedTitle != null) 'romanized_title': romanizedTitle,
+      if (secondaryTitles != null) 'secondary_titles': secondaryTitles,
       if (coverUrl != null) 'cover_url': coverUrl,
+      if (authors != null) 'authors': authors,
+      if (artists != null) 'artists': artists,
       if (description != null) 'description': description,
       if (year != null) 'year': year,
+      if (published != null) 'published': published,
       if (status != null) 'status': status,
+      if (isLicensed != null) 'is_licensed': isLicensed,
+      if (hasAnime != null) 'has_anime': hasAnime,
+      if (anime != null) 'anime': anime,
       if (contentRating != null) 'content_rating': contentRating,
       if (type != null) 'type': type,
       if (rating != null) 'rating': rating,
       if (finalVolume != null) 'final_volume': finalVolume,
       if (totalChapters != null) 'total_chapters': totalChapters,
-      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (links != null) 'links': links,
+      if (publishers != null) 'publishers': publishers,
       if (genres != null) 'genres': genres,
+      if (tags != null) 'tags': tags,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (relationships != null) 'relationships': relationships,
+      if (source != null) 'source': source,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -843,39 +1394,65 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
   SeriesTableCompanion copyWith({
     Value<String>? id,
     Value<String?>? state,
+    Value<String?>? mergedWith,
     Value<String>? title,
     Value<String?>? nativeTitle,
     Value<String?>? romanizedTitle,
+    Value<String>? secondaryTitles,
     Value<String>? coverUrl,
+    Value<String>? authors,
+    Value<String>? artists,
     Value<String>? description,
     Value<String?>? year,
+    Value<String?>? published,
     Value<String?>? status,
+    Value<String?>? isLicensed,
+    Value<String?>? hasAnime,
+    Value<String?>? anime,
     Value<String?>? contentRating,
     Value<String?>? type,
     Value<String?>? rating,
     Value<String?>? finalVolume,
     Value<String?>? totalChapters,
-    Value<String?>? lastUpdated,
+    Value<String>? links,
+    Value<String>? publishers,
     Value<String>? genres,
+    Value<String>? tags,
+    Value<String?>? lastUpdated,
+    Value<String?>? relationships,
+    Value<String?>? source,
     Value<int>? rowid,
   }) {
     return SeriesTableCompanion(
       id: id ?? this.id,
       state: state ?? this.state,
+      mergedWith: mergedWith ?? this.mergedWith,
       title: title ?? this.title,
       nativeTitle: nativeTitle ?? this.nativeTitle,
       romanizedTitle: romanizedTitle ?? this.romanizedTitle,
+      secondaryTitles: secondaryTitles ?? this.secondaryTitles,
       coverUrl: coverUrl ?? this.coverUrl,
+      authors: authors ?? this.authors,
+      artists: artists ?? this.artists,
       description: description ?? this.description,
       year: year ?? this.year,
+      published: published ?? this.published,
       status: status ?? this.status,
+      isLicensed: isLicensed ?? this.isLicensed,
+      hasAnime: hasAnime ?? this.hasAnime,
+      anime: anime ?? this.anime,
       contentRating: contentRating ?? this.contentRating,
       type: type ?? this.type,
       rating: rating ?? this.rating,
       finalVolume: finalVolume ?? this.finalVolume,
       totalChapters: totalChapters ?? this.totalChapters,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
+      links: links ?? this.links,
+      publishers: publishers ?? this.publishers,
       genres: genres ?? this.genres,
+      tags: tags ?? this.tags,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      relationships: relationships ?? this.relationships,
+      source: source ?? this.source,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -889,6 +1466,9 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
     if (state.present) {
       map['state'] = Variable<String>(state.value);
     }
+    if (mergedWith.present) {
+      map['merged_with'] = Variable<String>(mergedWith.value);
+    }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
@@ -898,8 +1478,17 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
     if (romanizedTitle.present) {
       map['romanized_title'] = Variable<String>(romanizedTitle.value);
     }
+    if (secondaryTitles.present) {
+      map['secondary_titles'] = Variable<String>(secondaryTitles.value);
+    }
     if (coverUrl.present) {
       map['cover_url'] = Variable<String>(coverUrl.value);
+    }
+    if (authors.present) {
+      map['authors'] = Variable<String>(authors.value);
+    }
+    if (artists.present) {
+      map['artists'] = Variable<String>(artists.value);
     }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
@@ -907,8 +1496,20 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
     if (year.present) {
       map['year'] = Variable<String>(year.value);
     }
+    if (published.present) {
+      map['published'] = Variable<String>(published.value);
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
+    }
+    if (isLicensed.present) {
+      map['is_licensed'] = Variable<String>(isLicensed.value);
+    }
+    if (hasAnime.present) {
+      map['has_anime'] = Variable<String>(hasAnime.value);
+    }
+    if (anime.present) {
+      map['anime'] = Variable<String>(anime.value);
     }
     if (contentRating.present) {
       map['content_rating'] = Variable<String>(contentRating.value);
@@ -925,11 +1526,26 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
     if (totalChapters.present) {
       map['total_chapters'] = Variable<String>(totalChapters.value);
     }
-    if (lastUpdated.present) {
-      map['last_updated'] = Variable<String>(lastUpdated.value);
+    if (links.present) {
+      map['links'] = Variable<String>(links.value);
+    }
+    if (publishers.present) {
+      map['publishers'] = Variable<String>(publishers.value);
     }
     if (genres.present) {
       map['genres'] = Variable<String>(genres.value);
+    }
+    if (tags.present) {
+      map['tags'] = Variable<String>(tags.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<String>(lastUpdated.value);
+    }
+    if (relationships.present) {
+      map['relationships'] = Variable<String>(relationships.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -942,20 +1558,33 @@ class SeriesTableCompanion extends UpdateCompanion<SeriesTableData> {
     return (StringBuffer('SeriesTableCompanion(')
           ..write('id: $id, ')
           ..write('state: $state, ')
+          ..write('mergedWith: $mergedWith, ')
           ..write('title: $title, ')
           ..write('nativeTitle: $nativeTitle, ')
           ..write('romanizedTitle: $romanizedTitle, ')
+          ..write('secondaryTitles: $secondaryTitles, ')
           ..write('coverUrl: $coverUrl, ')
+          ..write('authors: $authors, ')
+          ..write('artists: $artists, ')
           ..write('description: $description, ')
           ..write('year: $year, ')
+          ..write('published: $published, ')
           ..write('status: $status, ')
+          ..write('isLicensed: $isLicensed, ')
+          ..write('hasAnime: $hasAnime, ')
+          ..write('anime: $anime, ')
           ..write('contentRating: $contentRating, ')
           ..write('type: $type, ')
           ..write('rating: $rating, ')
           ..write('finalVolume: $finalVolume, ')
           ..write('totalChapters: $totalChapters, ')
-          ..write('lastUpdated: $lastUpdated, ')
+          ..write('links: $links, ')
+          ..write('publishers: $publishers, ')
           ..write('genres: $genres, ')
+          ..write('tags: $tags, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('relationships: $relationships, ')
+          ..write('source: $source, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1524,40 +2153,66 @@ typedef $$SeriesTableTableCreateCompanionBuilder =
     SeriesTableCompanion Function({
       required String id,
       Value<String?> state,
+      Value<String?> mergedWith,
       required String title,
       Value<String?> nativeTitle,
       Value<String?> romanizedTitle,
+      Value<String> secondaryTitles,
       required String coverUrl,
+      Value<String> authors,
+      Value<String> artists,
       required String description,
       Value<String?> year,
+      Value<String?> published,
       Value<String?> status,
+      Value<String?> isLicensed,
+      Value<String?> hasAnime,
+      Value<String?> anime,
       Value<String?> contentRating,
       Value<String?> type,
       Value<String?> rating,
       Value<String?> finalVolume,
       Value<String?> totalChapters,
-      Value<String?> lastUpdated,
+      Value<String> links,
+      Value<String> publishers,
       Value<String> genres,
+      Value<String> tags,
+      Value<String?> lastUpdated,
+      Value<String?> relationships,
+      Value<String?> source,
       Value<int> rowid,
     });
 typedef $$SeriesTableTableUpdateCompanionBuilder =
     SeriesTableCompanion Function({
       Value<String> id,
       Value<String?> state,
+      Value<String?> mergedWith,
       Value<String> title,
       Value<String?> nativeTitle,
       Value<String?> romanizedTitle,
+      Value<String> secondaryTitles,
       Value<String> coverUrl,
+      Value<String> authors,
+      Value<String> artists,
       Value<String> description,
       Value<String?> year,
+      Value<String?> published,
       Value<String?> status,
+      Value<String?> isLicensed,
+      Value<String?> hasAnime,
+      Value<String?> anime,
       Value<String?> contentRating,
       Value<String?> type,
       Value<String?> rating,
       Value<String?> finalVolume,
       Value<String?> totalChapters,
-      Value<String?> lastUpdated,
+      Value<String> links,
+      Value<String> publishers,
       Value<String> genres,
+      Value<String> tags,
+      Value<String?> lastUpdated,
+      Value<String?> relationships,
+      Value<String?> source,
       Value<int> rowid,
     });
 
@@ -1612,6 +2267,11 @@ class $$SeriesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get mergedWith => $composableBuilder(
+    column: $table.mergedWith,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnFilters(column),
@@ -1627,8 +2287,23 @@ class $$SeriesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get secondaryTitles => $composableBuilder(
+    column: $table.secondaryTitles,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get coverUrl => $composableBuilder(
     column: $table.coverUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authors => $composableBuilder(
+    column: $table.authors,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get artists => $composableBuilder(
+    column: $table.artists,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1642,8 +2317,28 @@ class $$SeriesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get published => $composableBuilder(
+    column: $table.published,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get isLicensed => $composableBuilder(
+    column: $table.isLicensed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hasAnime => $composableBuilder(
+    column: $table.hasAnime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get anime => $composableBuilder(
+    column: $table.anime,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1672,13 +2367,38 @@ class $$SeriesTableTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get lastUpdated => $composableBuilder(
-    column: $table.lastUpdated,
+  ColumnFilters<String> get links => $composableBuilder(
+    column: $table.links,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publishers => $composableBuilder(
+    column: $table.publishers,
     builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<String> get genres => $composableBuilder(
     column: $table.genres,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1727,6 +2447,11 @@ class $$SeriesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get mergedWith => $composableBuilder(
+    column: $table.mergedWith,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -1742,8 +2467,23 @@ class $$SeriesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get secondaryTitles => $composableBuilder(
+    column: $table.secondaryTitles,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get coverUrl => $composableBuilder(
     column: $table.coverUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authors => $composableBuilder(
+    column: $table.authors,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get artists => $composableBuilder(
+    column: $table.artists,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1757,8 +2497,28 @@ class $$SeriesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get published => $composableBuilder(
+    column: $table.published,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get isLicensed => $composableBuilder(
+    column: $table.isLicensed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hasAnime => $composableBuilder(
+    column: $table.hasAnime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get anime => $composableBuilder(
+    column: $table.anime,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1787,13 +2547,38 @@ class $$SeriesTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get lastUpdated => $composableBuilder(
-    column: $table.lastUpdated,
+  ColumnOrderings<String> get links => $composableBuilder(
+    column: $table.links,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get publishers => $composableBuilder(
+    column: $table.publishers,
     builder: (column) => ColumnOrderings(column),
   );
 
   ColumnOrderings<String> get genres => $composableBuilder(
     column: $table.genres,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tags => $composableBuilder(
+    column: $table.tags,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -1813,6 +2598,11 @@ class $$SeriesTableTableAnnotationComposer
   GeneratedColumn<String> get state =>
       $composableBuilder(column: $table.state, builder: (column) => column);
 
+  GeneratedColumn<String> get mergedWith => $composableBuilder(
+    column: $table.mergedWith,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
@@ -1826,8 +2616,19 @@ class $$SeriesTableTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get secondaryTitles => $composableBuilder(
+    column: $table.secondaryTitles,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get coverUrl =>
       $composableBuilder(column: $table.coverUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get authors =>
+      $composableBuilder(column: $table.authors, builder: (column) => column);
+
+  GeneratedColumn<String> get artists =>
+      $composableBuilder(column: $table.artists, builder: (column) => column);
 
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
@@ -1837,8 +2638,22 @@ class $$SeriesTableTableAnnotationComposer
   GeneratedColumn<String> get year =>
       $composableBuilder(column: $table.year, builder: (column) => column);
 
+  GeneratedColumn<String> get published =>
+      $composableBuilder(column: $table.published, builder: (column) => column);
+
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get isLicensed => $composableBuilder(
+    column: $table.isLicensed,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get hasAnime =>
+      $composableBuilder(column: $table.hasAnime, builder: (column) => column);
+
+  GeneratedColumn<String> get anime =>
+      $composableBuilder(column: $table.anime, builder: (column) => column);
 
   GeneratedColumn<String> get contentRating => $composableBuilder(
     column: $table.contentRating,
@@ -1861,13 +2676,32 @@ class $$SeriesTableTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get lastUpdated => $composableBuilder(
-    column: $table.lastUpdated,
+  GeneratedColumn<String> get links =>
+      $composableBuilder(column: $table.links, builder: (column) => column);
+
+  GeneratedColumn<String> get publishers => $composableBuilder(
+    column: $table.publishers,
     builder: (column) => column,
   );
 
   GeneratedColumn<String> get genres =>
       $composableBuilder(column: $table.genres, builder: (column) => column);
+
+  GeneratedColumn<String> get tags =>
+      $composableBuilder(column: $table.tags, builder: (column) => column);
+
+  GeneratedColumn<String> get lastUpdated => $composableBuilder(
+    column: $table.lastUpdated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get relationships => $composableBuilder(
+    column: $table.relationships,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
 
   Expression<T> libraryEntriesTableRefs<T extends Object>(
     Expression<T> Function($$LibraryEntriesTableTableAnnotationComposer a) f,
@@ -1926,76 +2760,128 @@ class $$SeriesTableTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String?> state = const Value.absent(),
+                Value<String?> mergedWith = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> nativeTitle = const Value.absent(),
                 Value<String?> romanizedTitle = const Value.absent(),
+                Value<String> secondaryTitles = const Value.absent(),
                 Value<String> coverUrl = const Value.absent(),
+                Value<String> authors = const Value.absent(),
+                Value<String> artists = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<String?> year = const Value.absent(),
+                Value<String?> published = const Value.absent(),
                 Value<String?> status = const Value.absent(),
+                Value<String?> isLicensed = const Value.absent(),
+                Value<String?> hasAnime = const Value.absent(),
+                Value<String?> anime = const Value.absent(),
                 Value<String?> contentRating = const Value.absent(),
                 Value<String?> type = const Value.absent(),
                 Value<String?> rating = const Value.absent(),
                 Value<String?> finalVolume = const Value.absent(),
                 Value<String?> totalChapters = const Value.absent(),
-                Value<String?> lastUpdated = const Value.absent(),
+                Value<String> links = const Value.absent(),
+                Value<String> publishers = const Value.absent(),
                 Value<String> genres = const Value.absent(),
+                Value<String> tags = const Value.absent(),
+                Value<String?> lastUpdated = const Value.absent(),
+                Value<String?> relationships = const Value.absent(),
+                Value<String?> source = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SeriesTableCompanion(
                 id: id,
                 state: state,
+                mergedWith: mergedWith,
                 title: title,
                 nativeTitle: nativeTitle,
                 romanizedTitle: romanizedTitle,
+                secondaryTitles: secondaryTitles,
                 coverUrl: coverUrl,
+                authors: authors,
+                artists: artists,
                 description: description,
                 year: year,
+                published: published,
                 status: status,
+                isLicensed: isLicensed,
+                hasAnime: hasAnime,
+                anime: anime,
                 contentRating: contentRating,
                 type: type,
                 rating: rating,
                 finalVolume: finalVolume,
                 totalChapters: totalChapters,
-                lastUpdated: lastUpdated,
+                links: links,
+                publishers: publishers,
                 genres: genres,
+                tags: tags,
+                lastUpdated: lastUpdated,
+                relationships: relationships,
+                source: source,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String id,
                 Value<String?> state = const Value.absent(),
+                Value<String?> mergedWith = const Value.absent(),
                 required String title,
                 Value<String?> nativeTitle = const Value.absent(),
                 Value<String?> romanizedTitle = const Value.absent(),
+                Value<String> secondaryTitles = const Value.absent(),
                 required String coverUrl,
+                Value<String> authors = const Value.absent(),
+                Value<String> artists = const Value.absent(),
                 required String description,
                 Value<String?> year = const Value.absent(),
+                Value<String?> published = const Value.absent(),
                 Value<String?> status = const Value.absent(),
+                Value<String?> isLicensed = const Value.absent(),
+                Value<String?> hasAnime = const Value.absent(),
+                Value<String?> anime = const Value.absent(),
                 Value<String?> contentRating = const Value.absent(),
                 Value<String?> type = const Value.absent(),
                 Value<String?> rating = const Value.absent(),
                 Value<String?> finalVolume = const Value.absent(),
                 Value<String?> totalChapters = const Value.absent(),
-                Value<String?> lastUpdated = const Value.absent(),
+                Value<String> links = const Value.absent(),
+                Value<String> publishers = const Value.absent(),
                 Value<String> genres = const Value.absent(),
+                Value<String> tags = const Value.absent(),
+                Value<String?> lastUpdated = const Value.absent(),
+                Value<String?> relationships = const Value.absent(),
+                Value<String?> source = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SeriesTableCompanion.insert(
                 id: id,
                 state: state,
+                mergedWith: mergedWith,
                 title: title,
                 nativeTitle: nativeTitle,
                 romanizedTitle: romanizedTitle,
+                secondaryTitles: secondaryTitles,
                 coverUrl: coverUrl,
+                authors: authors,
+                artists: artists,
                 description: description,
                 year: year,
+                published: published,
                 status: status,
+                isLicensed: isLicensed,
+                hasAnime: hasAnime,
+                anime: anime,
                 contentRating: contentRating,
                 type: type,
                 rating: rating,
                 finalVolume: finalVolume,
                 totalChapters: totalChapters,
-                lastUpdated: lastUpdated,
+                links: links,
+                publishers: publishers,
                 genres: genres,
+                tags: tags,
+                lastUpdated: lastUpdated,
+                relationships: relationships,
+                source: source,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

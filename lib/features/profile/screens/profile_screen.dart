@@ -5,6 +5,7 @@ import 'package:bakahyou/features/profile/services/statistics_service.dart';
 import 'package:bakahyou/features/profile/widgets/snapshot_list.dart';
 import 'package:bakahyou/features/profile/widgets/statistic_card.dart';
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 import '../models/mb_profile.dart';
 import '../services/profile_auth_service.dart';
 
@@ -176,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : _profile?.preferredUsername;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0a0a0a),
+      backgroundColor: AppConstants.primaryBackground,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

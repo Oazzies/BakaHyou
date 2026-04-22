@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:bakahyou/features/news/models/news.dart';
 import 'package:bakahyou/features/news/widgets/referenced_list_item.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class NewsListItem extends StatelessWidget {
   final News news;
@@ -30,7 +31,7 @@ class NewsListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color(0xFF18181B),
+      color: AppConstants.secondaryBackground,
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Padding(
         padding: const EdgeInsets.all(12.0),

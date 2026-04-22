@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bakahyou/features/news/models/news.dart';
 import 'package:bakahyou/features/news/services/news_service.dart';
 import 'package:bakahyou/features/news/widgets/news_list.item.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({Key? key}) : super(key: key);
@@ -78,7 +79,7 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0a0a0a),
+      backgroundColor: AppConstants.primaryBackground,
       body: SafeArea(
         child: _newsList.isEmpty && !_isLoading
             ? Center(child: Text(_error ?? 'No news found.'))

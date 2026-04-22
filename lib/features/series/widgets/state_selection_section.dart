@@ -1,5 +1,6 @@
-import 'package:bakahyou/features/library/screens/library_screen_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:bakahyou/features/library/screens/library_screen_constants.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class StateSelectionSection extends StatelessWidget {
   final String? currentState;
@@ -29,15 +30,15 @@ class StateSelectionSection extends StatelessWidget {
             height: 38, // Slightly taller
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             decoration: BoxDecoration(
-              color: const Color(0xFF0a0a0a),
+              color: AppConstants.primaryBackground,
               borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: const Color(0xFF3f3f46), width: 1.5),
+              border: Border.all(color: AppConstants.borderColor, width: 1.5),
             ),
             child: DropdownButton<String>(
               value: currentState,
               isExpanded: true,
               underline: const SizedBox.shrink(),
-              dropdownColor: const Color(0xFF0a0a0a),
+              dropdownColor: AppConstants.primaryBackground,
               icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
               style: const TextStyle(
                 color: Colors.white,
@@ -114,11 +115,11 @@ class StateSelectionSection extends StatelessWidget {
     switch (state) {
       case 'reading':
       case 'rereading':
-        return const Color(0xFF81e6ca);
+        return AppConstants.successColor;
       case 'completed':
         return Colors.white;
       case 'paused':
-        return const Color(0xFFffc83e);
+        return AppConstants.warningColor;
       case 'dropped':
         return Colors.red;
       case 'plan_to_read':

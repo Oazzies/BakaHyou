@@ -3,6 +3,7 @@ import 'package:bakahyou/features/browse/screens/browse_screen.dart';
 import 'package:bakahyou/features/library/screens/library_screen.dart';
 import 'package:bakahyou/features/news/screens/news_screen.dart';
 import 'package:bakahyou/features/profile/screens/profile_screen.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -31,12 +32,12 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF18181B),
+      backgroundColor: AppConstants.secondaryBackground,
       body: _pages[_selectedIndex],
       bottomNavigationBar: SafeArea(
         child: NavigationBarTheme(
           data: NavigationBarThemeData(
-            backgroundColor: const Color(0xFF18181B),
+            backgroundColor: AppConstants.secondaryBackground,
             labelTextStyle: WidgetStateProperty.all(
               const TextStyle(color: Colors.white, fontSize: 12),
             ),
@@ -45,8 +46,8 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           child: NavigationBar(
-            backgroundColor: const Color(0xFF18181B),
-            indicatorColor: Color(0xFF1b9f70),
+            backgroundColor: AppConstants.secondaryBackground,
+            indicatorColor: AppConstants.accentColor,
             selectedIndex: _selectedIndex,
             onDestinationSelected: _onItemTapped,
             labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

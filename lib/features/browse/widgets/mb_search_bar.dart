@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class MBSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
@@ -64,7 +65,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
               )
             : null,
         filled: true,
-        fillColor: const Color(0xFF18181B),
+        fillColor: AppConstants.secondaryBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(40),
           borderSide: BorderSide.none,

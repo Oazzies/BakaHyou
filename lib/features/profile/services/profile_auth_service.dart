@@ -66,10 +66,6 @@ class ProfileAuthService {
         ),
       );
 
-      if (response == null || response.accessToken == null) {
-        throw Exception('OAuth login failed: no access token returned');
-      }
-
       await _persistTokens(response);
     } catch (e) {
       _logger.severe('Login failed: $e');
@@ -125,10 +121,6 @@ class ProfileAuthService {
           ],
         ),
       );
-
-      if (response == null) {
-        throw Exception('Token refresh failed: no response from server');
-      }
 
       await _persistTokens(response);
     } catch (e) {

@@ -1,5 +1,7 @@
+import 'package:bakahyou/utils/constants/app_constants.dart';
+
 class LibraryConstants {
-  static const String baseUrl = 'https://api.mangabaka.dev/v1/my/library';
-  static const int pageLimit = 50; // API max
-  static const String userAgent = 'BakaHyou/0.0 (oazziesmail@gmail.com)';
+  static const String baseUrl = '${AppConstants.baseApiUrl}/my/library';
+  static const int pageLimit = AppConstants.libraryPageLimit;
+  static const String userAgent = AppConstants.userAgent;
 }

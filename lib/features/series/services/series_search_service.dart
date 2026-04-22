@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:bakahyou/utils/services/logging_service.dart';
+import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:bakahyou/features/series/models/series.dart';
 
 class SeriesSearchService {
-  static const String _baseUrl = 'https://api.mangabaka.dev/v1/series/search';
+  static const String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
   final _logger = LoggingService.logger;
 
   Future<List<Series>> searchSeriesByName(
@@ -30,27 +33,66 @@ class SeriesSearchService {
     try {
       final response = await http.get(
         Uri.parse(url),
-        headers: {'User-Agent': 'BakaHyou/0.0 (oazziesmail@gmail.com)'},
+        headers: {'User-Agent': AppConstants.userAgent},
+      ).timeout(
+        const Duration(seconds: AppConstants.networkTimeoutSeconds),
+        onTimeout: () => throw TimeoutException('Series search request timed out'),
       );
 
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final List data = json['data'] ?? [];
-        return data
-            .map((item) => Series.fromJson(item as Map<String, dynamic>))
-            .toList();
+        try {
+          final json = jsonDecode(response.body);
+          final List data = json['data'] ?? [];
+          return data
+              .map((item) => Series.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } catch (e, st) {
+          _logger.severe('Failed to parse series search response: $e\n$st');
+          throw ParseException(
+            message: 'Failed to parse series search response',
+            originalError: e,
+            stackTrace: st,
+          );
+        }
       } else {
         _logger.severe(
-            'Failed to search series. Status code: ${response.statusCode}, body: ${response.body}');
-        throw Exception(
-            'Failed to search series. Status code: ${response.statusCode}');
+            'Series search failed. Status: ${response.statusCode}, Body: ${response.body}');
+        throw ApiException(
+          message: 'Failed to search series',
+          statusCode: response.statusCode,
+          responseBody: response.body,
+          code: 'SEARCH_FAILED',
+        );
       }
-    } on SocketException catch (e) {
-      _logger.severe('Failed to search series due to a network error: $e');
-      throw Exception('Failed to search series. Please check your network connection.');
-    } catch (e) {
-      _logger.severe('An unexpected error occurred during series search: $e');
-      throw Exception('An unexpected error occurred while searching for series.');
+    } on SocketException catch (e, st) {
+      _logger.severe('Network error during series search: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
+    } on TimeoutException catch (e, st) {
+      _logger.severe('Request timeout during series search: $e\n$st');
+      throw NetworkException(
+        message: 'Request timed out. Please try again.',
+        code: 'TIMEOUT',
+        originalError: e,
+        stackTrace: st,
+      );
+    } on ParseException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } on NetworkException {
+      rethrow;
+    } catch (e, st) {
+      _logger.severe('Unexpected error during series search: $e\n$st');
+      throw AppError(
+        message: 'An unexpected error occurred while searching for series',
+        originalError: e,
+        stackTrace: st,
+      );
     }
   }
 }

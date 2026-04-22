@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:bakahyou/features/navigation/screens/main_screen.dart';
 import 'package:bakahyou/utils/services/logging_service.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   LoggingService.setup();
   await dotenv.load();
+  setupServiceLocator();
   
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     systemNavigationBarColor: Colors.transparent,
@@ -27,11 +30,13 @@ class BakaHyouApp extends StatelessWidget {
     return MaterialApp(
       title: 'BakaHyou',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF00301d)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppConstants.primaryAccent,
+        ),
       ),
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(0xFF00301d),
+          seedColor: AppConstants.primaryAccent,
           brightness: Brightness.dark,
         ),
       ),

@@ -9,6 +9,7 @@ import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
 import 'package:bakahyou/features/series/widgets/entry_list_item.dart';
 import 'package:bakahyou/features/series/models/series.dart' as api;
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({Key? key}) : super(key: key);
@@ -37,8 +38,8 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   void _initializeServices() {
-    _auth = ProfileAuthService();
-    _libraryService = LibraryService(auth: _auth);
+    _auth = getIt<ProfileAuthService>();
+    _libraryService = getIt<LibraryService>();
   }
 
   void _initializeControllers() {

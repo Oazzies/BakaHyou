@@ -4,6 +4,8 @@ import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
 import 'package:bakahyou/features/series/widgets/entry_list_item.dart';
 import 'package:bakahyou/features/series/services/series_search_service.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 class BrowseResultsScreen extends StatefulWidget {
   final String sortType;
@@ -24,11 +26,6 @@ class BrowseResultsScreen extends StatefulWidget {
 }
 
 class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
-  // Constants
-  static const int _pageLimit = 20;
-  static const double _scrollThreshold = 100;
-  static const Color _backgroundColor = Color(0xFF0a0a0a);
-
   // Services & Controllers
   late final SeriesSearchService _searchService;
   late final ScrollController _scrollController;
@@ -44,7 +41,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   @override
   void initState() {
     super.initState();
-    _searchService = SeriesSearchService();
+    _searchService = getIt<SeriesSearchService>();
     _scrollController = ScrollController();
     _currentRandomSeed = widget.randomSeed ?? _generateRandomSeed();
     _scrollController.addListener(_onScroll);
@@ -63,7 +60,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
 
   void _onScroll() {
     final isNearEnd = _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - _scrollThreshold;
+        _scrollController.position.maxScrollExtent - AppConstants.scrollThresholdPx;
 
     if (isNearEnd && _hasMore && !_isLoading) {
       _fetchResults(initial: false);
@@ -92,7 +89,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
           _results.clear();
         }
         _results.addAll(newResults);
-        _hasMore = newResults.length == _pageLimit;
+        _hasMore = newResults.length == AppConstants.defaultPageLimit;
         _isLoading = false;
         _incrementPageIfNeeded();
       });
@@ -106,7 +103,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
 
   Map<String, dynamic> _buildRequestParams(bool initial) {
     final params = <String, dynamic>{
-      'limit': _pageLimit,
+      'limit': AppConstants.defaultPageLimit,
       'page': _currentPage,
     };
 
@@ -214,9 +211,9 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppConstants.primaryBackground,
       appBar: AppBar(
-        backgroundColor: _backgroundColor,
+        backgroundColor: AppConstants.primaryBackground,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class LibraryScreenConstants {
-  static const Color backgroundColor = Color(0xFF0a0a0a);
-  static const Color accentColor = Color(0xFF1b9f70);
+  static const Color backgroundColor = AppConstants.primaryBackground;
+  static const Color accentColor = AppConstants.accentColor;
   static const Color errorColor = Colors.red;
 
   static const List<LibraryTabDefinition> tabs = [
@@ -15,15 +16,7 @@ class LibraryScreenConstants {
     LibraryTabDefinition(key: 'considering', label: 'Considering'),
   ];
 
-  static const Set<String> knownStates = {
-    'reading',
-    'paused',
-    'completed',
-    'plan_to_read',
-    'dropped',
-    'rereading',
-    'considering',
-  };
+  static const Set<String> knownStates = AppConstants.libraryStates;
 }
 
 class LibraryTabDefinition {
