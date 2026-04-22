@@ -41,20 +41,6 @@ class SettingsScreen extends StatelessWidget {
                   isLast: true,
                 ),
               ]),
-              const SizedBox(height: 16),
-              _buildSectionHeader('General'),
-              _buildSettingsGroup([
-                _buildSettingItem(
-                  icon: Icons.info_outline,
-                  title: 'About',
-                  onTap: () {
-                    // TODO: Implement About dialog
-                  },
-                  isFirst: true,
-                  isLast: true,
-                ),
-              ]),
-              const SizedBox(height: 24),
             ],
           );
         },
