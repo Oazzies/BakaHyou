@@ -6,8 +6,8 @@ import 'package:bakahyou/features/profile/widgets/snapshot_list.dart';
 import 'package:bakahyou/features/profile/widgets/statistic_card.dart';
 import 'package:flutter/material.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
-import '../models/mb_profile.dart';
-import '../services/profile_auth_service.dart';
+import 'package:bakahyou/features/profile/models/mb_profile.dart';
+import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:bakahyou/utils/services/logging_service.dart';
 
-import '../models/mb_profile.dart';
+import 'package:bakahyou/features/profile/models/mb_profile.dart';
 
 class ProfileAuthService {
   final _logger = LoggingService.logger;
