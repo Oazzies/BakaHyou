@@ -19,30 +19,42 @@ class SettingsScreen extends StatelessWidget {
         listenable: Listenable.merge([ThemeManager(), SettingsManager()]),
         builder: (context, _) {
           return ListView(
-            padding: EdgeInsets.all(AppConstants.horizontalPadding),
+            padding: EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding, vertical: 8),
             children: [
               _buildSectionHeader('Appearance'),
-              _buildSettingItem(
-                icon: Icons.palette_outlined,
-                title: 'App Theme',
-                subtitle: _getThemeName(ThemeManager().currentTheme),
-                onTap: () => _showThemeSelectionDialog(context),
-              ),
-              _buildSettingItem(
-                icon: Icons.view_list_outlined,
-                title: 'List Style',
-                subtitle: _getListStyleName(SettingsManager().currentListStyle),
-                onTap: () => _showListStyleSelectionDialog(context),
-              ),
+              _buildSettingsGroup([
+                _buildSettingItem(
+                  icon: Icons.palette_outlined,
+                  title: 'App Theme',
+                  subtitle: _getThemeName(ThemeManager().currentTheme),
+                  onTap: () => _showThemeSelectionDialog(context),
+                  isFirst: true,
+                  isLast: false,
+                ),
+                _buildDivider(),
+                _buildSettingItem(
+                  icon: Icons.view_list_outlined,
+                  title: 'List Style',
+                  subtitle: _getListStyleName(SettingsManager().currentListStyle),
+                  onTap: () => _showListStyleSelectionDialog(context),
+                  isFirst: false,
+                  isLast: true,
+                ),
+              ]),
+              const SizedBox(height: 16),
               _buildSectionHeader('General'),
-              _buildSettingItem(
-                icon: Icons.info_outline,
-                title: 'About',
-                onTap: () {
-                  // TODO: Implement About dialog
-                },
-              ),
-              // Add more settings here in the future
+              _buildSettingsGroup([
+                _buildSettingItem(
+                  icon: Icons.info_outline,
+                  title: 'About',
+                  onTap: () {
+                    // TODO: Implement About dialog
+                  },
+                  isFirst: true,
+                  isLast: true,
+                ),
+              ]),
+              const SizedBox(height: 24),
             ],
           );
         },
@@ -52,15 +64,37 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.0, top: 16.0),
+      padding: EdgeInsets.only(bottom: 8.0, top: 8.0, left: 4.0),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: AppConstants.accentColor,
+          letterSpacing: 1.2,
+          color: AppConstants.textMutedColor,
         ),
       ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppConstants.secondaryBackground,
+        borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: AppConstants.borderColor.withOpacity(0.2),
+      indent: 48,
     );
   }
 
@@ -69,22 +103,49 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     String? subtitle,
     required VoidCallback onTap,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppConstants.textMutedColor),
-      title: Text(
-        title,
-        style: TextStyle(color: AppConstants.textColor),
-      ),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle,
-              style: TextStyle(color: AppConstants.textMutedColor),
-            )
-          : null,
-      trailing: Icon(Icons.chevron_right, color: AppConstants.textMutedColor),
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.vertical(
+        top: isFirst ? Radius.circular(AppConstants.cardRadius) : Radius.zero,
+        bottom: isLast ? Radius.circular(AppConstants.cardRadius) : Radius.zero,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Row(
+          children: [
+            Icon(icon, color: AppConstants.textMutedColor, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: AppConstants.textColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppConstants.textMutedColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppConstants.textMutedColor),
+          ],
+        ),
+      ),
     );
   }
 
