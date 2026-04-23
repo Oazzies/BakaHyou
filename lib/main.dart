@@ -38,8 +38,7 @@ class BakaHyouApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: ThemeManager(),
       builder: (context, _) {
-        final theme = ThemeManager().currentTheme;
-        final isLight = theme == AppTheme.light;
+        final currentThemeMode = ThemeManager().currentThemeMode;
         
         return MaterialApp(
           title: 'BakaHyou',
@@ -57,7 +56,7 @@ class BakaHyouApp extends StatelessWidget {
             ),
             scaffoldBackgroundColor: AppConstants.primaryBackground,
           ),
-          themeMode: isLight ? ThemeMode.light : ThemeMode.dark,
+          themeMode: currentThemeMode,
           home: SettingsManager().hasCompletedOnboarding 
               ? const MainScreen() 
               : const OnboardingScreen(),
