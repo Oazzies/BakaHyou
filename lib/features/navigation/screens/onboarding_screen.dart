@@ -5,6 +5,7 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 import 'package:bakahyou/features/navigation/widgets/onboarding/welcome_page.dart';
 import 'package:bakahyou/features/navigation/widgets/onboarding/theme_page.dart';
@@ -23,7 +24,7 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
-  final ProfileAuthService _authService = ProfileAuthService();
+  late final ProfileAuthService _authService;
   int _currentPage = 0;
   bool _isLoggingIn = false;
   bool _isLoggedIn = false;
@@ -33,22 +34,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    _authService = getIt<ProfileAuthService>();
+    _isLoggedIn = _authService.isLoggedIn;
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    final loggedIn = await _authService.hasSession();
-    if (mounted) {
-      setState(() {
-        _isLoggedIn = loggedIn;
-      });
-    }
   }
 
   void _nextPage() {

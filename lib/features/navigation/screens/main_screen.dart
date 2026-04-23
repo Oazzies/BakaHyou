@@ -16,7 +16,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 2;
 
-
+  // Keep pages alive across tab switches with IndexedStack
+  final List<Widget> _pages = const [
+    Placeholder(),
+    LibraryScreen(),
+    BrowseScreen(),
+    NewsScreen(),
+    ProfileScreen(),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -29,17 +36,12 @@ class _MainScreenState extends State<MainScreen> {
     return ListenableBuilder(
       listenable: ThemeManager(),
       builder: (context, _) {
-        final pages = [
-          Placeholder(),
-          LibraryScreen(),
-          BrowseScreen(),
-          NewsScreen(),
-          ProfileScreen(),
-        ];
-
         return Scaffold(
           backgroundColor: AppConstants.secondaryBackground,
-          body: pages[_selectedIndex],
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: _pages,
+          ),
           bottomNavigationBar: SafeArea(
             child: NavigationBarTheme(
               data: NavigationBarThemeData(

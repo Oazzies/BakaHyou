@@ -20,7 +20,7 @@ class SeriesSearchService {
             headers: {'User-Agent': AppConstants.userAgent},
           )
           .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
-
+      print("Genres API");
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         return List<Map<String, dynamic>>.from(json['data'] ?? []);
@@ -40,6 +40,8 @@ class SeriesSearchService {
             headers: {'User-Agent': AppConstants.userAgent},
           )
           .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
+
+      print("Tags API");
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
@@ -90,6 +92,8 @@ class SeriesSearchService {
             onTimeout: () =>
                 throw TimeoutException('Series search request timed out'),
           );
+
+      print("Search API");
 
       if (response.statusCode == 200) {
         try {

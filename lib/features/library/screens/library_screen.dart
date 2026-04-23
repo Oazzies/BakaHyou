@@ -27,7 +27,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   late TabController _tabController;
   late final Map<String, ScrollController> _scrollControllers;
 
-  bool _loggedIn = false;
+  late bool _loggedIn;
   String _query = '';
   Stream<List<LibraryEntry>>? _entriesStream;
 
@@ -64,13 +64,10 @@ class _LibraryScreenState extends State<LibraryScreen>
     super.dispose();
   }
 
-  Future<void> _bootstrap() async {
-    final hasSession = await _auth.hasSession();
-    if (!mounted) return;
+  void _bootstrap() {
+    _loggedIn = _auth.isLoggedIn;
 
-    setState(() => _loggedIn = hasSession);
-
-    if (hasSession) {
+    if (_loggedIn) {
       _setupStreamAndSync();
     }
   }
