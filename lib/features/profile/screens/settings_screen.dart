@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/features/navigation/screens/onboarding_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});
@@ -62,6 +63,25 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: 'Exclude series already in your library from Browse search results',
                   value: SettingsManager().hideLibrarySeriesInBrowse,
                   onChanged: (value) => SettingsManager().setHideLibrarySeriesInBrowse(value),
+                  isFirst: true,
+                  isLast: true,
+                ),
+              ]),
+              const SizedBox(height: 16),
+              _buildSectionHeader('Other'),
+              _buildSettingsGroup([
+                _buildSettingItem(
+                  icon: Icons.replay_outlined,
+                  title: 'Redo Onboarding',
+                  subtitle: 'Restart the initial app setup process',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OnboardingScreen(isRedoing: true),
+                      ),
+                    );
+                  },
                   isFirst: true,
                   isLast: true,
                 ),

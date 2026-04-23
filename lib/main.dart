@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:bakahyou/features/navigation/screens/main_screen.dart';
+import 'package:bakahyou/features/navigation/screens/onboarding_screen.dart';
 import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
@@ -41,7 +42,6 @@ class BakaHyouApp extends StatelessWidget {
         final isLight = theme == AppTheme.light;
         
         return MaterialApp(
-          key: ValueKey(theme),
           title: 'BakaHyou',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
@@ -58,7 +58,9 @@ class BakaHyouApp extends StatelessWidget {
             scaffoldBackgroundColor: AppConstants.primaryBackground,
           ),
           themeMode: isLight ? ThemeMode.light : ThemeMode.dark,
-          home: const MainScreen(),
+          home: SettingsManager().hasCompletedOnboarding 
+              ? const MainScreen() 
+              : const OnboardingScreen(),
         );
       },
     );

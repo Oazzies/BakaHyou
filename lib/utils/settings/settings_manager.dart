@@ -11,6 +11,7 @@ enum AppListStyle {
 
 const String _hideLibrarySeriesInBrowseKey = '${AppConstants.prefixStorageKey}hide_library_series';
 const String _contentPreferencesKey = '${AppConstants.prefixStorageKey}content_prefs';
+const String _onboardingCompletedKey = '${AppConstants.prefixStorageKey}onboarding_completed';
 
 class SettingsManager extends ChangeNotifier {
   static final SettingsManager _instance = SettingsManager._internal();
@@ -27,6 +28,9 @@ class SettingsManager extends ChangeNotifier {
 
   List<String> _contentPreferences = ['safe', 'suggestive'];
   List<String> get contentPreferences => _contentPreferences;
+
+  bool _hasCompletedOnboarding = false;
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -45,6 +49,9 @@ class SettingsManager extends ChangeNotifier {
     if (savedContentPrefs != null && savedContentPrefs.isNotEmpty) {
       _contentPreferences = savedContentPrefs;
     }
+
+    // Load Onboarding Completed
+    _hasCompletedOnboarding = prefs.getBool(_onboardingCompletedKey) ?? false;
     
     notifyListeners();
   }
@@ -77,6 +84,17 @@ class SettingsManager extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_contentPreferencesKey, prefsList);
     
+    notifyListeners();
+  }
+
+  Future<void> setHasCompletedOnboarding(bool value) async {
+    if (_hasCompletedOnboarding == value) return;
+
+    _hasCompletedOnboarding = value;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingCompletedKey, value);
+
     notifyListeners();
   }
 }
