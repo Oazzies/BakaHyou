@@ -15,33 +15,31 @@ class StatisticCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppConstants.secondaryBackground,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: AppConstants.textColor, size: 22),
-            SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(color: AppConstants.textMutedColor, fontSize: 14),
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppConstants.secondaryBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppConstants.textColor, size: 22),
+          SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(color: AppConstants.textMutedColor, fontSize: 14),
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: AppConstants.textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                color: AppConstants.textColor,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
