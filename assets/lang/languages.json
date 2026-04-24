@@ -186,7 +186,7 @@
   },
   "nl": {
     "name": "Nederlands",
-    "translators": ["Oazzies"],
+    "translators": ["Gemini 3 Flash"],
     "strings": {
       "app_name": "BakaHyou",
       "home": "Start",
@@ -371,7 +371,7 @@
   },
   "de": {
     "name": "Deutsch",
-    "translators": ["DeepMind"],
+    "translators": ["Gemini 3 Flash"],
     "strings": {
       "app_name": "BakaHyou",
       "home": "Startseite",
