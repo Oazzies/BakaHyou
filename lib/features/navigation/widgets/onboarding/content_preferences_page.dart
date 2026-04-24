@@ -9,65 +9,113 @@ class ContentPreferencesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.filter_alt_outlined,
-            size: 80,
-            color: AppConstants.accentColor,
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Content Preferences',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppConstants.textColor,
+    final options = ['safe', 'suggestive', 'erotica', 'pornographic'];
+    final labels = {
+      'safe': 'Safe Content',
+      'suggestive': 'Suggestive',
+      'erotica': 'Erotica',
+      'pornographic': 'Hentai',
+    };
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 80),
+            Text(
+              'Content Filter',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: AppConstants.textColor,
+                letterSpacing: -1,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'What type of content would you like to see?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppConstants.textMutedColor,
+            const SizedBox(height: 12),
+            Text(
+              'Select what content ratings you want to see. This can be changed later in settings.',
+              style: TextStyle(
+                fontSize: 15,
+                color: AppConstants.textMutedColor,
+                height: 1.4,
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          ListenableBuilder(
-            listenable: SettingsManager(),
-            builder: (context, _) {
-              final currentPrefs = SettingsManager().contentPreferences;
-              return Column(
-                children: contentOptions.map((option) {
-                  final isSelected = currentPrefs.contains(option);
-                  final label = option[0].toUpperCase() + option.substring(1);
-                  return CheckboxListTile(
-                    title: Text(label, style: TextStyle(color: AppConstants.textColor)),
-                    value: isSelected,
-                    activeColor: AppConstants.accentColor,
-                    checkColor: AppConstants.primaryBackground,
-                    onChanged: (bool? value) {
-                      final newPrefs = List<String>.from(currentPrefs);
-                      if (value == true) {
-                        newPrefs.add(option);
-                      } else {
-                        newPrefs.remove(option);
-                      }
-                      SettingsManager().setContentPreferences(newPrefs);
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                  );
-                }).toList(),
-              );
-            },
-          ),
-        ],
+            const SizedBox(height: 48),
+            ListenableBuilder(
+              listenable: SettingsManager(),
+              builder: (context, _) {
+                final currentPrefs = SettingsManager().contentPreferences;
+                return Column(
+                  children: options.map((option) {
+                    final isSelected = currentPrefs.contains(option);
+                    final label = labels[option]!;
+
+                    return GestureDetector(
+                      onTap: () {
+                        final newPrefs = List<String>.from(currentPrefs);
+                        if (isSelected) {
+                          newPrefs.remove(option);
+                        } else {
+                          newPrefs.add(option);
+                        }
+                        SettingsManager().setContentPreferences(newPrefs);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppConstants.borderColor.withValues(alpha: 0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              label,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? AppConstants.textColor
+                                    : AppConstants.textMutedColor,
+                                fontSize: 18,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            const Spacer(),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: isSelected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      key: const ValueKey('checked'),
+                                      color: AppConstants.accentColor,
+                                      size: 28,
+                                    )
+                                  : Icon(
+                                      Icons.circle_outlined,
+                                      key: const ValueKey('unchecked'),
+                                      color: AppConstants.borderColor.withValues(alpha: 0.3),
+                                      size: 28,
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 60),
+          ],
+        ),
       ),
     );
   }

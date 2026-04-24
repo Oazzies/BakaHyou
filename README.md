@@ -49,7 +49,7 @@ Go to the [releases](https://github.com/Oazzies/BakaHyou/releases) page.
 Home
 * Discover
 * Current
-* Activity)
+* Activity
 
 Browse
 * More browse shortcuts(Recommendations, etc)

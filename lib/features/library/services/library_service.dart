@@ -509,4 +509,13 @@ class LibraryService {
       );
     }
   }
+
+  Future<void> clearLibrary() async {
+    try {
+      await _db.libraryEntriesDao.deleteAllEntries();
+      _hasPerformedInitialSync = false;
+    } catch (e, st) {
+      _logger.severe('Failed to clear library: $e\n$st');
+    }
+  }
 }

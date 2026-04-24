@@ -184,25 +184,60 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   }
 
   Widget _buildResultsList() {
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: _results.length + (_isLoading && _results.isNotEmpty ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= _results.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12.0),
-            child: Center(child: CircularProgressIndicator()),
+    return ListenableBuilder(
+      listenable: SettingsManager(),
+      builder: (context, _) {
+        final settings = SettingsManager();
+        final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
+        final isGrid = activeStyle == AppListStyle.grid || activeStyle == AppListStyle.coverOnlyGrid;
+        final shouldShowRanking = widget.sortBy == 'popularity_asc';
+
+        if (isGrid) {
+          return GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 160,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemCount: _results.length + (_isLoading && _results.isNotEmpty ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index >= _results.length) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final series = _results[index];
+              return InkWell(
+                onTap: () => _navigateToDetail(series),
+                child: shouldShowRanking
+                    ? EntryListItem(series: series, ranking: index + 1)
+                    : EntryListItem(series: series),
+              );
+            },
           );
         }
 
-        final series = _results[index];
-        final shouldShowRanking = widget.sortBy == 'popularity_asc';
+        return ListView.builder(
+          controller: _scrollController,
+          itemCount: _results.length + (_isLoading && _results.isNotEmpty ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index >= _results.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-        return InkWell(
-          onTap: () => _navigateToDetail(series),
-          child: shouldShowRanking
-              ? EntryListItem(series: series, ranking: index + 1)
-              : EntryListItem(series: series),
+            final series = _results[index];
+            return InkWell(
+              onTap: () => _navigateToDetail(series),
+              child: shouldShowRanking
+                  ? EntryListItem(series: series, ranking: index + 1)
+                  : EntryListItem(series: series),
+            );
+          },
         );
       },
     );

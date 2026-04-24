@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 class RatingSelectionDialog extends StatefulWidget {
   final int initialRating;
@@ -49,7 +50,7 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
             value: _currentRating,
             min: 0,
             max: 100,
-            divisions: 100,
+            divisions: _getDivisions(),
             label: _currentRating.round().toString(),
             onChanged: (double value) {
               setState(() {
@@ -76,5 +77,16 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
         ),
       ],
     );
+  }
+
+  int _getDivisions() {
+    final step = SettingsManager().ratingSliderStep;
+    switch (step) {
+      case RatingSliderStep.step5: return 20;
+      case RatingSliderStep.step10: return 10;
+      case RatingSliderStep.step20: return 5;
+      case RatingSliderStep.step25: return 4;
+      case RatingSliderStep.step1: return 100;
+    }
   }
 }

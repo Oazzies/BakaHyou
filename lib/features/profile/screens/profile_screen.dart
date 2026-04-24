@@ -10,6 +10,7 @@ import 'package:bakahyou/features/profile/models/mb_profile.dart';
 import 'package:bakahyou/features/profile/screens/settings_screen.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -47,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _auth = getIt<ProfileAuthService>();
+    _auth.addListener(_onAuthStateChanged);
     _statisticsService = StatisticsService(AppDatabase());
     _snapshotService = SnapshotService();
 
@@ -69,6 +71,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Not logged in — show login prompt instantly
       _loading = false;
     }
+  }
+
+  @override
+  void dispose() {
+    _auth.removeListener(_onAuthStateChanged);
+    super.dispose();
+  }
+
+  void _onAuthStateChanged() {
+    if (!mounted) return;
+    setState(() {
+      _profile = _auth.cachedProfile;
+      if (_profile == null) {
+        // Clear all state on logout
+        _totalSeries = 0;
+        _chaptersRead = 0;
+        _volumesRead = 0;
+        _completionRate = 0.0;
+        _totalRereads = 0;
+        _recentlyChanged.clear();
+        _recentlyAdded.clear();
+        _error = null;
+        _loading = false;
+      } else {
+        // Logged in — full reload
+        _bootstrap();
+      }
+    });
   }
 
   Future<void> _bootstrap() async {
@@ -178,184 +208,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    await _auth.logout();
-    setState(() {
-      _profile = null;
-      _totalSeries = 0;
-      _chaptersRead = 0;
-      _volumesRead = 0;
-      _completionRate = 0;
-      _totalRereads = 0;
-      _recentlyChanged.clear();
-      _recentlyAdded.clear();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final username = _profile?.nickname?.isNotEmpty == true
-        ? _profile!.nickname
-        : _profile?.preferredUsername;
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        final username = _profile?.nickname?.isNotEmpty == true
+            ? _profile!.nickname
+            : _profile?.preferredUsername;
 
-    return Scaffold(
-      backgroundColor: AppConstants.primaryBackground,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text(_error!))
-          : _profile == null
-          ? _buildLoginPrompt()
-          : RefreshIndicator(
-              onRefresh: _bootstrap,
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Scaffold(
+          backgroundColor: AppConstants.primaryBackground,
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? Center(child: Text(_error!))
+              : _profile == null
+              ? _buildLoginPrompt()
+              : RefreshIndicator(
+                  onRefresh: _bootstrap,
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              '${username ?? 'User'} Profile',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.settings),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SettingsScreen(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${username ?? 'User'} ${l10n.translate('profile_title_suffix')}',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              );
-                            },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.settings),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SettingsScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'At a Glance',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'A quick overview of your reading statistics.',
-                        style: TextStyle(color: AppConstants.textMutedColor),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          StatisticCard(
-                            icon: Icons.book,
-                            label: 'Total Series',
-                            value: '$_totalSeries',
-                          ),
-                          const SizedBox(width: 16),
-                          StatisticCard(
-                            icon: Icons.article,
-                            label: 'Chapters Read',
-                            value: '$_chaptersRead',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          StatisticCard(
-                            icon: Icons.library_books,
-                            label: 'Volumes Read',
-                            value: '$_volumesRead',
-                          ),
-                          const SizedBox(width: 16),
-                          StatisticCard(
-                            icon: Icons.check_circle,
-                            label: 'Completion',
-                            value: '${_completionRate.toStringAsFixed(1)}%',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          StatisticCard(
-                            icon: Icons.replay,
-                            label: 'Total Rereads',
-                            value: '$_totalRereads',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Library Snapshot',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Two quick ways to scan what has been added lately, what is rated highest, and what has seen recent reading progress.',
-                        style: TextStyle(color: AppConstants.textMutedColor),
-                      ),
-                      const SizedBox(height: 16),
-                      SnapshotList(
-                        title: 'Recently Changed',
-                        entries: _recentlyChanged,
-                        hasMore: _hasMoreChanged,
-                        onFetchMore: _fetchRecentlyChanged,
-                      ),
-                      const SizedBox(height: 16),
-                      SnapshotList(
-                        title: 'Recently Added',
-                        entries: _recentlyAdded,
-                        hasMore: _hasMoreAdded,
-                        onFetchMore: _fetchRecentlyAdded,
-                      ),
-                      SizedBox(height: 32),
-                      if (_profile != null)
-                        Center(
-                          child: ElevatedButton.icon(
-                            onPressed: _logout,
-                            icon: Icon(Icons.logout),
-                            label: Text('Logout'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppConstants.errorColor,
-                              foregroundColor: AppConstants.textColor,
+                          const SizedBox(height: 24),
+                          Text(
+                            l10n.translate('at_a_glance'),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                    ],
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.translate('overview_desc'),
+                            style: TextStyle(color: AppConstants.textMutedColor),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: StatisticCard(
+                                  icon: Icons.book,
+                                  label: l10n.translate('total_series'),
+                                  value: '$_totalSeries',
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: StatisticCard(
+                                  icon: Icons.article,
+                                  label: l10n.translate('chapters_read'),
+                                  value: '$_chaptersRead',
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: StatisticCard(
+                                  icon: Icons.library_books,
+                                  label: l10n.translate('volumes_read'),
+                                  value: '$_volumesRead',
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: StatisticCard(
+                                  icon: Icons.check_circle,
+                                  label: l10n.translate('completion'),
+                                  value: '${_completionRate.toStringAsFixed(1)}%',
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: StatisticCard(
+                                  icon: Icons.replay,
+                                  label: l10n.translate('total_rereads'),
+                                  value: '$_totalRereads',
+                                ),
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            l10n.translate('library_snapshot'),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.translate('snapshot_desc'),
+                            style: TextStyle(color: AppConstants.textMutedColor),
+                          ),
+                          const SizedBox(height: 16),
+                          SnapshotList(
+                            title: l10n.translate('recently_changed'),
+                            entries: _recentlyChanged,
+                            hasMore: _hasMoreChanged,
+                            onFetchMore: _fetchRecentlyChanged,
+                          ),
+                          const SizedBox(height: 16),
+                          SnapshotList(
+                            title: l10n.translate('recently_added'),
+                            entries: _recentlyAdded,
+                            hasMore: _hasMoreAdded,
+                            onFetchMore: _fetchRecentlyAdded,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+        );
+      },
     );
   }
 
   Widget _buildLoginPrompt() {
+    final l10n = LocalizationService();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
           Text(
-            'Login with MangaBaka to see your profile.',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            l10n.translate('login_with'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _login,
-            label: Text('Login with MangaBaka'),
+            icon: const Icon(Icons.login),
+            label: Text(l10n.translate('login_with')),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.successColor,
               foregroundColor: AppConstants.textColor,

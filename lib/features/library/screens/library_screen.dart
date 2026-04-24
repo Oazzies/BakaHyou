@@ -12,6 +12,7 @@ import 'package:bakahyou/features/series/models/series.dart' as api;
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -35,6 +36,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   void initState() {
     super.initState();
     _initializeServices();
+    _auth.addListener(_onAuthStateChanged);
     _initializeControllers();
     _bootstrap();
   }
@@ -57,6 +59,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   @override
   void dispose() {
+    _auth.removeListener(_onAuthStateChanged);
     _tabController.dispose();
     for (var c in _scrollControllers.values) {
       c.dispose();
@@ -70,6 +73,18 @@ class _LibraryScreenState extends State<LibraryScreen>
     if (_loggedIn) {
       _setupStreamAndSync();
     }
+  }
+
+  void _onAuthStateChanged() {
+    if (!mounted) return;
+    setState(() {
+      _loggedIn = _auth.isLoggedIn;
+      if (!_loggedIn) {
+        _entriesStream = null;
+      } else {
+        _setupStreamAndSync();
+      }
+    });
   }
 
   void _setupStreamAndSync() {
@@ -97,10 +112,15 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: LibraryScreenConstants.backgroundColor,
-      appBar: _buildAppBar(),
-      body: _buildBody(),
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: LibraryScreenConstants.backgroundColor,
+          appBar: _buildAppBar(),
+          body: _buildBody(),
+        );
+      },
     );
   }
 
@@ -113,17 +133,19 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   PreferredSizeWidget _buildTabBar() {
+    final l10n = LocalizationService();
     return TabBar(
       controller: _tabController,
       isScrollable: true,
       tabAlignment: TabAlignment.start,
       tabs: LibraryScreenConstants.tabs
-          .map((tab) => Tab(text: tab.label))
+          .map((tab) => Tab(text: l10n.translate(tab.key)))
           .toList(),
     );
   }
 
   Widget _buildBody() {
+    final l10n = LocalizationService();
     if (!_loggedIn) return _buildLoginPrompt();
     if (_entriesStream == null) {
       return const Center(child: CircularProgressIndicator());
@@ -133,18 +155,18 @@ class _LibraryScreenState extends State<LibraryScreen>
       stream: _entriesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
           return Center(
             child: Text(
-              'Error: ${snapshot.error}',
+              '${l10n.translate('failed_to_load')}: ${snapshot.error}',
               style: TextStyle(color: LibraryScreenConstants.errorColor),
             ),
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Your library is empty.'));
+          return Center(child: Text(l10n.translate('empty_library')));
         }
 
         return ListenableBuilder(
@@ -170,23 +192,24 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildLoginPrompt() {
+    final l10n = LocalizationService();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Login with MangaBaka to see your Library',
+            l10n.translate('login_with'),
             style: TextStyle(fontSize: 18, color: AppConstants.textColor),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _loginAndReload,
             style: ElevatedButton.styleFrom(
               backgroundColor: LibraryScreenConstants.accentColor,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
             ),
             child: Text(
-              'Login with MangaBaka',
+              l10n.translate('login_with'),
               style: TextStyle(fontSize: 16, color: AppConstants.textColor),
             ),
           ),
@@ -197,9 +220,10 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   Widget _buildTabContent(List<LibraryEntry> items, String tabKey) {
     if (items.isEmpty) {
+      final l10n = LocalizationService();
       return Center(
         child: Text(
-          'No entries in this category.',
+          l10n.translate('no_results'),
           style: TextStyle(color: AppConstants.textMutedColor),
         ),
       );
@@ -225,7 +249,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               final entry = items[index];
               return GestureDetector(
                 onTap: () => _navigateToSeriesDetail(entry.series),
-                child: EntryListItem(series: entry.series),
+                child: EntryListItem(series: entry.series, isLibrary: true),
               );
             },
           );
@@ -239,7 +263,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             final entry = items[index];
             return GestureDetector(
               onTap: () => _navigateToSeriesDetail(entry.series),
-              child: EntryListItem(series: entry.series),
+              child: EntryListItem(series: entry.series, isLibrary: true),
             );
           },
         );

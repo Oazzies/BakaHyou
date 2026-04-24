@@ -4,6 +4,8 @@ import 'package:bakahyou/features/browse/models/search_filters.dart';
 import 'package:bakahyou/features/browse/widgets/search_filter_bottom_sheet.dart';
 import 'package:bakahyou/features/series/models/autocomplete_series_result.dart';
 import 'package:bakahyou/features/series/services/series_autocomplete_service.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class MBSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
@@ -62,6 +64,11 @@ class _MBSearchBarState extends State<MBSearchBar> {
 
   void _onSearchChanged(String query) {
     widget.onChanged(query);
+    
+    if (!SettingsManager().autoSuggestBrowse) {
+      _setSuggestions([]);
+      return;
+    }
 
     if (query.trim().length < SeriesAutocompleteService.minQueryLength) {
       _setSuggestions([]);
@@ -109,7 +116,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
           setState(() => _showSuggestions = false);
         }
       });
-    } else if (_results.isNotEmpty) {
+    } else if (_results.isNotEmpty && SettingsManager().autoSuggestBrowse) {
       setState(() => _showSuggestions = true);
     }
   }
@@ -118,25 +125,34 @@ class _MBSearchBarState extends State<MBSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildTextField(),
-        _buildSuggestionsPanel(),
-      ],
+    return ListenableBuilder(
+      listenable: Listenable.merge([SettingsManager(), LocalizationService()]),
+      builder: (context, _) {
+        final autoSuggest = SettingsManager().autoSuggestBrowse;
+        final effectiveShowSuggestions = _showSuggestions && autoSuggest;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildTextField(effectiveShowSuggestions),
+            _buildSuggestionsPanel(effectiveShowSuggestions),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildTextField() {
+  Widget _buildTextField(bool showSuggestions) {
     // When suggestions are visible, flatten the bottom corners so the
     // suggestions panel visually continues from the search bar.
-    final bottomRadius = _showSuggestions ? 0.0 : 40.0;
+    final bottomRadius = showSuggestions ? 0.0 : 40.0;
+    final l10n = LocalizationService();
 
     return TextField(
       controller: _controller,
       focusNode: _focusNode,
       decoration: InputDecoration(
-        hintText: 'Search for something',
+        hintText: l10n.translate('search_hint'),
         hintStyle: TextStyle(color: AppConstants.textMutedColor),
         prefixIcon: Icon(Icons.search, color: AppConstants.textColor),
         suffixIcon: _buildSuffixIcons(),
@@ -221,12 +237,12 @@ class _MBSearchBarState extends State<MBSearchBar> {
 
   // ─── Suggestions panel (in-tree, not an overlay) ───────────────────
 
-  Widget _buildSuggestionsPanel() {
+  Widget _buildSuggestionsPanel(bool showSuggestions) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       alignment: Alignment.topCenter,
-      child: _showSuggestions ? _buildSuggestionsList() : const SizedBox.shrink(),
+      child: showSuggestions ? _buildSuggestionsList() : const SizedBox.shrink(),
     );
   }
 

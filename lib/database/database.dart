@@ -355,6 +355,15 @@ class LibraryEntriesDao extends DatabaseAccessor<AppDatabase>
       throw Exception('Failed to delete entry.');
     }
   }
+
+  Future<void> deleteAllEntries() async {
+    try {
+      await delete(libraryEntriesTable).go();
+    } catch (e) {
+      _logger.severe('Failed to delete all entries: $e');
+      throw Exception('Failed to delete all entries.');
+    }
+  }
 }
 
 @DriftDatabase(

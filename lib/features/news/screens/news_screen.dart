@@ -4,6 +4,8 @@ import 'package:bakahyou/features/news/services/news_service.dart';
 import 'package:bakahyou/features/news/widgets/news_list.item.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
+import 'package:bakahyou/utils/localization/localization_service.dart';
+
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
 
@@ -104,30 +106,43 @@ class _NewsScreenState extends State<NewsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppConstants.primaryBackground,
-      body: SafeArea(
-        child: _newsList.isEmpty && !_isLoading && !_isBackgroundRefresh
-            ? Center(child: Text(_error ?? 'No news found.'))
-            : RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _newsList.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == _newsList.length) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    return NewsListItem(news: _newsList[index]);
-                  },
-                ),
-              ),
-      ),
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        return Scaffold(
+          backgroundColor: AppConstants.primaryBackground,
+          body: SafeArea(
+            child: _newsList.isEmpty && !_isLoading && !_isBackgroundRefresh
+                ? Center(
+                    child: Text(
+                      _error != null
+                          ? '${l10n.translate('failed_to_load')}: $_error'
+                          : l10n.translate('no_results'),
+                      style: TextStyle(color: AppConstants.textMutedColor),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _newsList.length + (_isLoading ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _newsList.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        return NewsListItem(news: _newsList[index]);
+                      },
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }

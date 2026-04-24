@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
+import 'package:bakahyou/utils/localization/localization_service.dart';
+
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({super.key});
 
@@ -39,56 +41,62 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Scan ISBN Barcode'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppConstants.textColor),
-        titleTextStyle: TextStyle(
-          color: AppConstants.textColor,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: _onDetect,
-          ),
-          // Scanner overlay
-          Center(
-            child: Container(
-              width: 300,
-              height: 150, // Typical proportion for 1D barcodes like ISBN
-              decoration: BoxDecoration(
-                border: Border.all(color: AppConstants.accentColor, width: 2),
-                borderRadius: BorderRadius.circular(12),
-              ),
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        return Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            title: Text(l10n.translate('scan_isbn_barcode')),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: AppConstants.textColor),
+            titleTextStyle: TextStyle(
+              color: AppConstants.textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Align barcode within the frame',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+          body: Stack(
+            children: [
+              MobileScanner(
+                controller: _scannerController,
+                onDetect: _onDetect,
+              ),
+              // Scanner overlay
+              Center(
+                child: Container(
+                  width: 300,
+                  height: 150, // Typical proportion for 1D barcodes like ISBN
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppConstants.accentColor, width: 2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      l10n.translate('align_barcode'),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

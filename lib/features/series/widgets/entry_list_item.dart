@@ -2,61 +2,84 @@ import 'package:flutter/material.dart';
 import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class EntryListItem extends StatelessWidget {
   final Series series;
   final int? ranking;
+  final bool isLibrary;
 
-  const EntryListItem({super.key, required this.series, this.ranking});
+  const EntryListItem({super.key, required this.series, this.ranking, this.isLibrary = false});
 
   String capitalize(String s) =>
       s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
 
+  String _getDisplayTitle() {
+    final lang = SettingsManager().defaultTitleLanguage;
+    switch (lang) {
+      case TitleLanguage.native:
+        return series.nativeTitle.isNotEmpty ? series.nativeTitle : series.title;
+      case TitleLanguage.romanized:
+        return series.romanizedTitle.isNotEmpty ? series.romanizedTitle : series.title;
+      case TitleLanguage.defaultLang:
+        return series.title;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final style = SettingsManager().currentListStyle;
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        final settings = SettingsManager();
+        final style = settings.separateListStyles 
+            ? (isLibrary ? settings.libraryListStyle : settings.browseListStyle)
+            : settings.currentListStyle;
 
-    return Stack(
-      children: [
-        _buildContent(context, style),
-        if (ranking != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppConstants.warningColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
+        return Stack(
+          children: [
+            _buildContent(context, style, l10n),
+            if (ranking != null)
+              Positioned(
+                top: 0,
+                left: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppConstants.warningColor,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Text(
+                    '$ranking',
+                    style: TextStyle(
+                      color: AppConstants.primaryBackground,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
                 ),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: Text(
-                '$ranking',
-                style: TextStyle(
-                  color: AppConstants.primaryBackground,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildContent(BuildContext context, AppListStyle style) {
+  Widget _buildContent(BuildContext context, AppListStyle style, LocalizationService l10n) {
     switch (style) {
       case AppListStyle.grid:
-        return _buildGridItem(context);
+        return _buildGridItem(context, l10n);
       case AppListStyle.minimalList:
-        return _buildMinimalListItem(context);
+        return _buildMinimalListItem(context, l10n);
       case AppListStyle.compact:
-        return _buildCompactListItem(context);
+        return _buildCompactListItem(context, l10n);
       case AppListStyle.comfortable:
       default:
-        return _buildComfortableListItem(context);
+        return _buildComfortableListItem(context, l10n);
     }
   }
 
@@ -94,7 +117,7 @@ class EntryListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildGridItem(BuildContext context) {
+  Widget _buildGridItem(BuildContext context, LocalizationService l10n) {
     return Card(
       color: AppConstants.secondaryBackground,
       clipBehavior: Clip.antiAlias,
@@ -114,7 +137,7 @@ class EntryListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  series.title,
+                  _getDisplayTitle(),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppConstants.textColor,
@@ -124,7 +147,7 @@ class EntryListItem extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  '${capitalize(series.type)} • ${capitalize(series.status)}',
+                  '${l10n.translate('type_${series.type.toLowerCase()}')} • ${l10n.translate('status_${series.status.toLowerCase()}')}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppConstants.textMutedColor,
                         fontSize: 11,
@@ -140,7 +163,7 @@ class EntryListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildMinimalListItem(BuildContext context) {
+  Widget _buildMinimalListItem(BuildContext context, LocalizationService l10n) {
     return Card(
       color: AppConstants.secondaryBackground,
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -153,7 +176,7 @@ class EntryListItem extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  series.title,
+                  _getDisplayTitle(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppConstants.textColor,
@@ -170,7 +193,7 @@ class EntryListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactListItem(BuildContext context) {
+  Widget _buildCompactListItem(BuildContext context, LocalizationService l10n) {
     return Card(
       color: AppConstants.secondaryBackground,
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -187,7 +210,7 @@ class EntryListItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      series.title,
+                      _getDisplayTitle(),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textColor,
@@ -198,7 +221,7 @@ class EntryListItem extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '${capitalize(series.type)} - ${capitalize(series.status)} - ${series.year}',
+                      '${l10n.translate('type_${series.type.toLowerCase()}')} - ${l10n.translate('status_${series.status.toLowerCase()}')} - ${series.year}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppConstants.textMutedColor,
                             fontSize: 14,
@@ -216,7 +239,7 @@ class EntryListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildComfortableListItem(BuildContext context) {
+  Widget _buildComfortableListItem(BuildContext context, LocalizationService l10n) {
     return Card(
       color: AppConstants.secondaryBackground,
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -232,7 +255,7 @@ class EntryListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      series.title,
+                      _getDisplayTitle(),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textColor,
@@ -243,7 +266,7 @@ class EntryListItem extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '${capitalize(series.type)} - ${capitalize(series.status)} - ${series.year}',
+                      '${l10n.translate('type_${series.type.toLowerCase()}')} - ${l10n.translate('status_${series.status.toLowerCase()}')} - ${series.year}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppConstants.textMutedColor,
                             fontSize: 14,

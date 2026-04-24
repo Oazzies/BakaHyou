@@ -11,6 +11,9 @@ import 'package:bakahyou/features/series/widgets/description_section.dart';
 import 'package:bakahyou/features/series/widgets/series_detail_header.dart';
 import 'package:bakahyou/features/series/widgets/rating_icon_button.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
+
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class SeriesDetailScreen extends StatefulWidget {
   final Series series;
@@ -52,6 +55,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   }
 
   void _shareLink() {
+    final l10n = LocalizationService();
     String? mangabakaLink;
     for (var link in widget.series.links) {
       if (link is String && link.contains('mangabaka')) {
@@ -70,32 +74,33 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No MangaBaka link found for sharing.'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.translate('no_sharing_link')),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
   }
 
   void _showDeleteConfirmationDialog() {
+    final l10n = LocalizationService();
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: AppConstants.tertiaryBackground,
           title: Text(
-            'Delete from Library',
+            l10n.translate('delete_from_library'),
             style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Are you sure you want to delete this series from your library?',
+            l10n.translate('delete_confirmation'),
             style: TextStyle(color: AppConstants.textMutedColor),
           ),
           actions: <Widget>[
             TextButton(
               child: Text(
-                'Cancel',
+                l10n.translate('cancel'),
                 style: TextStyle(color: AppConstants.textColor),
               ),
               onPressed: () {
@@ -103,7 +108,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
               },
             ),
             TextButton(
-              child: Text('Confirm', style: TextStyle(color: AppConstants.errorColor)),
+              child: Text(l10n.translate('confirm'), style: TextStyle(color: AppConstants.errorColor)),
               onPressed: () async {
                 // First, pop the dialog.
                 Navigator.of(dialogContext).pop();
@@ -119,7 +124,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Error: ${e.toString()}'),
+                        content: Text('${l10n.translate('failed_to_load')}: $e'),
                         backgroundColor: AppConstants.errorColor,
                       ),
                     );
@@ -134,21 +139,23 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   }
 
   Future<void> _onStateChanged(String newState) async {
+    final l10n = LocalizationService();
     try {
       await _libraryService.updateLibraryEntryState(widget.series.id, newState);
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Library status updated!')));
+      ).showSnackBar(SnackBar(content: Text(l10n.translate('status_updated'))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating status: ${e.toString()}')),
+        SnackBar(content: Text('${l10n.translate('failed_to_load')}: $e')),
       );
     }
   }
 
   Future<void> _onRatingChanged(int newRating) async {
+    final l10n = LocalizationService();
     try {
       await _libraryService.updateLibraryEntryRating(
         widget.series.id,
@@ -157,29 +164,30 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Rating updated!')));
+      ).showSnackBar(SnackBar(content: Text(l10n.translate('rating_updated'))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating rating: ${e.toString()}')),
+        SnackBar(content: Text('${l10n.translate('failed_to_load')}: $e')),
       );
     }
   }
 
   Future<void> _addSeriesToLibrary() async {
+    final l10n = LocalizationService();
     if (_isAdding) return;
     setState(() => _isAdding = true);
 
     try {
       await _libraryService.createLibraryEntry(
         widget.series.id,
-        'plan_to_read',
+        SettingsManager().addLibraryDefaultTab,
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to add to library: $e')));
+        ).showSnackBar(SnackBar(content: Text('${l10n.translate('failed_to_add')}: $e')));
       }
     } finally {
       if (mounted) {
@@ -190,130 +198,136 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: _showTitle ? Text(widget.series.title) : null,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.share), onPressed: _shareLink),
-          StreamBuilder<LibraryEntry?>(
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            title: _showTitle ? Text(widget.series.title) : null,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            systemOverlayStyle: const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.light,
+            ),
+            actions: [
+              IconButton(icon: const Icon(Icons.share), onPressed: _shareLink),
+              StreamBuilder<LibraryEntry?>(
+                stream: _entryStream,
+                builder: (context, snapshot) {
+                  if (snapshot.data != null) {
+                    return IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: _showDeleteConfirmationDialog,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: StreamBuilder<LibraryEntry?>(
+              stream: _entryStream,
+              builder: (context, snapshot) {
+                final entry = snapshot.data;
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SeriesDetailHeader(
+                          series: widget.series,
+                          progressChapter: entry?.progressChapter,
+                          progressVolume: entry?.progressVolume,
+                          inLibrary: entry != null,
+                        ),
+                      ),
+                      if (entry != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: StateSelectionSection(
+                                  currentState: entry.state,
+                                  onStateChanged: _onStateChanged,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              RatingIconButton(
+                                currentRating: entry.rating,
+                                onRatingChanged: _onRatingChanged,
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (widget.series.description.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: DescriptionSection(
+                            description: widget.series.description,
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            WidgetUtils.chipWrap(l10n.translate('genres'), widget.series.genres),
+                            if (widget.series.authors.isNotEmpty)
+                              WidgetUtils.chipWrap(
+                                l10n.translate('authors'),
+                                widget.series.authors,
+                              ),
+                            if (widget.series.artists.isNotEmpty)
+                              WidgetUtils.chipWrap(
+                                l10n.translate('artists'),
+                                widget.series.artists,
+                              ),
+                            if (widget.series.publishers.isNotEmpty)
+                              WidgetUtils.chipWrap(
+                                l10n.translate('publishers'),
+                                widget.series.publishers,
+                              ),
+                            if (widget.series.links.isNotEmpty)
+                              WidgetUtils.linkList(widget.series.links),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          floatingActionButton: StreamBuilder<LibraryEntry?>(
             stream: _entryStream,
             builder: (context, snapshot) {
-              if (snapshot.data != null) {
-                return IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: _showDeleteConfirmationDialog,
+              if (snapshot.connectionState == ConnectionState.active &&
+                  snapshot.data == null) {
+                return FloatingActionButton.extended(
+                  onPressed: _isAdding ? null : _addSeriesToLibrary,
+                  label: _isAdding
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.translate('add_to_library')),
+                  icon: _isAdding ? null : const Icon(Icons.add),
                 );
               }
               return const SizedBox.shrink();
             },
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: StreamBuilder<LibraryEntry?>(
-          stream: _entryStream,
-          builder: (context, snapshot) {
-            final entry = snapshot.data;
-            return SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SeriesDetailHeader(
-                      series: widget.series,
-                      progressChapter: entry?.progressChapter,
-                      progressVolume: entry?.progressVolume,
-                      inLibrary: entry != null,
-                    ),
-                  ),
-                  if (entry != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: StateSelectionSection(
-                              currentState: entry.state,
-                              onStateChanged: _onStateChanged,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          RatingIconButton(
-                            currentRating: entry.rating,
-                            onRatingChanged: _onRatingChanged,
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (widget.series.description.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: DescriptionSection(
-                        description: widget.series.description,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        WidgetUtils.chipWrap('Genres', widget.series.genres),
-                        if (widget.series.authors.isNotEmpty)
-                          WidgetUtils.chipWrap(
-                            'Authors',
-                            widget.series.authors,
-                          ),
-                        if (widget.series.artists.isNotEmpty)
-                          WidgetUtils.chipWrap(
-                            'Artists',
-                            widget.series.artists,
-                          ),
-                        if (widget.series.publishers.isNotEmpty)
-                          WidgetUtils.chipWrap(
-                            'Publishers',
-                            widget.series.publishers,
-                          ),
-                        if (widget.series.links.isNotEmpty)
-                          WidgetUtils.linkList(widget.series.links),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-      floatingActionButton: StreamBuilder<LibraryEntry?>(
-        stream: _entryStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.active &&
-              snapshot.data == null) {
-            return FloatingActionButton.extended(
-              onPressed: _isAdding ? null : _addSeriesToLibrary,
-              label: _isAdding
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Add to Library'),
-              icon: _isAdding ? null : const Icon(Icons.add),
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+        );
+      },
     );
   }
 }

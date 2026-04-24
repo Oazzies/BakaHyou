@@ -5,6 +5,8 @@ import 'package:bakahyou/features/browse/widgets/browse_shortcuts.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 
+import 'package:bakahyou/utils/localization/localization_service.dart';
+
 class BrowseContent extends StatelessWidget {
   final List<Series> searchResults;
   final bool isLoading;
@@ -31,7 +33,7 @@ class BrowseContent extends StatelessWidget {
     return Expanded(child: Center(child: CircularProgressIndicator()));
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(LocalizationService l10n) {
     return Expanded(
       child: Center(
         child: Column(
@@ -45,19 +47,21 @@ class BrowseContent extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            ElevatedButton(onPressed: onRetry, child: Text(l10n.translate('retry'))),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildResultsList() {
+  Widget _buildResultsList(LocalizationService l10n) {
     return Expanded(
       child: ListenableBuilder(
-        listenable: SettingsManager(),
+        listenable: Listenable.merge([SettingsManager(), l10n]),
         builder: (context, _) {
-          final isGrid = SettingsManager().currentListStyle == AppListStyle.grid;
+          final settings = SettingsManager();
+          final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
+          final isGrid = activeStyle == AppListStyle.grid || activeStyle == AppListStyle.coverOnlyGrid;
 
           if (isGrid) {
             return GridView.builder(
@@ -109,22 +113,28 @@ class BrowseContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (searchResults.isEmpty && !isLoading && error == null) {
-      return Expanded(child: BrowseShortcuts(onNavigate: onNavigateToResults));
-    }
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        if (searchResults.isEmpty && !isLoading && error == null) {
+          return Expanded(child: BrowseShortcuts(onNavigate: onNavigateToResults));
+        }
 
-    if (isLoading && searchResults.isEmpty) {
-      return _buildLoadingState();
-    }
+        if (isLoading && searchResults.isEmpty) {
+          return _buildLoadingState();
+        }
 
-    if (error != null && searchResults.isEmpty) {
-      return _buildErrorState();
-    }
+        if (error != null && searchResults.isEmpty) {
+          return _buildErrorState(l10n);
+        }
 
-    if (searchResults.isNotEmpty) {
-      return _buildResultsList();
-    }
+        if (searchResults.isNotEmpty) {
+          return _buildResultsList(l10n);
+        }
 
-    return const SizedBox.shrink();
+        return const SizedBox.shrink();
+      },
+    );
   }
 }

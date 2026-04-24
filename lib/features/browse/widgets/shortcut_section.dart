@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:bakahyou/features/browse/widgets/shortcut_button.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
+import 'package:bakahyou/utils/localization/localization_service.dart';
+
 class ShortcutSection extends StatelessWidget {
   final String header;
   final VoidCallback onMostPopular;
@@ -16,47 +18,53 @@ class ShortcutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 14.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            header,
-            style: TextStyle(
-              color: AppConstants.textColor,
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        return Padding(
+          padding: EdgeInsets.symmetric(vertical: 14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 3.0),
-                  child: ShortcutButton(
-                    icon: Icons.star_outline,
-                    label: 'Most Popular',
-                    onPressed: onMostPopular,
-                  ),
+              Text(
+                header,
+                style: TextStyle(
+                  color: AppConstants.textColor,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  letterSpacing: 0.5,
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 3.0),
-                  child: ShortcutButton(
-                    icon: Icons.casino_outlined,
-                    label: 'Random',
-                    onPressed: onRandom,
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 3.0),
+                      child: ShortcutButton(
+                        icon: Icons.star_outline,
+                        label: l10n.translate('most_popular'),
+                        onPressed: onMostPopular,
+                      ),
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 3.0),
+                      child: ShortcutButton(
+                        icon: Icons.casino_outlined,
+                        label: l10n.translate('random'),
+                        onPressed: onRandom,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

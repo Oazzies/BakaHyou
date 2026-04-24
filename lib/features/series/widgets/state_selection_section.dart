@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/features/library/screens/library_screen_constants.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class StateSelectionSection extends StatelessWidget {
   final String? currentState;
@@ -20,73 +21,79 @@ class StateSelectionSection extends StatelessWidget {
 
     final dropdownWidth = MediaQuery.of(context).size.width / 3;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: SizedBox(
-          width: dropdownWidth,
-          child: Container(
-            height: 38, // Slightly taller
-            padding: EdgeInsets.symmetric(horizontal: 12.0),
-            decoration: BoxDecoration(
-              color: AppConstants.primaryBackground,
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: AppConstants.borderColor, width: 1.5),
-            ),
-            child: DropdownButton<String>(
-              value: currentState,
-              isExpanded: true,
-              underline: SizedBox.shrink(),
-              dropdownColor: AppConstants.primaryBackground,
-              icon: Icon(Icons.arrow_drop_down, color: AppConstants.textColor),
-              style: TextStyle(
-                color: AppConstants.textColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-              itemHeight: 48,
-              menuMaxHeight: MediaQuery.of(context).size.height * 0.7,
-              onChanged: (value) {
-                if (value != null && value != currentState) {
-                  onStateChanged(value);
-                }
-              },
-              items: LibraryScreenConstants.tabs.map((tab) {
-                return DropdownMenuItem(
-                  value: tab.key,
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getIconForState(tab.key),
-                        color: _getColorForState(tab.key),
-                      ),
-                      SizedBox(width: 8),
-                      Text(tab.label),
-                    ],
+    return ListenableBuilder(
+      listenable: LocalizationService(),
+      builder: (context, _) {
+        final l10n = LocalizationService();
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: dropdownWidth,
+              child: Container(
+                height: 38, // Slightly taller
+                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                decoration: BoxDecoration(
+                  color: AppConstants.primaryBackground,
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: AppConstants.borderColor, width: 1.5),
+                ),
+                child: DropdownButton<String>(
+                  value: currentState,
+                  isExpanded: true,
+                  underline: SizedBox.shrink(),
+                  dropdownColor: AppConstants.primaryBackground,
+                  icon: Icon(Icons.arrow_drop_down, color: AppConstants.textColor),
+                  style: TextStyle(
+                    color: AppConstants.textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
                   ),
-                );
-              }).toList(),
-              selectedItemBuilder: (BuildContext context) {
-                return LibraryScreenConstants.tabs.map<Widget>((tab) {
-                  return Row(
-                    children: [
-                      Icon(
-                        _getIconForState(tab.key),
-                        color: _getColorForState(tab.key),
+                  itemHeight: 48,
+                  menuMaxHeight: MediaQuery.of(context).size.height * 0.7,
+                  onChanged: (value) {
+                    if (value != null && value != currentState) {
+                      onStateChanged(value);
+                    }
+                  },
+                  items: LibraryScreenConstants.tabs.map((tab) {
+                    return DropdownMenuItem(
+                      value: tab.key,
+                      child: Row(
+                        children: [
+                          Icon(
+                            _getIconForState(tab.key),
+                            color: _getColorForState(tab.key),
+                          ),
+                          SizedBox(width: 8),
+                          Text(l10n.translate(tab.key)),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(tab.label, overflow: TextOverflow.ellipsis),
-                      ),
-                    ],
-                  );
-                }).toList();
-              },
+                    );
+                  }).toList(),
+                  selectedItemBuilder: (BuildContext context) {
+                    return LibraryScreenConstants.tabs.map<Widget>((tab) {
+                      return Row(
+                        children: [
+                          Icon(
+                            _getIconForState(tab.key),
+                            color: _getColorForState(tab.key),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(l10n.translate(tab.key), overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

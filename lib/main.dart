@@ -9,6 +9,7 @@ import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ void main() async {
   
   await ThemeManager().init();
   await SettingsManager().init();
+  await LocalizationService().init();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

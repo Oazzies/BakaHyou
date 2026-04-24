@@ -6,8 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:bakahyou/utils/services/logging_service.dart';
 
 import 'package:bakahyou/features/profile/models/mb_profile.dart';
+import 'package:flutter/foundation.dart';
 
-class ProfileAuthService {
+class ProfileAuthService extends ChangeNotifier {
   final _logger = LoggingService.logger;
   static const _authorizationEndpoint =
       'https://mangabaka.org/auth/oauth2/authorize';
@@ -92,6 +93,7 @@ class ProfileAuthService {
 
       await _persistTokens(response);
       _hasSessionCache = true;
+      notifyListeners();
     } catch (e) {
       _logger.severe('Login failed: $e');
       throw Exception('Login failed.');
@@ -239,6 +241,7 @@ class ProfileAuthService {
       await _storage.delete(key: _kProfileCache);
       _cachedProfile = null;
       _hasSessionCache = false;
+      notifyListeners();
     } catch (e) {
       _logger.severe('Failed to logout: $e');
       throw Exception('Failed to logout.');

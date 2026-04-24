@@ -5,6 +5,9 @@ import 'package:bakahyou/features/news/screens/news_screen.dart';
 import 'package:bakahyou/features/profile/screens/profile_screen.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
+
+import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,7 +17,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 2;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = SettingsManager().defaultStartPage.index;
+  }
 
   // Keep pages alive across tab switches with IndexedStack
   final List<Widget> _pages = const [
@@ -34,8 +43,9 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: ThemeManager(),
+      listenable: Listenable.merge([ThemeManager(), LocalizationService()]),
       builder: (context, _) {
+        final l10n = LocalizationService();
         return Scaffold(
           backgroundColor: AppConstants.secondaryBackground,
           body: IndexedStack(
@@ -59,31 +69,31 @@ class _MainScreenState extends State<MainScreen> {
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: _onItemTapped,
                 labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: const [
+                destinations: [
                   NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home),
-                    label: "Home",
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home),
+                    label: l10n.translate("home"),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.library_books_outlined),
-                    selectedIcon: Icon(Icons.library_books),
-                    label: "Library",
+                    icon: const Icon(Icons.library_books_outlined),
+                    selectedIcon: const Icon(Icons.library_books),
+                    label: l10n.translate("library"),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.explore_outlined),
-                    selectedIcon: Icon(Icons.explore),
-                    label: "Browse",
+                    icon: const Icon(Icons.explore_outlined),
+                    selectedIcon: const Icon(Icons.explore),
+                    label: l10n.translate("browse"),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.article_outlined),
-                    selectedIcon: Icon(Icons.article),
-                    label: "News",
+                    icon: const Icon(Icons.article_outlined),
+                    selectedIcon: const Icon(Icons.article),
+                    label: l10n.translate("news"),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon: Icon(Icons.person),
-                    label: "Profile",
+                    icon: const Icon(Icons.person_outline),
+                    selectedIcon: const Icon(Icons.person),
+                    label: l10n.translate("profile"),
                   ),
                 ],
               ),
