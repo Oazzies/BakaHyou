@@ -9,7 +9,7 @@ class ThemeManager extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
-  static String _themeKey = '${AppConstants.prefixStorageKey}theme_pref';
+  static final String _themeKey = '${AppConstants.prefixStorageKey}theme_pref';
 
   AppTheme _currentTheme = AppTheme.dark;
   AppTheme get currentTheme => _currentTheme;
@@ -17,7 +17,9 @@ class ThemeManager extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final themeIndex = prefs.getInt(_themeKey);
-    if (themeIndex != null && themeIndex >= 0 && themeIndex < AppTheme.values.length) {
+    if (themeIndex != null &&
+        themeIndex >= 0 &&
+        themeIndex < AppTheme.values.length) {
       _currentTheme = AppTheme.values[themeIndex];
     }
     AppConstants.setAppTheme(_currentTheme);
@@ -26,13 +28,13 @@ class ThemeManager extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> setTheme(AppTheme theme) async {
     if (_currentTheme == theme) return;
-    
+
     _currentTheme = theme;
     AppConstants.setAppTheme(_currentTheme);
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_themeKey, theme.index);
-    
+
     notifyListeners();
   }
 

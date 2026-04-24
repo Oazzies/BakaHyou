@@ -4,7 +4,7 @@ import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 class SettingsScreen extends StatelessWidget {
-  SettingsScreen({super.key});
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,10 @@ class SettingsScreen extends StatelessWidget {
         listenable: Listenable.merge([ThemeManager(), SettingsManager()]),
         builder: (context, _) {
           return ListView(
-            padding: EdgeInsets.symmetric(horizontal: AppConstants.horizontalPadding, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppConstants.horizontalPadding,
+              vertical: 8,
+            ),
             children: [
               _buildSectionHeader('Appearance'),
               _buildSettingsGroup([
@@ -35,7 +38,9 @@ class SettingsScreen extends StatelessWidget {
                 _buildSettingItem(
                   icon: Icons.view_list_outlined,
                   title: 'List Style',
-                  subtitle: _getListStyleName(SettingsManager().currentListStyle),
+                  subtitle: _getListStyleName(
+                    SettingsManager().currentListStyle,
+                  ),
                   onTap: () => _showListStyleSelectionDialog(context),
                   isFirst: false,
                   isLast: true,
@@ -47,9 +52,11 @@ class SettingsScreen extends StatelessWidget {
                 _buildSwitchItem(
                   icon: Icons.library_books_outlined,
                   title: 'Hide Library Series',
-                  subtitle: 'Exclude series already in your library from Browse search results',
+                  subtitle:
+                      'Exclude series already in your library from Browse search results',
                   value: SettingsManager().hideLibrarySeriesInBrowse,
-                  onChanged: (value) => SettingsManager().setHideLibrarySeriesInBrowse(value),
+                  onChanged: (value) =>
+                      SettingsManager().setHideLibrarySeriesInBrowse(value),
                   isFirst: true,
                   isLast: true,
                 ),
@@ -82,9 +89,7 @@ class SettingsScreen extends StatelessWidget {
         color: AppConstants.secondaryBackground,
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -196,7 +201,7 @@ class SettingsScreen extends StatelessWidget {
             Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: AppConstants.accentColor,
+              activeThumbColor: AppConstants.accentColor,
             ),
           ],
         ),

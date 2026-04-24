@@ -5,7 +5,7 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 class DateDialog extends StatelessWidget {
   final String start;
   final String end;
-  DateDialog({required this.start, required this.end, super.key});
+  const DateDialog({required this.start, required this.end, super.key});
 
   @override
   Widget build(BuildContext context) {

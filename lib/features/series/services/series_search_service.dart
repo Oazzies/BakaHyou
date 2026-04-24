@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:bakahyou/features/series/models/series.dart';
 
 class SeriesSearchService {
-  static String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
+  static final String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
   final _logger = LoggingService.logger;
 
   Future<List<Map<String, dynamic>>> getGenres() async {

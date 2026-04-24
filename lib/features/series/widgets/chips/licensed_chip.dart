@@ -3,7 +3,7 @@ import 'package:bakahyou/features/series/widgets/chip.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class LicensedChip extends StatelessWidget {
-  LicensedChip({super.key});
+  const LicensedChip({super.key});
 
   @override
   Widget build(BuildContext context) {
