@@ -97,6 +97,7 @@ Settings
 
 * Advanced Settings (new page)
   * Redo Onboarding
+  * Browse-suggestions switch
 
 Extra
 * Optional Notifications for various things
