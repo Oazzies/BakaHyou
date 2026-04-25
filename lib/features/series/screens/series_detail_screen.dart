@@ -12,6 +12,7 @@ import 'package:bakahyou/features/series/widgets/series_detail_header.dart';
 import 'package:bakahyou/features/series/widgets/rating_icon_button.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/features/series/services/metadata_service.dart';
 
 import 'package:bakahyou/utils/localization/localization_service.dart';
 
@@ -279,7 +280,18 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            WidgetUtils.chipWrap(l10n.translate('genres'), widget.series.genres),
+                            WidgetUtils.chipWrap(
+                              l10n.translate('genres'),
+                              widget.series.genres
+                                  .map((g) => getIt<MetadataService>().getGenreLabel(g))
+                                  .toList(),
+                            ),
+                            if (widget.series.tags.isNotEmpty)
+                              WidgetUtils.chipWrap(
+                                l10n.translate('tags'),
+                                widget.series.tags,
+                                color: AppConstants.accentColor.withValues(alpha: 0.1),
+                              ),
                             if (widget.series.authors.isNotEmpty)
                               WidgetUtils.chipWrap(
                                 l10n.translate('authors'),

@@ -8,6 +8,7 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/features/series/services/metadata_service.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
 
@@ -18,6 +19,7 @@ void main() async {
   await dotenv.load();
   setupServiceLocator();
   await getIt<ProfileAuthService>().init();
+  await getIt<MetadataService>().init();
   
   await ThemeManager().init();
   await SettingsManager().init();

@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/features/series/services/metadata_service.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:http/http.dart' as http;
 import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
@@ -11,47 +13,20 @@ import 'package:bakahyou/utils/settings/settings_manager.dart';
 class SeriesSearchService {
   static final String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
   final _logger = LoggingService.logger;
+  final _metadataService = getIt<MetadataService>();
 
   Future<List<Map<String, dynamic>>> getGenres() async {
-    try {
-      final response = await http
-          .get(
-            Uri.parse('${AppConstants.baseApiUrl}/genres'),
-            headers: {'User-Agent': AppConstants.userAgent},
-          )
-          .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
-      print("Genres API");
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(json['data'] ?? []);
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Failed to fetch genres: $e');
-      return [];
+    if (!_metadataService.isInitialized) {
+      await _metadataService.fetchGenres();
     }
+    return _metadataService.genres;
   }
 
   Future<List<Map<String, dynamic>>> getTags() async {
-    try {
-      final response = await http
-          .get(
-            Uri.parse('${AppConstants.baseApiUrl}/tags'),
-            headers: {'User-Agent': AppConstants.userAgent},
-          )
-          .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
-
-      print("Tags API");
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(json['data'] ?? []);
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Failed to fetch tags: $e');
-      return [];
+    if (!_metadataService.isInitialized) {
+      await _metadataService.fetchTags();
     }
+    return _metadataService.tags;
   }
 
   Future<List<Series>> searchSeriesByName(

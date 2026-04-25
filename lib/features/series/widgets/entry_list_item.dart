@@ -3,6 +3,8 @@ import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/features/series/services/metadata_service.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 
 class EntryListItem extends StatelessWidget {
   final Series series;
@@ -283,9 +285,7 @@ class EntryListItem extends StatelessWidget {
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           final genre = series.genres[index];
-                          final genreLabel = genre.isNotEmpty
-                              ? genre[0].toUpperCase() + genre.substring(1)
-                              : genre;
+                          final genreLabel = getIt<MetadataService>().getGenreLabel(genre);
                           return Chip(
                             label: Text(
                               genreLabel,
