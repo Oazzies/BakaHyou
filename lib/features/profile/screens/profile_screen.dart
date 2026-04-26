@@ -99,8 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _error = null;
         _loading = false;
         _profile = null;
-      } else if (_profile == null || _auth.isLoggedIn) {
-        // Logged in — full reload if profile not fetched yet or just logged in
+      } else if (_profile == null && _auth.isLoggedIn) {
+        // Logged in but profile not fetched yet — full load
         _bootstrap();
       }
     });

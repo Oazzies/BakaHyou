@@ -68,8 +68,8 @@ class LibraryService {
       _hasPerformedInitialSync = true;
     } on NetworkException catch (e) {
       _logger.warning('Initial sync failed due to network error: $e. Using local data.');
-      // Don't set _hasPerformedInitialSync = true so it can retry later
       _initialSyncTask = null; 
+      rethrow;
     } catch (e, st) {
       _logger.severe('Failed to perform initial sync: $e\n$st');
       _initialSyncTask = null;
@@ -87,14 +87,18 @@ class LibraryService {
         final token = await _auth.getValidAccessToken();
 
         var page = 1;
+        var totalFetched = 0;
         while (true) {
           final entries = await _fetchPage(token, page, state: state);
+          _logger.info('Fetched ${entries.length} entries on page $page');
           await _saveEntries(entries);
+          totalFetched += entries.length;
           if (entries.length < LibraryConstants.pageLimit) {
             break;
           }
           page++;
         }
+        _logger.info('Library sync completed. Total entries fetched: $totalFetched');
         return; // Success
       } on AuthException {
         rethrow;
