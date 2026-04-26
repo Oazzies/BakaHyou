@@ -87,7 +87,7 @@ Settings
   * Logout Button placement
 
 * Push Notifications
-  * Push Notifications
+  * Push Notifications (News related to series in your Library)
 
 * Information
   * MangaBaka Discord
