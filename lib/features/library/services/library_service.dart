@@ -55,6 +55,9 @@ class LibraryService {
     _hasPerformedInitialSync = true;
     try {
       await syncLibrary();
+    } on NetworkException catch (e) {
+      _logger.warning('Initial sync failed due to network error: $e. Using local data.');
+      _hasPerformedInitialSync = false; // Allow retry on next load
     } catch (e, st) {
       _logger.severe('Failed to perform initial sync: $e\n$st');
       _hasPerformedInitialSync = false;
@@ -64,33 +67,46 @@ class LibraryService {
 
   /// Performs a full sync with the remote API.
   Future<void> syncLibrary() async {
-    try {
-      final token = await _auth.getValidAccessToken();
+    const maxRetries = 3;
+    var retryCount = 0;
 
-      var page = 1;
-      while (true) {
-        final entries = await _fetchPage(token, page);
-        await _saveEntries(entries);
-        if (entries.length < LibraryConstants.pageLimit) {
-          break;
+    while (retryCount < maxRetries) {
+      try {
+        final token = await _auth.getValidAccessToken();
+
+        var page = 1;
+        while (true) {
+          final entries = await _fetchPage(token, page);
+          await _saveEntries(entries);
+          if (entries.length < LibraryConstants.pageLimit) {
+            break;
+          }
+          page++;
         }
-        page++;
+        return; // Success
+      } on AuthException {
+        rethrow;
+      } on NetworkException catch (e) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          _logger.severe('Failed to sync library after $maxRetries attempts: $e');
+          rethrow;
+        }
+        final delay = Duration(seconds: retryCount * 2);
+        _logger.warning('Network error during sync. Retrying in ${delay.inSeconds}s... ($retryCount/$maxRetries)');
+        await Future.delayed(delay);
+      } on ApiException {
+        rethrow;
+      } on DatabaseException {
+        rethrow;
+      } catch (e, st) {
+        _logger.severe('Failed to sync library: $e\n$st');
+        throw AppError(
+          message: 'Failed to sync library',
+          originalError: e,
+          stackTrace: st,
+        );
       }
-    } on AuthException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } on ApiException {
-      rethrow;
-    } on DatabaseException {
-      rethrow;
-    } catch (e, st) {
-      _logger.severe('Failed to sync library: $e\n$st');
-      throw AppError(
-        message: 'Failed to sync library',
-        originalError: e,
-        stackTrace: st,
-      );
     }
   }
 
@@ -161,6 +177,14 @@ class LibraryService {
           stackTrace: st,
         );
       }
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error fetching library page: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error fetching library page: $e\n$st');
       throw NetworkException(
@@ -254,6 +278,14 @@ class LibraryService {
 
       // Update the local database entry
       await _db.libraryEntriesDao.updateEntryState(seriesId, state);
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error updating entry state: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error updating entry state: $e\n$st');
       throw NetworkException(
@@ -329,6 +361,14 @@ class LibraryService {
       }
 
       await _db.libraryEntriesDao.updateEntryRating(seriesId, rating);
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error updating entry rating: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error updating entry rating: $e\n$st');
       throw NetworkException(
@@ -404,6 +444,14 @@ class LibraryService {
           code: 'CREATE_ENTRY_FAILED',
         );
       }
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error creating entry: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error creating entry: $e\n$st');
       throw NetworkException(
@@ -478,6 +526,14 @@ class LibraryService {
           code: 'DELETE_ENTRY_FAILED',
         );
       }
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error deleting entry: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error deleting entry: $e\n$st');
       throw NetworkException(

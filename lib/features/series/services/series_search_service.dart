@@ -96,6 +96,14 @@ class SeriesSearchService {
           code: 'SEARCH_FAILED',
         );
       }
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error during series search: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error during series search: $e\n$st');
       throw NetworkException(

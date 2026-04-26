@@ -54,6 +54,14 @@ class SeriesService {
           code: 'FETCH_FAILED',
         );
       }
+    } on http.ClientException catch (e, st) {
+      _logger.severe('HTTP client error while fetching series: $e\n$st');
+      throw NetworkException(
+        message: 'Network error. Please check your connection.',
+        code: 'NETWORK_ERROR',
+        originalError: e,
+        stackTrace: st,
+      );
     } on SocketException catch (e, st) {
       _logger.severe('Network error while fetching series: $e\n$st');
       throw NetworkException(
