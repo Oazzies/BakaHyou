@@ -11,6 +11,8 @@ import 'package:bakahyou/features/profile/screens/settings_screen.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -364,32 +366,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLoginPrompt() {
     final l10n = LocalizationService();
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            l10n.translate('login_with'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _login,
-            icon: const Icon(Icons.login),
-            label: Text(l10n.translate('login_with')),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.successColor,
-              foregroundColor: AppConstants.textColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return MBLoginPrompt(
+      onLogin: _login,
+      message: l10n.translate('login_prompt_profile'),
     );
   }
 }

@@ -181,7 +181,9 @@
       "browse_list_style_subtitle": "Select the display style for browse results",
       "content_preferences_subtitle": "Filter library and search results by rating",
       "language_subtitle": "Select your preferred app language",
-      "all_ratings_hint": "All ratings"
+      "all_ratings_hint": "All ratings",
+      "login_prompt_library": "Login with MangaBaka to see your library",
+      "login_prompt_profile": "Login with MangaBaka to see your profile"
     }
   },
   "nl": {
@@ -366,7 +368,9 @@
       "browse_list_style_subtitle": "Selecteer de weergavestijl voor bladerresultaten",
       "content_preferences_subtitle": "Filter bibliotheek en zoekresultaten op beoordeling",
       "language_subtitle": "Selecteer je voorkeurstaal voor de app",
-      "all_ratings_hint": "Alle beoordelingen"
+      "all_ratings_hint": "Alle beoordelingen",
+      "login_prompt_library": "Inloggen met MangaBaka om je bibliotheek te zien",
+      "login_prompt_profile": "Inloggen met MangaBaka om je profiel te zien"
     }
   },
   "de": {
@@ -551,7 +555,9 @@
       "browse_list_style_subtitle": "Wähle den Listenstil für Suchergebnisse",
       "content_preferences_subtitle": "Bibliothek und Suche nach Bewertung filtern",
       "language_subtitle": "Wähle deine bevorzugte App-Sprache",
-      "all_ratings_hint": "Alle Bewertungen"
+      "all_ratings_hint": "Alle Bewertungen",
+      "login_prompt_library": "Mit MangaBaka anmelden, um deine Bibliothek zu sehen",
+      "login_prompt_profile": "Mit MangaBaka anmelden, um dein Profil zu sehen"
     }
   },
   "es": {
@@ -736,7 +742,9 @@
       "browse_list_style_subtitle": "Cambia el estilo de lista en Explorar",
       "content_preferences_subtitle": "Filtra por clasificación de contenido",
       "language_subtitle": "Idioma de la aplicación",
-      "all_ratings_hint": "Todas las clasificaciones"
+      "all_ratings_hint": "Todas las clasificaciones",
+      "login_prompt_library": "Inicia sesión con MangaBaka para ver tu biblioteca",
+      "login_prompt_profile": "Inicia sesión con MangaBaka para ver tu perfil"
     }
   }
 }

@@ -13,6 +13,8 @@ import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
+
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -191,30 +193,12 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
+
   Widget _buildLoginPrompt() {
     final l10n = LocalizationService();
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            l10n.translate('login_with'),
-            style: TextStyle(fontSize: 18, color: AppConstants.textColor),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: _loginAndReload,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: LibraryScreenConstants.accentColor,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            ),
-            child: Text(
-              l10n.translate('login_with'),
-              style: TextStyle(fontSize: 16, color: AppConstants.textColor),
-            ),
-          ),
-        ],
-      ),
+    return MBLoginPrompt(
+      onLogin: _loginAndReload,
+      message: l10n.translate('login_prompt_library'),
     );
   }
 
