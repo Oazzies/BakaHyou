@@ -39,17 +39,18 @@ class TriStateGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.0),
-          child: Text(
-            title,
-            style: TextStyle(
-              color: AppConstants.textColor,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        if (title.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: AppConstants.textColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
         Wrap(
           spacing: 8,
           runSpacing: 8,

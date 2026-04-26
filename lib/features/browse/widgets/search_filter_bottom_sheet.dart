@@ -7,6 +7,7 @@ import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/features/browse/widgets/tri_state_group.dart';
 import 'package:bakahyou/features/browse/widgets/filter_list_dialog.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/features/profile/widgets/settings_components.dart';
 
 class SearchFilterBottomSheet extends StatefulWidget {
   final SearchFilters initialFilters;
@@ -81,15 +82,255 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
     }
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: AppConstants.textColor,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
+  void _showSortSelectionDialog(
+    BuildContext context,
+    LocalizationService l10n,
+    Map<String, String> sortOptions,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext dialogContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppConstants.secondaryBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 60),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppConstants.borderColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.translate('sort_by'),
+                style: TextStyle(
+                  color: AppConstants.textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ...sortOptions.entries.map((e) {
+                final isSelected = _filters.sortBy == e.key;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() => _filters = _filters.copyWith(sortBy: e.key));
+                    Navigator.pop(dialogContext);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppConstants.borderColor.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          e.value,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppConstants.textColor
+                                : AppConstants.textMutedColor,
+                            fontSize: 16,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_circle,
+                            color: AppConstants.accentColor,
+                            size: 24,
+                          )
+                        else
+                          Icon(
+                            Icons.circle_outlined,
+                            color: AppConstants.borderColor.withValues(alpha: 0.3),
+                            size: 24,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              GestureDetector(
+                onTap: () {
+                  setState(() => _filters = _filters.copyWith(sortBy: null));
+                  Navigator.pop(dialogContext);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 56,
+                  child: Row(
+                    children: [
+                      Text(
+                        l10n.translate('default'),
+                        style: TextStyle(
+                          color: _filters.sortBy == null
+                              ? AppConstants.textColor
+                              : AppConstants.textMutedColor,
+                          fontSize: 16,
+                          fontWeight: _filters.sortBy == null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_filters.sortBy == null)
+                        Icon(
+                          Icons.check_circle,
+                          color: AppConstants.accentColor,
+                          size: 24,
+                        )
+                      else
+                        Icon(
+                          Icons.circle_outlined,
+                          color: AppConstants.borderColor.withValues(alpha: 0.3),
+                          size: 24,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLicensedStatusDialog(
+    BuildContext context,
+    LocalizationService l10n,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext dialogContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppConstants.secondaryBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 60),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppConstants.borderColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.translate('licensed_status'),
+                style: TextStyle(
+                  color: AppConstants.textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSimpleSelectionTile(
+                l10n.translate('any'),
+                _filters.isLicensed == null,
+                () => setState(() => _filters = _filters.copyWithIsLicensed(null)),
+                dialogContext,
+              ),
+              _buildSimpleSelectionTile(
+                l10n.translate('yes'),
+                _filters.isLicensed == true,
+                () => setState(() => _filters = _filters.copyWithIsLicensed(true)),
+                dialogContext,
+              ),
+              _buildSimpleSelectionTile(
+                l10n.translate('no'),
+                _filters.isLicensed == false,
+                () => setState(() => _filters = _filters.copyWithIsLicensed(false)),
+                dialogContext,
+                isLast: true,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSimpleSelectionTile(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    BuildContext context, {
+    bool isLast = false,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        onTap();
+        Navigator.pop(context);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(
+                  bottom: BorderSide(
+                    color: AppConstants.borderColor.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
+                ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? AppConstants.textColor
+                    : AppConstants.textMutedColor,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: AppConstants.accentColor,
+                size: 24,
+              )
+            else
+              Icon(
+                Icons.circle_outlined,
+                color: AppConstants.borderColor.withValues(alpha: 0.3),
+                size: 24,
+              ),
+          ],
         ),
       ),
     );
@@ -107,74 +348,25 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppConstants.tertiaryBackground,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppConstants.cardRadius),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return FilterListDialog(
-          title: title,
-          items: items,
-          idKey: idKey,
-          nameKey: nameKey,
-          initialIncludes: includes,
-          initialExcludes: excludes,
-          onApply: onApply,
+        return Container(
+          decoration: BoxDecoration(
+            color: AppConstants.primaryBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: FilterListDialog(
+            title: title,
+            items: items,
+            idKey: idKey,
+            nameKey: nameKey,
+            initialIncludes: includes,
+            initialExcludes: excludes,
+            onApply: onApply,
+          ),
         );
       },
     );
-  }
-
-  Widget _buildFilterRow(
-    String title,
-    List<String> includes,
-    List<String> excludes,
-    VoidCallback onTap,
-    LocalizationService l10n,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppConstants.borderColor),
-          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                includes.isEmpty && excludes.isEmpty
-                    ? '${l10n.translate('select')} $title...'
-                    : '${includes.length} ${l10n.translate('included')}, ${excludes.length} ${l10n.translate('excluded')}',
-                style: TextStyle(color: AppConstants.textMutedColor),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: AppConstants.textMutedColor,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  int _getDivisions() {
-    final step = SettingsManager().ratingSliderStep;
-    switch (step) {
-      case RatingSliderStep.step5: return 20;
-      case RatingSliderStep.step10: return 10;
-      case RatingSliderStep.step20: return 5;
-      case RatingSliderStep.step25: return 4;
-      case RatingSliderStep.step1: return 100;
-    }
   }
 
   @override
@@ -184,37 +376,47 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
       builder: (context, _) {
         final l10n = LocalizationService();
         final sortOptions = _getSortOptions(l10n);
-        
-        return SizedBox(
-          height: MediaQuery.of(context).size.height,
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: BoxDecoration(
+            color: AppConstants.primaryBackground,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
           child: Column(
             children: [
-              SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppConstants.borderColor,
-                  borderRadius: BorderRadius.circular(2),
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppConstants.borderColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
-                      onPressed: () => setState(() => _filters = SearchFilters()),
+                      onPressed: () =>
+                          setState(() => _filters = SearchFilters()),
                       child: Text(
                         l10n.translate('reset'),
-                        style: TextStyle(color: AppConstants.textMutedColor),
+                        style: TextStyle(
+                          color: AppConstants.textMutedColor,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                     Text(
                       l10n.translate('filters'),
                       style: TextStyle(
                         color: AppConstants.textColor,
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -223,292 +425,301 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
                         widget.onApply(_filters);
                         Navigator.pop(context);
                       },
+                      style: TextButton.styleFrom(
+                        backgroundColor:
+                            AppConstants.accentColor.withValues(alpha: 0.15),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
                       child: Text(
                         l10n.translate('apply'),
                         style: TextStyle(
                           color: AppConstants.accentColor,
                           fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              Divider(color: AppConstants.borderColor, height: 1),
               Expanded(
                 child: _isLoadingMetadata
-                    ? Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator())
                     : ListView(
-                        padding: EdgeInsets.all(16.0),
+                        padding: EdgeInsets.only(
+                          left: AppConstants.horizontalPadding,
+                          right: AppConstants.horizontalPadding,
+                          top: 8,
+                          bottom: 40,
+                        ),
                         children: [
-                          _buildSectionTitle(l10n.translate('sort_by')),
-                          DropdownButtonFormField<String>(
-                            value: _filters.sortBy,
-                            dropdownColor: AppConstants.tertiaryBackground,
-                            style: TextStyle(color: AppConstants.textColor),
-                            decoration: InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.cardRadius,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.cardRadius,
-                                ),
-                                borderSide: BorderSide(color: AppConstants.borderColor),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.cardRadius,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppConstants.accentColor,
-                                ),
-                              ),
-                            ),
-                            items: [
-                              DropdownMenuItem(
-                                value: null,
-                                child: Text(l10n.translate('default')),
-                              ),
-                              ...sortOptions.entries.map(
-                                (e) => DropdownMenuItem(
-                                  value: e.key,
-                                  child: Text(e.value),
-                                ),
-                              ),
-                            ],
-                            onChanged: (val) => setState(
-                              () => _filters = _filters.copyWith(sortBy: val),
-                            ),
+                          SettingsSectionHeader(
+                            title: l10n.translate('sort_by'),
                           ),
-                          const SizedBox(height: 16),
-
-                          _buildSectionTitle(l10n.translate('genres')),
-                          _buildFilterRow(
-                            l10n.translate('genres'),
-                            _filters.genre,
-                            _filters.genreNot,
-                            () {
-                              _showFilterDialog(
-                                title: l10n.translate('genres'),
-                                items: _genres,
-                                idKey: 'value',
-                                nameKey: 'label',
-                                includes: _filters.genre,
-                                excludes: _filters.genreNot,
-                                onApply: (inc, exc) => setState(
-                                  () => _filters = _filters.copyWith(
-                                    genre: inc,
-                                    genreNot: exc,
-                                  ),
-                                ),
-                              );
-                            },
-                            l10n,
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildSectionTitle(l10n.translate('tags')),
-                          _buildFilterRow(
-                            l10n.translate('tags'),
-                            _filters.tag,
-                            _filters.tagNot,
-                            () {
-                              _showFilterDialog(
-                                title: l10n.translate('tags'),
-                                items: _tags,
-                                idKey: 'id',
-                                nameKey: 'name',
-                                includes: _filters.tag,
-                                excludes: _filters.tagNot,
-                                onApply: (inc, exc) => setState(
-                                  () => _filters = _filters.copyWith(
-                                    tag: inc,
-                                    tagNot: exc,
-                                  ),
-                                ),
-                              );
-                            },
-                            l10n,
-                          ),
-                          const SizedBox(height: 16),
-
-                          TriStateGroup(
-                            title: l10n.translate('type'),
-                            options: _types
-                                .map(
-                                  (t) => {
-                                    'value': t,
-                                    'label': l10n.translate('type_$t'),
-                                  },
-                                )
-                                .toList(),
-                            includes: _filters.type,
-                            excludes: _filters.typeNot,
-                            onUpdate: (inc, exc) => setState(
-                              () => _filters = _filters.copyWith(
-                                type: inc,
-                                typeNot: exc,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          TriStateGroup(
-                            title: l10n.translate('status'),
-                            options: _statuses
-                                .map(
-                                  (s) => {
-                                    'value': s,
-                                    'label': l10n.translate('status_$s'),
-                                  },
-                                )
-                                .toList(),
-                            includes: _filters.status,
-                            excludes: _filters.statusNot,
-                            onUpdate: (inc, exc) => setState(
-                              () => _filters = _filters.copyWith(
-                                status: inc,
-                                statusNot: exc,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildSectionTitle(l10n.translate('licensed_status')),
-                          Wrap(
-                            spacing: 8,
+                          SettingsGroup(
                             children: [
-                              ChoiceChip(
-                                label: Text(l10n.translate('any')),
-                                selected: _filters.isLicensed == null,
-                                onSelected: (val) => setState(
-                                  () =>
-                                      _filters = _filters.copyWithIsLicensed(null),
+                              SettingsItem(
+                                icon: Icons.sort_outlined,
+                                title: l10n.translate('sort_by'),
+                                subtitle: _filters.sortBy == null
+                                    ? l10n.translate('default')
+                                    : sortOptions[_filters.sortBy],
+                                isFirst: true,
+                                isLast: true,
+                                onTap: () => _showSortSelectionDialog(
+                                  context,
+                                  l10n,
+                                  sortOptions,
                                 ),
-                                selectedColor: AppConstants.accentColor.withValues(
-                                  alpha: 0.3,
-                                ),
-                                labelStyle: TextStyle(
-                                  color: _filters.isLicensed == null
-                                      ? AppConstants.accentColor
-                                      : AppConstants.textColor,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppConstants.cardRadius,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SettingsSectionHeader(
+                            title: l10n.translate('categories'),
+                          ),
+                          SettingsGroup(
+                            children: [
+                              SettingsItem(
+                                icon: Icons.category_outlined,
+                                title: l10n.translate('genres'),
+                                subtitle: _filters.genre.isEmpty &&
+                                        _filters.genreNot.isEmpty
+                                    ? l10n.translate('any')
+                                    : '${_filters.genre.length} ${l10n.translate('included')}, ${_filters.genreNot.length} ${l10n.translate('excluded')}',
+                                isFirst: true,
+                                onTap: () => _showFilterDialog(
+                                  title: l10n.translate('genres'),
+                                  items: _genres,
+                                  idKey: 'value',
+                                  nameKey: 'label',
+                                  includes: _filters.genre,
+                                  excludes: _filters.genreNot,
+                                  onApply: (inc, exc) => setState(
+                                    () => _filters = _filters.copyWith(
+                                      genre: inc,
+                                      genreNot: exc,
+                                    ),
                                   ),
                                 ),
                               ),
-                              ChoiceChip(
-                                label: Text(l10n.translate('yes')),
-                                selected: _filters.isLicensed == true,
-                                onSelected: (val) => setState(
-                                  () =>
-                                      _filters = _filters.copyWithIsLicensed(true),
-                                ),
-                                selectedColor: AppConstants.accentColor.withValues(
-                                  alpha: 0.3,
-                                ),
-                                labelStyle: TextStyle(
-                                  color: _filters.isLicensed == true
-                                      ? AppConstants.accentColor
-                                      : AppConstants.textColor,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppConstants.cardRadius,
-                                  ),
-                                ),
-                              ),
-                              ChoiceChip(
-                                label: Text(l10n.translate('no')),
-                                selected: _filters.isLicensed == false,
-                                onSelected: (val) => setState(
-                                  () =>
-                                      _filters = _filters.copyWithIsLicensed(false),
-                                ),
-                                selectedColor: AppConstants.accentColor.withValues(
-                                  alpha: 0.3,
-                                ),
-                                labelStyle: TextStyle(
-                                  color: _filters.isLicensed == false
-                                      ? AppConstants.accentColor
-                                      : AppConstants.textColor,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppConstants.cardRadius,
+                              const SettingsDivider(),
+                              SettingsItem(
+                                icon: Icons.label_outline,
+                                title: l10n.translate('tags'),
+                                subtitle: _filters.tag.isEmpty &&
+                                        _filters.tagNot.isEmpty
+                                    ? l10n.translate('any')
+                                    : '${_filters.tag.length} ${l10n.translate('included')}, ${_filters.tagNot.length} ${l10n.translate('excluded')}',
+                                isLast: true,
+                                onTap: () => _showFilterDialog(
+                                  title: l10n.translate('tags'),
+                                  items: _tags,
+                                  idKey: 'id',
+                                  nameKey: 'name',
+                                  includes: _filters.tag,
+                                  excludes: _filters.tagNot,
+                                  onApply: (inc, exc) => setState(
+                                    () => _filters = _filters.copyWith(
+                                      tag: inc,
+                                      tagNot: exc,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-
-                          _buildSectionTitle(
-                            '${l10n.translate('rating_range')} (${_filters.ratingLower.toInt()} - ${_filters.ratingUpper.toInt()})',
-                          ),
-                          RangeSlider(
-                            values: RangeValues(
-                              _filters.ratingLower,
-                              _filters.ratingUpper,
-                            ),
-                            min: 0,
-                            max: 100,
-                            divisions: _getDivisions(),
-                            activeColor: AppConstants.accentColor,
-                            inactiveColor: AppConstants.borderColor,
-                            labels: RangeLabels(
-                              '${_filters.ratingLower.toInt()}',
-                              '${_filters.ratingUpper.toInt()}',
-                            ),
-                            onChanged: (values) => setState(
-                              () => _filters = _filters.copyWith(
-                                ratingLower: values.start,
-                                ratingUpper: values.end,
+                          const SizedBox(height: 8),
+                          SettingsGroup(
+                            children: [
+                              SettingsItem(
+                                icon: Icons.auto_awesome_outlined,
+                                title: l10n.translate('type'),
+                                subtitle: _filters.type.isEmpty &&
+                                        _filters.typeNot.isEmpty
+                                    ? l10n.translate('any')
+                                    : '${_filters.type.length} ${l10n.translate('included')}, ${_filters.typeNot.length} ${l10n.translate('excluded')}',
+                                isFirst: true,
+                                onTap: () => _showFilterDialog(
+                                  title: l10n.translate('type'),
+                                  items: _types
+                                      .map((t) => {
+                                            'value': t,
+                                            'label': l10n.translate('type_$t'),
+                                          })
+                                      .toList(),
+                                  idKey: 'value',
+                                  nameKey: 'label',
+                                  includes: _filters.type,
+                                  excludes: _filters.typeNot,
+                                  onApply: (inc, exc) => setState(
+                                    () => _filters = _filters.copyWith(
+                                      type: inc,
+                                      typeNot: exc,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          _buildSectionTitle(
-                            '${l10n.translate('publication_year')} (${_filters.publishedYearLower ?? l10n.translate('any')} - ${_filters.publishedYearUpper ?? l10n.translate('any')})',
-                          ),
-                          RangeSlider(
-                            values: RangeValues(
-                              (_filters.publishedYearLower ?? _minYear).toDouble(),
-                              (_filters.publishedYearUpper ?? _maxYear).toDouble(),
-                            ),
-                            min: _minYear.toDouble(),
-                            max: _maxYear.toDouble(),
-                            divisions: _maxYear - _minYear,
-                            activeColor: AppConstants.accentColor,
-                            inactiveColor: AppConstants.borderColor,
-                            labels: RangeLabels(
-                              _filters.publishedYearLower == null
-                                  ? l10n.translate('any')
-                                  : '${_filters.publishedYearLower}',
-                              _filters.publishedYearUpper == null
-                                  ? l10n.translate('any')
-                                  : '${_filters.publishedYearUpper}',
-                            ),
-                            onChanged: (values) => setState(
-                              () => _filters = _filters.copyWith(
-                                publishedYearLower: values.start.toInt() == _minYear
-                                    ? null
-                                    : values.start.toInt(),
-                                publishedYearUpper: values.end.toInt() == _maxYear
-                                    ? null
-                                    : values.end.toInt(),
+                              const SettingsDivider(),
+                              SettingsItem(
+                                icon: Icons.history_outlined,
+                                title: l10n.translate('status'),
+                                subtitle: _filters.status.isEmpty &&
+                                        _filters.statusNot.isEmpty
+                                    ? l10n.translate('any')
+                                    : '${_filters.status.length} ${l10n.translate('included')}, ${_filters.statusNot.length} ${l10n.translate('excluded')}',
+                                isLast: true,
+                                onTap: () => _showFilterDialog(
+                                  title: l10n.translate('status'),
+                                  items: _statuses
+                                      .map((s) => {
+                                            'value': s,
+                                            'label': l10n.translate('status_$s'),
+                                          })
+                                      .toList(),
+                                  idKey: 'value',
+                                  nameKey: 'label',
+                                  includes: _filters.status,
+                                  excludes: _filters.statusNot,
+                                  onApply: (inc, exc) => setState(
+                                    () => _filters = _filters.copyWith(
+                                      status: inc,
+                                      statusNot: exc,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SettingsSectionHeader(
+                            title: l10n.translate('details'),
+                          ),
+                          SettingsGroup(
+                            children: [
+                              SettingsItem(
+                                icon: Icons.verified_user_outlined,
+                                title: l10n.translate('licensed_status'),
+                                subtitle: _filters.isLicensed == null
+                                    ? l10n.translate('any')
+                                    : (_filters.isLicensed == true
+                                        ? l10n.translate('yes')
+                                        : l10n.translate('no')),
+                                isFirst: true,
+                                onTap: () => _showLicensedStatusDialog(
+                                  context,
+                                  l10n,
+                                ),
+                              ),
+                              const SettingsDivider(),
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          l10n.translate('rating_range'),
+                                          style: TextStyle(
+                                            color: AppConstants.textColor,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${_filters.ratingLower.toInt()} - ${_filters.ratingUpper.toInt()}',
+                                          style: TextStyle(
+                                            color: AppConstants.accentColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    RangeSlider(
+                                      values: RangeValues(
+                                        _filters.ratingLower,
+                                        _filters.ratingUpper,
+                                      ),
+                                      min: 0,
+                                      max: 100,
+                                      divisions: 20,
+                                      activeColor: AppConstants.accentColor,
+                                      inactiveColor: AppConstants.borderColor
+                                          .withValues(alpha: 0.2),
+                                      onChanged: (values) => setState(
+                                        () => _filters = _filters.copyWith(
+                                          ratingLower: values.start,
+                                          ratingUpper: values.end,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SettingsDivider(),
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          l10n.translate('publication_year'),
+                                          style: TextStyle(
+                                            color: AppConstants.textColor,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${_filters.publishedYearLower ?? l10n.translate('any')} - ${_filters.publishedYearUpper ?? l10n.translate('any')}',
+                                          style: TextStyle(
+                                            color: AppConstants.accentColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    RangeSlider(
+                                      values: RangeValues(
+                                        (_filters.publishedYearLower ??
+                                                _minYear)
+                                            .toDouble(),
+                                        (_filters.publishedYearUpper ??
+                                                _maxYear)
+                                            .toDouble(),
+                                      ),
+                                      min: _minYear.toDouble(),
+                                      max: _maxYear.toDouble(),
+                                      divisions: _maxYear - _minYear,
+                                      activeColor: AppConstants.accentColor,
+                                      inactiveColor: AppConstants.borderColor
+                                          .withValues(alpha: 0.2),
+                                      onChanged: (values) => setState(
+                                        () => _filters = _filters.copyWith(
+                                          publishedYearLower:
+                                              values.start.toInt() == _minYear
+                                                  ? null
+                                                  : values.start.toInt(),
+                                          publishedYearUpper:
+                                              values.end.toInt() == _maxYear
+                                                  ? null
+                                                  : values.end.toInt(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 32),
                         ],
@@ -518,6 +729,33 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildChoiceChip(String label, bool selected, VoidCallback onSelected) {
+    return GestureDetector(
+      onTap: onSelected,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppConstants.accentColor.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+          border: Border.all(
+            color: selected ? AppConstants.accentColor : AppConstants.borderColor,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppConstants.accentColor : AppConstants.textColor,
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 }
