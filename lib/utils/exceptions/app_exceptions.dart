@@ -77,6 +77,14 @@ class AuthException extends AppException {
   });
 }
 
+/// Authentication cancelled by user
+class AuthCancelledException extends AppException {
+  AuthCancelledException({
+    super.message = 'Login cancelled',
+    super.code = 'CANCELLED',
+  });
+}
+
 /// Generic application exception
 class AppError extends AppException {
   AppError({

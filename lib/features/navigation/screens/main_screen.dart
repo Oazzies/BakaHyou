@@ -27,7 +27,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   // Keep pages alive across tab switches with IndexedStack
-  static const List<Widget> _pages = [
+  final List<Widget> _pages = const [
     HomeScreen(),
     LibraryScreen(),
     BrowseScreen(),

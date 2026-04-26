@@ -8,6 +8,7 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/features/profile/models/mb_profile.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class ProfileAuthService extends ChangeNotifier {
   final _logger = LoggingService.logger;
@@ -91,9 +92,20 @@ class ProfileAuthService extends ChangeNotifier {
       _hasSessionCache = true;
       notifyListeners();
     } catch (e, st) {
+      if (e is PlatformException &&
+          (e.code == 'authorize_and_exchange_code_failed' ||
+              e.code == 'user_cancelled')) {
+        final msg = e.message?.toLowerCase() ?? '';
+        if (msg.contains('cancelled') || msg.contains('canceled') || msg.contains('user')) {
+          _logger.info('Login cancelled by user');
+          throw AuthCancelledException();
+        }
+      }
+
       _logger.severe('Login failed: $e\n$st');
       if (e is AppException) rethrow;
-      throw AuthException(message: 'Login failed', originalError: e, stackTrace: st);
+      throw AuthException(
+          message: 'Login failed', originalError: e, stackTrace: st);
     }
   }
 

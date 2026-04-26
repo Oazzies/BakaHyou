@@ -49,18 +49,30 @@ class LibraryService {
         }, test: (error) => true);
   }
 
+  Future<void>? _initialSyncTask;
+
   /// Performs initial sync only once on first app load.
   Future<void> performInitialSyncIfNeeded() async {
     if (_hasPerformedInitialSync) return;
-    _hasPerformedInitialSync = true;
+    
+    // If a sync is already in progress, wait for it
+    if (_initialSyncTask != null) return _initialSyncTask;
+
+    _initialSyncTask = _doInitialSync();
+    return _initialSyncTask;
+  }
+
+  Future<void> _doInitialSync() async {
     try {
       await syncLibrary();
+      _hasPerformedInitialSync = true;
     } on NetworkException catch (e) {
       _logger.warning('Initial sync failed due to network error: $e. Using local data.');
-      _hasPerformedInitialSync = false; // Allow retry on next load
+      // Don't set _hasPerformedInitialSync = true so it can retry later
+      _initialSyncTask = null; 
     } catch (e, st) {
       _logger.severe('Failed to perform initial sync: $e\n$st');
-      _hasPerformedInitialSync = false;
+      _initialSyncTask = null;
       rethrow;
     }
   }
@@ -572,6 +584,7 @@ class LibraryService {
     try {
       await _db.libraryEntriesDao.deleteAllEntries();
       _hasPerformedInitialSync = false;
+      _initialSyncTask = null;
     } catch (e, st) {
       _logger.severe('Failed to clear library: $e\n$st');
     }

@@ -7,6 +7,7 @@ import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 
+import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/features/navigation/widgets/onboarding/welcome_page.dart';
 import 'package:bakahyou/features/navigation/widgets/onboarding/theme_page.dart';
 import 'package:bakahyou/features/navigation/widgets/onboarding/camera_permission_page.dart';
@@ -82,6 +83,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       setState(() => _isLoggedIn = true);
       _nextPage();
     } catch (e) {
+      if (e is AuthCancelledException) return;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),

@@ -22,12 +22,20 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), SettingsManager(), LocalizationService()]),
+      listenable: Listenable.merge([
+        ThemeManager(),
+        SettingsManager(),
+        LocalizationService(),
+        getIt<ProfileAuthService>(),
+      ]),
       builder: (context, _) {
         final l10n = LocalizationService();
+        final auth = getIt<ProfileAuthService>();
+        
         return Scaffold(
           backgroundColor: AppConstants.primaryBackground,
           appBar: AppBar(
+// ... (omitted lines for brevity, but I will include them in the final replacement)
             title: Text(
               l10n.translate('settings'),
               style: TextStyle(color: AppConstants.textColor),
@@ -210,23 +218,22 @@ class SettingsScreen extends StatelessWidget {
               //     ),
               //   ],
               // ),
-              const SizedBox(height: 16),
-              SettingsSectionHeader(title: l10n.translate('account')),
-              SettingsGroup(
-                children: [
-                  SettingsItem(
-                    icon: Icons.manage_accounts_outlined,
-                    title: l10n.translate('account_settings'),
-                    subtitle: l10n.translate('account_settings_subtext'),
-                    onTap: () => launchUrl(
-                      Uri.parse('https://mangabaka.org/my/settings/profile'),
-                      mode: LaunchMode.externalApplication,
+              if (auth.isLoggedIn) ...[
+                const SizedBox(height: 16),
+                SettingsSectionHeader(title: l10n.translate('account')),
+                SettingsGroup(
+                  children: [
+                    SettingsItem(
+                      icon: Icons.manage_accounts_outlined,
+                      title: l10n.translate('account_settings'),
+                      subtitle: l10n.translate('account_settings_subtext'),
+                      onTap: () => launchUrl(
+                        Uri.parse('https://mangabaka.org/my/settings/profile'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      trailing: Icon(Icons.open_in_new, color: AppConstants.textMutedColor, size: 20),
+                      isFirst: true,
                     ),
-                    trailing: Icon(Icons.open_in_new, color: AppConstants.textMutedColor, size: 20),
-                    isFirst: true,
-                    isLast: !getIt<ProfileAuthService>().isLoggedIn,
-                  ),
-                  if (getIt<ProfileAuthService>().isLoggedIn) ...[
                     const SettingsDivider(),
                     SettingsItem(
                       icon: Icons.logout_outlined,
@@ -240,8 +247,8 @@ class SettingsScreen extends StatelessWidget {
                       isLast: true,
                     ),
                   ],
-                ],
-              ),
+                ),
+              ],
               const SizedBox(height: 16),
               SettingsSectionHeader(title: l10n.translate('information')),
               SettingsGroup(

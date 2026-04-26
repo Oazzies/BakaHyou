@@ -9,8 +9,10 @@ import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/features/profile/models/mb_profile.dart';
 import 'package:bakahyou/features/profile/screens/settings_screen.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
+import 'package:bakahyou/features/library/services/library_service.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
 
 
@@ -85,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     setState(() {
       _profile = _auth.cachedProfile;
-      if (_profile == null) {
+      if (!_auth.isLoggedIn) {
         // Clear all state on logout
         _totalSeries = 0;
         _chaptersRead = 0;
@@ -96,8 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _recentlyAdded.clear();
         _error = null;
         _loading = false;
-      } else {
-        // Logged in — full reload
+        _profile = null;
+      } else if (_profile == null || _auth.isLoggedIn) {
+        // Logged in — full reload if profile not fetched yet or just logged in
         _bootstrap();
       }
     });
@@ -113,6 +116,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final profile = await _auth.fetchProfile(forceRefresh: true);
       if (!mounted) return;
       setState(() => _profile = profile);
+
+      // Ensure library is synced before fetching statistics
+      await getIt<LibraryService>().performInitialSyncIfNeeded();
 
       // Fetch all data in parallel
       await Future.wait([
@@ -203,6 +209,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _auth.login();
       await _bootstrap();
     } catch (e) {
+      if (e is AuthCancelledException) {
+        setState(() => _loading = false);
+        return;
+      }
       setState(() {
         _error = 'Login failed: $e';
         _loading = false;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:bakahyou/features/profile/widgets/mb_login_button.dart';
 
 class LoginPage extends StatelessWidget {
   final bool isLoggingIn;
@@ -56,23 +57,10 @@ class LoginPage extends StatelessWidget {
                 ),
               ],
             )
-          else if (isLoggingIn)
-            const CircularProgressIndicator()
           else
-            ElevatedButton(
+            MBLoginButton(
               onPressed: onLogin,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.successColor,
-                foregroundColor: AppConstants.textColor,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-                ),
-              ),
-              child: const Text(
-                'Login with MangaBaka',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              isLoading: isLoggingIn,
             ),
         ],
       ),

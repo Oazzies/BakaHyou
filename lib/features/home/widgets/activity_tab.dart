@@ -8,6 +8,7 @@ import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
 import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
+import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
 
 class ActivityTab extends StatefulWidget {
@@ -126,6 +127,7 @@ class _ActivityTabState extends State<ActivityTab> {
       await _authService.login();
       // _onAuthChanged will handle the data fetch
     } catch (e) {
+      if (e is AuthCancelledException) return;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),
