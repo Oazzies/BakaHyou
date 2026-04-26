@@ -40,29 +40,9 @@ Go to the [releases](https://github.com/Oazzies/BakaHyou/releases) page.
 * Customization (List styles, App styles, Preferences, etc)
 * Content Rating Preferences
 * On Boarding
-
-</details>
-
-<details open="">
-    <summary><h3>Upcoming</h3></summary>
-
-Home
-* Discover
 * Current
 * Activity
-
-Browse
-* More browse shortcuts(Recommendations, etc)
-
-Series
-* Multiple series covers
-* Collections
-* Works
-* Better Tags Display
-
-Profile
-* More Statistics
-
+* Language Support
 Settings
 * Display
   * Theme and Mode placement
@@ -99,10 +79,29 @@ Settings
   * Redo Onboarding
   * Browse-suggestions switch
 
+</details>
+
+<details open="">
+    <summary><h3>Upcoming</h3></summary>
+
+Home
+* Discover
+
+Browse
+* More browse shortcuts(Recommendations, etc)
+
+Series
+* Multiple series covers
+* Collections
+* Works
+* Better Tags Display
+
+Profile
+* More Statistics
+
 Extra
 * Optional Notifications for various things
 * A LOT of UI/UX improvements
-* Language Support
 
 MB Api Needed:
 * Homepage Discover feed
@@ -114,7 +113,6 @@ MB Api Needed:
 <details>
     <summary><h3>Not Planned</h3></summary>
 
-Its not a definite no, but its a list that is really really low priority, not fit for an app or not possible
 * Data Moderation, Submissions, etc in App
 * API/Any Documentation in App
 * Import/Export in App
