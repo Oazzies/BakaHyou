@@ -12,6 +12,8 @@ import 'package:bakahyou/features/series/widgets/chips/rating_chip.dart';
 import 'package:bakahyou/features/series/widgets/chips/content_rating_chip.dart';
 import 'package:bakahyou/features/series/widgets/id_chip.dart';
 
+import 'package:bakahyou/utils/settings/settings_manager.dart';
+
 class SeriesDetailHeader extends StatelessWidget {
   final Series series;
   final int? progressChapter;
@@ -28,6 +30,25 @@ class SeriesDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = SettingsManager();
+    final preferredTitle = series.getDisplayTitle(settings.defaultTitleLanguage);
+    
+    // Determine which other titles to show
+    final otherTitles = <String>[];
+    if (series.title.isNotEmpty && series.title != preferredTitle) {
+      otherTitles.add(series.title);
+    }
+    if (series.nativeTitle.isNotEmpty && 
+        series.nativeTitle != preferredTitle && 
+        !otherTitles.contains(series.nativeTitle)) {
+      otherTitles.add(series.nativeTitle);
+    }
+    if (series.romanizedTitle.isNotEmpty && 
+        series.romanizedTitle != preferredTitle && 
+        !otherTitles.contains(series.romanizedTitle)) {
+      otherTitles.add(series.romanizedTitle);
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -52,9 +73,9 @@ class SeriesDetailHeader extends StatelessWidget {
                   Expanded(
                     child: GestureDetector(
                       onTap: () =>
-                          Clipboard.setData(ClipboardData(text: series.title)),
+                          Clipboard.setData(ClipboardData(text: preferredTitle)),
                       child: Text(
-                        series.title,
+                        preferredTitle,
                         style: Theme.of(context).textTheme.headlineSmall,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -64,32 +85,19 @@ class SeriesDetailHeader extends StatelessWidget {
                   IdChip(id: series.id),
                 ],
               ),
-              if (series.nativeTitle.isNotEmpty &&
-                  series.nativeTitle != series.title)
-                GestureDetector(
-                  onTap: () => Clipboard.setData(
-                    ClipboardData(text: series.nativeTitle),
-                  ),
+              ...otherTitles.map((t) => Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: GestureDetector(
+                  onTap: () => Clipboard.setData(ClipboardData(text: t)),
                   child: Text(
-                    series.nativeTitle,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    t,
+                    style: t == otherTitles.first 
+                      ? Theme.of(context).textTheme.bodyMedium
+                      : Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-              if (series.romanizedTitle.isNotEmpty &&
-                  series.romanizedTitle != series.title &&
-                  series.romanizedTitle != series.nativeTitle)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: GestureDetector(
-                    onTap: () => Clipboard.setData(
-                      ClipboardData(text: series.romanizedTitle),
-                    ),
-                    child: Text(
-                      series.romanizedTitle,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ),
+              )),
+
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,

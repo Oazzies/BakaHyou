@@ -1,4 +1,6 @@
 import 'package:bakahyou/utils/json_utils.dart';
+import 'package:bakahyou/utils/settings/settings_enums.dart';
+
 
 class Series {
   final String id;
@@ -62,6 +64,18 @@ class Series {
     this.relationships,
     this.source,
   });
+
+  String getDisplayTitle(TitleLanguage lang) {
+    switch (lang) {
+      case TitleLanguage.native:
+        return nativeTitle.isNotEmpty ? nativeTitle : title;
+      case TitleLanguage.romanized:
+        return romanizedTitle.isNotEmpty ? romanizedTitle : title;
+      case TitleLanguage.defaultLang:
+        return title;
+    }
+  }
+
 
   //Thanks GPT4.1
   factory Series.fromJson(Map<String, dynamic> json) {

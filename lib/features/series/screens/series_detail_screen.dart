@@ -207,7 +207,8 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
         return Scaffold(
           extendBodyBehindAppBar: true,
           appBar: AppBar(
-            title: _showTitle ? Text(widget.series.title) : null,
+            title: _showTitle ? Text(widget.series.getDisplayTitle(SettingsManager().defaultTitleLanguage)) : null,
+
             backgroundColor: Colors.transparent,
             elevation: 0,
             systemOverlayStyle: const SystemUiOverlayStyle(

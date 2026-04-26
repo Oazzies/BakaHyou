@@ -2,19 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 
-enum AppListStyle {
-  comfortable,
-  compact,
-  minimalList,
-  grid,
-  coverOnlyGrid,
-}
+import 'package:bakahyou/utils/settings/settings_enums.dart';
 
-enum AppStartPage { home, library, browse, news, profile }
-
-enum RatingSliderStep { step1, step5, step10, step20, step25 }
-
-enum TitleLanguage { defaultLang, native, romanized }
 
 const String _hideLibrarySeriesInBrowseKey = '${AppConstants.prefixStorageKey}hide_library_series';
 const String _contentPreferencesKey = '${AppConstants.prefixStorageKey}content_prefs';

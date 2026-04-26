@@ -16,28 +16,21 @@ class EntryListItem extends StatelessWidget {
   String capitalize(String s) =>
       s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
 
-  String _getDisplayTitle() {
-    final lang = SettingsManager().defaultTitleLanguage;
-    switch (lang) {
-      case TitleLanguage.native:
-        return series.nativeTitle.isNotEmpty ? series.nativeTitle : series.title;
-      case TitleLanguage.romanized:
-        return series.romanizedTitle.isNotEmpty ? series.romanizedTitle : series.title;
-      case TitleLanguage.defaultLang:
-        return series.title;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: LocalizationService(),
+      listenable: Listenable.merge([
+        LocalizationService(),
+        SettingsManager(),
+      ]),
       builder: (context, _) {
         final l10n = LocalizationService();
         final settings = SettingsManager();
+        final displayTitle = series.getDisplayTitle(settings.defaultTitleLanguage);
         final style = settings.separateListStyles 
             ? (isLibrary ? settings.libraryListStyle : settings.browseListStyle)
             : settings.currentListStyle;
+
 
         return Stack(
           children: [
@@ -178,7 +171,7 @@ class EntryListItem extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
-                  _getDisplayTitle(),
+                  displayTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppConstants.textColor,
@@ -212,7 +205,7 @@ class EntryListItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _getDisplayTitle(),
+                      displayTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textColor,
@@ -257,7 +250,7 @@ class EntryListItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getDisplayTitle(),
+                      displayTitle,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppConstants.textColor,

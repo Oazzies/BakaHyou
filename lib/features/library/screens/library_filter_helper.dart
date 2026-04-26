@@ -15,7 +15,10 @@ class LibraryFilterHelper {
     return allEntries
         .where((entry) {
           final matchesQuery = query.isEmpty ||
-              entry.series.title.toLowerCase().contains(query.toLowerCase());
+              entry.series.title.toLowerCase().contains(query.toLowerCase()) ||
+              entry.series.nativeTitle.toLowerCase().contains(query.toLowerCase()) ||
+              entry.series.romanizedTitle.toLowerCase().contains(query.toLowerCase());
+
           final matchesRating = contentPreferences.isEmpty ||
               contentPreferences.contains(entry.series.contentRating.toLowerCase());
           return matchesQuery && matchesRating;

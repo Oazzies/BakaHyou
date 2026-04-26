@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/features/series/screens/series_detail_screen.dart';
+import 'package:bakahyou/utils/settings/settings_manager.dart';
 
 class ReferencedListItem extends StatelessWidget {
   final Series series;
@@ -9,39 +10,46 @@ class ReferencedListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SeriesDetailScreen(series: series),
+    return ListenableBuilder(
+      listenable: SettingsManager(),
+      builder: (context, _) {
+        final displayTitle = series.getDisplayTitle(SettingsManager().defaultTitleLanguage);
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SeriesDetailScreen(series: series),
+              ),
+            );
+          },
+          child: Column(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.network(
+                    series.coverUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                displayTitle,
+                style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
       },
-      child: Column(
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.network(
-                series.coverUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            series.title,
-            style: Theme.of(context).textTheme.bodySmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 }
+
