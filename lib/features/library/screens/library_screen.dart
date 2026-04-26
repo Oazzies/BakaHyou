@@ -18,6 +18,7 @@ import 'package:bakahyou/utils/settings/settings_enums.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 
 import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
+import 'package:bakahyou/features/browse/models/search_filters.dart';
 
 
 class LibraryScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   late bool _loggedIn;
   String _query = '';
+  SearchFilters _filters = SearchFilters();
   Stream<List<LibraryEntry>>? _entriesStream;
 
   @override
@@ -134,7 +136,11 @@ class _LibraryScreenState extends State<LibraryScreen>
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: LibraryScreenConstants.backgroundColor,
-      title: MBSearchBar(onChanged: (value) => setState(() => _query = value)),
+      title: MBSearchBar(
+        onChanged: (value) => setState(() => _query = value),
+        initialFilters: _filters,
+        onFilterApplied: (filters) => setState(() => _filters = filters),
+      ),
       bottom: _buildTabBar(),
     );
   }
@@ -182,6 +188,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             final filterHelper = LibraryFilterHelper(
               allEntries: snapshot.data!,
               query: _query,
+              filters: _filters,
               contentPreferences: SettingsManager().contentPreferences,
             );
 
