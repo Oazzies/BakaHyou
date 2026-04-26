@@ -210,6 +210,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  String _getPossessiveName(String name) {
+    final lang = LocalizationService().currentLanguage;
+    if (lang == 'es') {
+      return name;
+    }
+    return "$name's";
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -225,6 +233,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           appBar: AppBar(
             backgroundColor: AppConstants.primaryBackground,
             elevation: 0,
+            title: Text(
+              _profile == null
+                  ? l10n.translate('profile')
+                  : l10n.currentLanguage == 'es'
+                      ? '${l10n.translate('profile_title_suffix')} de $username'
+                      : '${_getPossessiveName(username ?? 'User')} ${l10n.translate('profile_title_suffix')}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings),
@@ -248,25 +267,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : RefreshIndicator(
                   onRefresh: _bootstrap,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${username ?? 'User'} ${l10n.translate('profile_title_suffix')}',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                           Text(
                             l10n.translate('at_a_glance'),
                             style: const TextStyle(
