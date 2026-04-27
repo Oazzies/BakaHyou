@@ -23,6 +23,7 @@ class _NewsScreenState extends State<NewsScreen> {
   bool _isBackgroundRefresh = false;
   int _currentPage = 1;
   String? _error;
+  bool _showBackToTop = false;
 
   @override
   void initState() {
@@ -54,6 +55,13 @@ class _NewsScreenState extends State<NewsScreen> {
       if (_hasMore && !_isLoading) {
         _fetchNews(initial: false);
       }
+    }
+
+    final showBackToTop = _scrollController.offset > 500;
+    if (showBackToTop != _showBackToTop) {
+      setState(() {
+        _showBackToTop = showBackToTop;
+      });
     }
   }
 
@@ -142,6 +150,19 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                   ),
           ),
+          floatingActionButton: _showBackToTop
+              ? FloatingActionButton(
+                  onPressed: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: AppConstants.mediumAnimationDuration,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  backgroundColor: AppConstants.accentColor,
+                  child: const Icon(Icons.arrow_upward, color: Colors.white),
+                )
+              : null,
         );
       },
     );

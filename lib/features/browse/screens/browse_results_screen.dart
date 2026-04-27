@@ -46,6 +46,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
 
 
   String? _error;
+  bool _showBackToTop = false;
 
   @override
   void initState() {
@@ -77,6 +78,13 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
 
     if (isNearEnd && _hasMore && !_isLoading) {
       _fetchResults(initial: false);
+    }
+
+    final showBackToTop = _scrollController.offset > 500;
+    if (showBackToTop != _showBackToTop) {
+      setState(() {
+        _showBackToTop = showBackToTop;
+      });
     }
   }
 
@@ -296,6 +304,19 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
               child: _buildBody(),
             ),
           ),
+          floatingActionButton: _showBackToTop
+              ? FloatingActionButton(
+                  onPressed: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: AppConstants.mediumAnimationDuration,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  backgroundColor: AppConstants.accentColor,
+                  child: const Icon(Icons.arrow_upward, color: Colors.white),
+                )
+              : null,
         );
       },
     );

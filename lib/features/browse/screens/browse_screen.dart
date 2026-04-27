@@ -40,6 +40,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
   SearchFilters _currentFilters = SearchFilters();
+  bool _showBackToTop = false;
 
   @override
   void initState() {
@@ -69,10 +70,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
   }
 
   void _onScroll() {
-    final isNearEnd =
-        _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent -
-            AppConstants.scrollThresholdPx;
+    final isNearEnd = _scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - AppConstants.scrollThresholdPx;
 
     if (isNearEnd &&
         _hasMore &&
@@ -80,6 +79,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
         (_currentSearchQuery.isNotEmpty ||
             _currentFilters.toMap().isNotEmpty)) {
       _loadMoreResults();
+    }
+
+    final showBackToTop = _scrollController.offset > 500;
+    if (showBackToTop != _showBackToTop) {
+      setState(() {
+        _showBackToTop = showBackToTop;
+      });
     }
   }
 
@@ -356,6 +362,19 @@ class _BrowseScreenState extends State<BrowseScreen> {
               ),
             ),
           ),
+          floatingActionButton: _showBackToTop
+              ? FloatingActionButton(
+                  onPressed: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: AppConstants.mediumAnimationDuration,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  backgroundColor: AppConstants.accentColor,
+                  child: const Icon(Icons.arrow_upward, color: Colors.white),
+                )
+              : null,
         );
       },
     );
