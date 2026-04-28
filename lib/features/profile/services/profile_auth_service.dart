@@ -29,9 +29,12 @@ class ProfileAuthService extends ChangeNotifier {
   final FlutterAppAuth _appAuth = const FlutterAppAuth();
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
+      // encryptedSharedPreferences: true is known to cause "unwrap key failed" 
+      // errors on various Android devices after OS updates or re-installs.
+      // Setting it to false uses a more stable (but still encrypted) implementation.
+      encryptedSharedPreferences: false,
       resetOnError: true,
-      sharedPreferencesName: 'bakahyou_secure_storage_v2',
+      sharedPreferencesName: 'bakahyou_secure_storage_v3', // Changed name to ensure a clean start
     ),
   );
 
@@ -52,16 +55,26 @@ class ProfileAuthService extends ChangeNotifier {
       );
 
   Future<void> init() async {
-    _hasSessionCache = await hasSession();
-    if (_hasSessionCache) {
-      try {
+    try {
+      _hasSessionCache = await hasSession();
+      if (_hasSessionCache) {
         final cachedString = await _storage.read(key: _kProfileCache);
         if (cachedString != null) {
           _cachedProfile = MbProfile.fromJson(jsonDecode(cachedString));
         }
-      } catch (e) {
-        _logger.warning('Failed to load cached profile: $e');
       }
+    } on PlatformException catch (e) {
+      _logger.severe('Secure storage error during initialization: $e');
+      // If initialization fails due to keystore issues, we must clear it
+      try {
+        await _storage.deleteAll();
+      } catch (e2) {
+        _logger.severe('Failed to clear secure storage after error: $e2');
+      }
+      _hasSessionCache = false;
+      _cachedProfile = null;
+    } catch (e) {
+      _logger.warning('Failed to load cached profile: $e');
     }
   }
 
