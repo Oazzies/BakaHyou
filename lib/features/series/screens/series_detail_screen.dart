@@ -10,6 +10,7 @@ import 'package:bakahyou/utils/widget_utils.dart';
 import 'package:bakahyou/features/series/widgets/description_section.dart';
 import 'package:bakahyou/features/series/widgets/series_detail_header.dart';
 import 'package:bakahyou/features/series/widgets/rating_icon_button.dart';
+import 'package:bakahyou/features/series/widgets/expandable_chip_wrap.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/features/series/services/metadata_service.dart';
@@ -289,9 +290,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                                   .toList(),
                             ),
                             if (widget.series.tags.isNotEmpty)
-                              WidgetUtils.chipWrap(
-                                l10n.translate('tags'),
-                                widget.series.tags,
+                              ExpandableChipWrap(
+                                label: l10n.translate('tags'),
+                                items: widget.series.tags,
                                 color: AppConstants.accentColor.withValues(alpha: 0.1),
                               ),
                             if (widget.series.authors.isNotEmpty)
