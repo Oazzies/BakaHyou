@@ -9,6 +9,7 @@ import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:http/http.dart' as http;
 import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
+import 'package:bakahyou/features/series/services/series_id_service.dart';
 
 class SeriesSearchService {
   static final String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
@@ -84,9 +85,15 @@ class SeriesSearchService {
         try {
           final json = jsonDecode(response.body);
           final List data = json['data'] ?? [];
-          return data
+          final results = data
               .map((item) => Series.fromJson(item as Map<String, dynamic>))
               .toList();
+          
+          for (var series in results) {
+            SeriesService.precacheSeries(series);
+          }
+          
+          return results;
         } catch (e, st) {
           _logger.severe('Failed to parse series search response: $e\n$st');
           throw ParseException(

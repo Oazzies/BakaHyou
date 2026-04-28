@@ -1,4 +1,5 @@
 import 'package:bakahyou/features/series/models/series.dart';
+import 'package:bakahyou/features/series/models/series_link.dart';
 import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
@@ -9,8 +10,50 @@ import 'dart:async';
 
 class SeriesService {
   static final _logger = LoggingService.logger;
+  static final Map<String, Series> _cache = {};
+  
+  static void precacheSeries(Series series) {
+    _cache[series.id] = series;
+  }
+
+  static Future<List<SeriesLink>> fetchSeriesLinks(String id) async {
+    try {
+      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/links");
+      final response = await http
+          .get(url, headers: {'User-Agent': AppConstants.userAgent})
+          .timeout(
+            Duration(seconds: AppConstants.networkTimeoutSeconds),
+            onTimeout: () =>
+                throw TimeoutException('Series links fetch request timed out'),
+          );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List linksJson = data['data'] ?? [];
+        return linksJson.map((l) => SeriesLink.fromJson(l)).toList();
+      }
+      return [];
+    } on SocketException catch (e) {
+      _logger.warning('Network error while fetching links for $id: $e');
+      return [];
+    } on TimeoutException catch (e) {
+      _logger.warning('Timeout while fetching links for $id: $e');
+      return [];
+    } catch (e) {
+      _logger.warning('Unexpected error while fetching series links for ID: $id - $e');
+      return [];
+    }
+  }
+
+  static get logger => _logger;
 
   static Future<Series> fetchSeries(String id) async {
+    // Check cache first
+    if (_cache.containsKey(id)) {
+      _logger.fine('Returning cached series data for ID: $id');
+      return _cache[id]!;
+    }
+
     try {
       final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id");
       final response = await http
@@ -26,7 +69,12 @@ class SeriesService {
       if (response.statusCode == 200) {
         try {
           final data = jsonDecode(response.body);
-          return Series.fromJson(data['data']);
+          final series = Series.fromJson(data['data']);
+
+          // Store in cache
+          _cache[id] = series;
+
+          return series;
         } catch (e, st) {
           _logger.severe('Failed to parse series data: $e\n$st');
           throw ParseException(

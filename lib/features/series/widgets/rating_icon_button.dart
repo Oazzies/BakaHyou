@@ -18,17 +18,18 @@ class RatingIconButton extends StatelessWidget {
     final hasRating = rating > 0;
 
     return Container(
-      height: 38,
-      width: 50,
+      height: 44,
+      width: 54,
       decoration: BoxDecoration(
-        color: AppConstants.primaryBackground,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: AppConstants.borderColor, width: 1.5),
+        color: AppConstants.secondaryBackground,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: AppConstants.borderColor, width: 1),
       ),
       child: IconButton(
         icon: Icon(
           hasRating ? Icons.star : Icons.star_border,
           color: hasRating ? AppConstants.warningColor : AppConstants.textColor,
+          size: 24,
         ),
         onPressed: () {
           showDialog(

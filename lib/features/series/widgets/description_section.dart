@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class DescriptionSection extends StatefulWidget {
   final String description;
@@ -25,36 +26,93 @@ class DescriptionSectionState extends State<DescriptionSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.description,
-          maxLines: expanded ? null : 5,
-          overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: Stack(
+            children: [
+              Text(
+                widget.description,
+                maxLines: expanded ? null : 6,
+                overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.6,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 15,
+                    ),
+              ),
+              if (isLong && !expanded)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppConstants.primaryBackground.withValues(alpha: 0.8),
+                          AppConstants.primaryBackground,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         if (isLong || widget.description.isNotEmpty)
-          SizedBox(
-            height: 36,
-            child: Stack(
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
               children: [
                 if (isLong)
-                  Align(
-                    alignment: Alignment.center,
-                    child: IconButton(
-                      icon: Icon(
-                        expanded ? Icons.expand_less : Icons.expand_more,
+                  Expanded(
+                    child: Center(
+                      child: InkWell(
+                        onTap: () => setState(() => expanded = !expanded),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                expanded ? 'Show less' : 'Show more',
+                                style: TextStyle(
+                                  color: AppConstants.accentColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                size: 20,
+                                color: AppConstants.accentColor,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      onPressed: () => setState(() => expanded = !expanded),
                     ),
                   ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Copy description',
-                    onPressed: () => Clipboard.setData(
-                      ClipboardData(text: widget.description),
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.copy_all, size: 20),
+                  padding: const EdgeInsets.all(8),
+                  tooltip: 'Copy description',
+                  color: AppConstants.textMutedColor,
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: widget.description));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Description copied to clipboard'), behavior: SnackBarBehavior.floating),
+                    );
+                  },
                 ),
               ],
             ),

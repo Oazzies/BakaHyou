@@ -87,19 +87,24 @@ class EntryListItem extends StatelessWidget {
     double? height,
     BorderRadiusGeometry borderRadius = const BorderRadius.horizontal(left: Radius.circular(8)),
   }) {
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: series.coverUrl.isNotEmpty
-          ? Image.network(
-              series.coverUrl,
-              width: width,
-              height: height ?? double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return _buildPlaceholder(width, height);
-              },
-            )
-          : _buildPlaceholder(width, height),
+    return Hero(
+      tag: 'series_cover_${series.id}',
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: series.coverUrl.isNotEmpty
+            ? Image.network(
+                series.coverUrl,
+                width: width,
+                height: height ?? double.infinity,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: 300,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildPlaceholder(width, height);
+                },
+              )
+            : _buildPlaceholder(width, height),
+      ),
     );
   }
 

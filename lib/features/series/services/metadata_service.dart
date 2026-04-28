@@ -6,7 +6,7 @@ import 'package:bakahyou/utils/services/logging_service.dart';
 class MetadataService {
   final _logger = LoggingService.logger;
   Map<String, String> _genreMap = {};
-  Map<int, String> _tagMap = {};
+  Map<String, Map<String, dynamic>> _tagMap = {};
   
   List<Map<String, dynamic>> _genresList = [];
   List<Map<String, dynamic>> _tagsList = [];
@@ -59,7 +59,7 @@ class MetadataService {
         _tagsList = List<Map<String, dynamic>>.from(json['data'] ?? []);
         _tagMap = {
           for (var item in _tagsList)
-            int.parse(item['id'].toString()): item['name'].toString()
+            item['name'].toString(): item
         };
         _logger.info('Fetched ${_tagsList.length} tags');
       }
@@ -82,8 +82,19 @@ class MetadataService {
         .join(' ');
   }
 
+  String? getTagPath(String tagName) {
+    return _tagMap[tagName]?['name_path']?.toString();
+  }
+
   String getTagName(int id) {
-    return _tagMap[id] ?? 'Tag $id';
+    try {
+      final tag = _tagsList.firstWhere(
+        (t) => int.parse(t['id'].toString()) == id,
+      );
+      return tag['name'].toString();
+    } catch (e) {
+      return 'Tag $id';
+    }
   }
 
   List<Map<String, dynamic>> get genres => _genresList;

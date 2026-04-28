@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class ExpandableChipWrap extends StatefulWidget {
   final String label;
@@ -61,11 +62,24 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
     final chips = widget.items
-        .map((e) => Chip(
-              label: Text(e),
-              backgroundColor: widget.color,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        .map((e) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppConstants.secondaryBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppConstants.borderColor.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                e,
+                style: TextStyle(
+                  color: AppConstants.textColor.withValues(alpha: 0.9),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ))
         .toList();
 
@@ -77,8 +91,16 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.label, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            Text(
+              widget.label,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 16),
             Stack(
               children: [
                 // Measurement items (Invisible)
@@ -92,8 +114,8 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
                       // Full wrap to measure total height
                       Wrap(
                         key: _fullWrapKey,
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: chips,
                       ),
                     ],
@@ -110,10 +132,34 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
                         ? const BoxConstraints()
                         : BoxConstraints(maxHeight: _maxCollapsedHeight),
                     child: ClipRect(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: chips,
+                      child: Stack(
+                        children: [
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: chips,
+                          ),
+                          if (_needsExpansion && !_expanded)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      AppConstants.primaryBackground.withValues(alpha: 0),
+                                      AppConstants.primaryBackground.withValues(alpha: 0.8),
+                                      AppConstants.primaryBackground,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -122,35 +168,38 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
             ),
             if (_needsExpansion)
               Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: InkWell(
-                  onTap: () => setState(() => _expanded = !_expanded),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _expanded ? Icons.expand_less : Icons.expand_more,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _expanded ? 'Show less' : 'Show all',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Center(
+                  child: InkWell(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _expanded ? 'Show less' : 'Show all',
+                            style: TextStyle(
+                              color: AppConstants.accentColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            size: 20,
+                            color: AppConstants.accentColor,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 32),
           ],
         );
       },

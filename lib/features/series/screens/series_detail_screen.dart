@@ -1,19 +1,20 @@
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/features/library/services/library_service.dart';
 import 'package:bakahyou/features/library/models/library_entry.dart';
-import 'package:bakahyou/features/series/widgets/state_selection_section.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:bakahyou/features/series/models/series.dart';
-import 'package:bakahyou/utils/widget_utils.dart';
 import 'package:bakahyou/features/series/widgets/description_section.dart';
-import 'package:bakahyou/features/series/widgets/series_detail_header.dart';
-import 'package:bakahyou/features/series/widgets/rating_icon_button.dart';
-import 'package:bakahyou/features/series/widgets/expandable_chip_wrap.dart';
 import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
-import 'package:bakahyou/features/series/services/metadata_service.dart';
+import 'package:bakahyou/features/series/models/series_link.dart';
+import 'package:bakahyou/features/series/services/series_id_service.dart';
+import 'package:bakahyou/features/series/widgets/series_detail_app_bar.dart';
+import 'package:bakahyou/features/series/widgets/series_action_bar.dart';
+import 'package:bakahyou/features/series/widgets/series_metadata_chips.dart';
+import 'package:bakahyou/features/series/widgets/series_details_grid.dart';
+import 'package:bakahyou/features/series/widgets/series_hero_cover.dart';
 
 import 'package:bakahyou/utils/localization/localization_service.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
@@ -28,60 +29,55 @@ class SeriesDetailScreen extends StatefulWidget {
 }
 
 class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
-  late ScrollController _scrollController;
-  bool _showTitle = false;
   late final LibraryService _libraryService;
   Stream<LibraryEntry?>? _entryStream;
   bool _isAdding = false;
+  List<SeriesLink>? _enrichedLinks;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
     _libraryService = getIt<LibraryService>();
-    _scrollController.addListener(_onScroll);
     _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
+    _fetchEnrichedLinks();
   }
 
   @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
+  void didUpdateWidget(SeriesDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.series.id != widget.series.id) {
+      _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
+      _enrichedLinks = null;
+      _fetchEnrichedLinks();
+    }
   }
 
-  void _onScroll() {
-    final shouldShowTitle = _scrollController.offset > 200;
-    if (shouldShowTitle != _showTitle) {
-      setState(() => _showTitle = shouldShowTitle);
+  Future<void> _fetchEnrichedLinks() async {
+    try {
+      final links = await SeriesService.fetchSeriesLinks(widget.series.id);
+      if (mounted && links.isNotEmpty) {
+        setState(() => _enrichedLinks = links);
+      }
+    } catch (e) {
+      SeriesService.logger.warning('Error fetching enriched links: $e');
     }
   }
 
   void _shareLink() {
     final l10n = LocalizationService();
-    String? mangabakaLink;
-    for (var link in widget.series.links) {
-      if (link is String && link.contains('mangabaka')) {
-        mangabakaLink = link;
-        break;
-      }
-    }
+    String? link = widget.series.links.firstWhere(
+      (l) => l is String && l.contains('mangabaka'), 
+      orElse: () => null,
+    ) as String?;
 
-    if (mangabakaLink != null) {
+    if (link != null) {
       final box = context.findRenderObject() as RenderBox?;
-      SharePlus.instance.share(
-        ShareParams(
-          text: mangabakaLink,
-          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
-        ),
-      );
+      SharePlus.instance.share(ShareParams(
+        text: link,
+        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+      ));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.translate('no_sharing_link')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.translate('no_sharing_link'))));
     }
   }
 
@@ -89,260 +85,195 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     final l10n = LocalizationService();
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppConstants.tertiaryBackground,
-          title: Text(
-            l10n.translate('delete_from_library'),
-            style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold),
+      builder: (context) => AlertDialog(
+        backgroundColor: AppConstants.tertiaryBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(l10n.translate('delete_from_library'), style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold)),
+        content: Text(l10n.translate('delete_confirmation'), style: TextStyle(color: AppConstants.textMutedColor)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.translate('cancel'), style: TextStyle(color: AppConstants.textColor))),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _libraryService.deleteEntry(widget.series.id);
+              if (mounted) Navigator.pop(this.context);
+            },
+            child: Text(l10n.translate('confirm'), style: TextStyle(color: AppConstants.errorColor, fontWeight: FontWeight.bold)),
           ),
-          content: Text(
-            l10n.translate('delete_confirmation'),
-            style: TextStyle(color: AppConstants.textMutedColor),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                l10n.translate('cancel'),
-                style: TextStyle(color: AppConstants.textColor),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            TextButton(
-              child: Text(l10n.translate('confirm'), style: TextStyle(color: AppConstants.errorColor)),
-              onPressed: () async {
-                // First, pop the dialog.
-                Navigator.of(dialogContext).pop();
-
-                try {
-                  await _libraryService.deleteEntry(widget.series.id);
-
-                  // Then, if the widget is still mounted, pop the detail screen.
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${l10n.translate('failed_to_load')}: $e'),
-                        backgroundColor: AppConstants.errorColor,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Future<void> _onStateChanged(String newState) async {
-    final l10n = LocalizationService();
-    try {
-      await _libraryService.updateLibraryEntryState(widget.series.id, newState);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.translate('status_updated'))));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.translate('failed_to_load')}: $e')),
-      );
-    }
-  }
-
-  Future<void> _onRatingChanged(int newRating) async {
-    final l10n = LocalizationService();
-    try {
-      await _libraryService.updateLibraryEntryRating(
-        widget.series.id,
-        newRating,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.translate('rating_updated'))));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.translate('failed_to_load')}: $e')),
-      );
-    }
-  }
-
-  Future<void> _addSeriesToLibrary() async {
-    final l10n = LocalizationService();
-    if (_isAdding) return;
-    setState(() => _isAdding = true);
-
-    try {
-      await _libraryService.createLibraryEntry(
-        widget.series.id,
-        SettingsManager().addLibraryDefaultTab,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${l10n.translate('failed_to_add')}: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isAdding = false);
-      }
-    }
+  void _copyToClipboard(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Copied "$text" to clipboard'),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
+    final settings = SettingsManager();
+    final preferredTitle = widget.series.getDisplayTitle(settings.defaultTitleLanguage);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth > 900;
+    final isTablet = screenWidth > 600 && screenWidth <= 900;
+
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), ThemeManager()]),
       builder: (context, _) {
         final l10n = LocalizationService();
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            title: _showTitle ? Text(widget.series.getDisplayTitle(SettingsManager().defaultTitleLanguage)) : null,
-
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            systemOverlayStyle: const SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: Brightness.light,
-            ),
-            actions: [
-              IconButton(icon: const Icon(Icons.share), onPressed: _shareLink),
-              StreamBuilder<LibraryEntry?>(
-                stream: _entryStream,
-                builder: (context, snapshot) {
-                  if (snapshot.data != null) {
-                    return IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: _showDeleteConfirmationDialog,
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ],
-          ),
-          body: SafeArea(
-            child: StreamBuilder<LibraryEntry?>(
+        return GestureDetector(
+          onHorizontalDragUpdate: (details) {
+            if (details.delta.dx > 15) Navigator.of(context).pop();
+          },
+          child: Scaffold(
+            backgroundColor: AppConstants.primaryBackground,
+            body: StreamBuilder<LibraryEntry?>(
               stream: _entryStream,
               builder: (context, snapshot) {
                 final entry = snapshot.data;
-                return SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SeriesDetailHeader(
-                          series: widget.series,
-                          progressChapter: entry?.progressChapter,
-                          progressVolume: entry?.progressVolume,
-                          inLibrary: entry != null,
-                        ),
-                      ),
-                      if (entry != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: StateSelectionSection(
-                                  currentState: entry.state,
-                                  onStateChanged: _onStateChanged,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              RatingIconButton(
-                                currentRating: entry.rating,
-                                onRatingChanged: _onRatingChanged,
-                              ),
-                            ],
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1400),
+                    child: RepaintBoundary(
+                      child: CustomScrollView(
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                        slivers: [
+                          SeriesDetailAppBar(
+                            series: widget.series,
+                            title: preferredTitle,
+                            entry: entry,
+                            isWide: isWide || isTablet,
+                            onBack: () => Navigator.pop(context),
+                            onShare: _shareLink,
+                            onDelete: _showDeleteConfirmationDialog,
+                            onCopy: _copyToClipboard,
                           ),
-                        ),
-                      if (widget.series.description.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: DescriptionSection(
-                            description: widget.series.description,
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            WidgetUtils.chipWrap(
-                              l10n.translate('genres'),
-                              widget.series.genres
-                                  .map((g) => getIt<MetadataService>().getGenreLabel(g))
-                                  .toList(),
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: isWide ? 40.0 : 16.0),
+                              child: isWide 
+                                ? _buildWideLayout(entry, l10n)
+                                : _buildMobileLayout(entry, l10n),
                             ),
-                            if (widget.series.tags.isNotEmpty)
-                              ExpandableChipWrap(
-                                label: l10n.translate('tags'),
-                                items: widget.series.tags,
-                                color: AppConstants.accentColor.withValues(alpha: 0.1),
-                              ),
-                            if (widget.series.authors.isNotEmpty)
-                              WidgetUtils.chipWrap(
-                                l10n.translate('authors'),
-                                widget.series.authors,
-                              ),
-                            if (widget.series.artists.isNotEmpty)
-                              WidgetUtils.chipWrap(
-                                l10n.translate('artists'),
-                                widget.series.artists,
-                              ),
-                            if (widget.series.publishers.isNotEmpty)
-                              WidgetUtils.chipWrap(
-                                l10n.translate('publishers'),
-                                widget.series.publishers,
-                              ),
-                            if (widget.series.links.isNotEmpty)
-                              WidgetUtils.linkList(widget.series.links),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 );
               },
             ),
-          ),
-          floatingActionButton: StreamBuilder<LibraryEntry?>(
-            stream: _entryStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.active &&
-                  snapshot.data == null) {
-                return FloatingActionButton.extended(
-                  onPressed: _isAdding ? null : _addSeriesToLibrary,
-                  label: _isAdding
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.translate('add_to_library')),
-                  icon: _isAdding ? null : const Icon(Icons.add),
-                );
-              }
-              return const SizedBox.shrink();
-            },
+            floatingActionButton: _buildFAB(l10n),
           ),
         );
       },
     );
+  }
+
+  Widget _buildFAB(LocalizationService l10n) {
+    return StreamBuilder<LibraryEntry?>(
+      stream: _entryStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.active && snapshot.data == null) {
+          return FloatingActionButton.extended(
+            onPressed: _isAdding ? null : _addSeriesToLibrary,
+            backgroundColor: AppConstants.accentColor,
+            foregroundColor: Colors.white,
+            label: _isAdding 
+              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text(l10n.translate('add_to_library'), style: const TextStyle(fontWeight: FontWeight.bold)),
+            icon: _isAdding ? null : const Icon(Icons.add),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildMobileLayout(LibraryEntry? entry, LocalizationService l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SeriesMetadataChips(series: widget.series, entry: entry),
+        const SizedBox(height: 16),
+        SeriesActionBar(
+          entry: entry, 
+          l10n: l10n,
+          onStateChanged: (s) => _libraryService.updateLibraryEntryState(widget.series.id, s),
+          onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(widget.series.id, r),
+        ),
+        const SizedBox(height: 20),
+        if (widget.series.description.isNotEmpty) ...[
+          _buildSectionHeader('Description'),
+          DescriptionSection(description: widget.series.description),
+          const SizedBox(height: 20),
+        ],
+        SeriesDetailsGrid(series: widget.series, enrichedLinks: _enrichedLinks, l10n: l10n),
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(LibraryEntry? entry, LocalizationService l10n) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 300,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SeriesHeroCover(series: widget.series, height: 420, width: 300),
+              const SizedBox(height: 32),
+              SeriesMetadataChips(series: widget.series, entry: entry, isVertical: true),
+            ],
+          ),
+        ),
+        const SizedBox(width: 48),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SeriesActionBar(
+                entry: entry, 
+                l10n: l10n,
+                onStateChanged: (s) => _libraryService.updateLibraryEntryState(widget.series.id, s),
+                onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(widget.series.id, r),
+              ),
+              const SizedBox(height: 20),
+              if (widget.series.description.isNotEmpty) ...[
+                _buildSectionHeader('Description'),
+                DescriptionSection(description: widget.series.description),
+                const SizedBox(height: 24),
+              ],
+              SeriesDetailsGrid(series: widget.series, enrichedLinks: _enrichedLinks, isWide: true, l10n: l10n),
+              const SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)),
+    );
+  }
+
+  Future<void> _addSeriesToLibrary() async {
+    if (_isAdding) return;
+    setState(() => _isAdding = true);
+    try {
+      await _libraryService.createLibraryEntry(widget.series.id, SettingsManager().addLibraryDefaultTab);
+    } finally {
+      if (mounted) setState(() => _isAdding = false);
+    }
   }
 }
