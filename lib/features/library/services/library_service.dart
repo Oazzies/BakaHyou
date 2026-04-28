@@ -2,20 +2,31 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bakahyou/database/database.dart' as db;
 import 'package:bakahyou/features/library/models/library_entry.dart' as api;
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/features/library/services/library_constants.dart';
 import 'package:bakahyou/features/library/services/mappers/db_to_api_mapper.dart';
+import 'package:bakahyou/features/library/models/library_sync_status.dart';
 import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
+import 'package:flutter/foundation.dart';
 
 class LibraryService {
   final _logger = LoggingService.logger;
   final ProfileAuthService _auth;
   final db.AppDatabase _db;
   bool _hasPerformedInitialSync = false;
+  
+  static const String _syncStateKey = '${AppConstants.prefixStorageKey}library_sync_last_state';
+  static const String _syncTypeKey = '${AppConstants.prefixStorageKey}library_sync_last_type';
+  static const String _syncPageKey = '${AppConstants.prefixStorageKey}library_sync_last_page';
+  static const String _syncTotalFetchedKey = '${AppConstants.prefixStorageKey}library_sync_total_fetched';
+
+  final ValueNotifier<LibrarySyncStatus> syncStatus = 
+      ValueNotifier(LibrarySyncStatus());
 
   LibraryService({required ProfileAuthService auth})
     : _auth = auth,
@@ -79,44 +90,104 @@ class LibraryService {
 
   /// Performs a full sync with the remote API.
   Future<void> syncLibrary({String? state}) async {
-    const maxRetries = 3;
+    if (syncStatus.value.isSyncing) return;
+    
+    syncStatus.value = LibrarySyncStatus(isSyncing: true);
+
+    const maxRetries = 5; // Increased retries for better resilience
     var retryCount = 0;
 
     while (retryCount < maxRetries) {
       try {
         final token = await _auth.getValidAccessToken();
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Load saved progress if resuming
+        var totalFetched = prefs.getInt(_syncTotalFetchedKey) ?? 0;
+        var requestCount = 0;
+        
+        final savedState = prefs.getString(_syncStateKey);
+        final savedType = prefs.getString(_syncTypeKey);
+        final savedPage = prefs.getInt(_syncPageKey);
 
-        var page = 1;
-        var totalFetched = 0;
-        while (true) {
-          final entries = await _fetchPage(token, page, state: state);
-          _logger.info('Fetched ${entries.length} entries on page $page');
-          await _saveEntries(entries);
-          totalFetched += entries.length;
-          if (entries.length < LibraryConstants.pageLimit) {
-            break;
+        if (state != null) {
+          final result = await _syncState(token, state, requestCount: requestCount);
+          totalFetched = result.$1;
+          requestCount = result.$2;
+        } else {
+          final states = AppConstants.libraryStates.toList();
+          final types = [null, 'manga', 'manhwa', 'manhua', 'novel', 'oel'];
+          
+          var startIndex = 0;
+          if (savedState != null) {
+            startIndex = states.indexOf(savedState);
+            if (startIndex == -1) startIndex = 0;
+            _logger.info('Resuming sync from state: $savedState');
           }
-          page++;
+
+          for (var i = startIndex; i < states.length; i++) {
+            final s = states[i];
+            
+            var typeStartIndex = 0;
+            if (s == savedState && savedType != null) {
+              typeStartIndex = types.indexOf(savedType);
+              if (typeStartIndex == -1) typeStartIndex = 0;
+              _logger.info('Resuming sync for state $s from type: $savedType');
+            }
+
+            for (var j = typeStartIndex; j < types.length; j++) {
+              final type = types[j];
+              
+              // Only do deep sync if we already hit the limit or we are resuming a deep sync
+              if (type != null && (s != savedState || savedType == null)) {
+                 // Skip types unless we are in fallback mode
+                 // Wait, the logic in _syncState handles the fallback.
+                 // So here we only call _syncState once with type=null
+                 if (type != null) continue; 
+              }
+
+              final result = await _syncState(
+                token, 
+                s, 
+                type: type,
+                requestCount: requestCount,
+                initialFetched: totalFetched,
+                resumePage: (s == savedState && type == savedType) ? savedPage : null,
+              );
+              totalFetched = result.$1;
+              requestCount = result.$2;
+            }
+          }
         }
+
         _logger.info('Library sync completed. Total entries fetched: $totalFetched');
+        
+        // Clear saved progress on success
+        await _clearSyncProgress();
+        
+        syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
         return; // Success
-      } on AuthException {
+      } on AuthException catch (e) {
+        syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: e.message);
         rethrow;
       } on NetworkException catch (e) {
         retryCount++;
         if (retryCount >= maxRetries) {
           _logger.severe('Failed to sync library after $maxRetries attempts: $e');
+          syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: 'Connection failed. Will resume later.');
           rethrow;
         }
-        final delay = Duration(seconds: retryCount * 2);
-        _logger.warning('Network error during sync. Retrying in ${delay.inSeconds}s... ($retryCount/$maxRetries)');
-        await Future.delayed(delay);
-      } on ApiException {
-        rethrow;
-      } on DatabaseException {
-        rethrow;
+        
+        final delaySeconds = (retryCount * 15).clamp(5, 60);
+        syncStatus.value = syncStatus.value.copyWith(
+          error: 'Connection lost. Retrying in ${delaySeconds}s... ($retryCount/$maxRetries)',
+        );
+        
+        _logger.warning('Network error during sync. Retrying in ${delaySeconds}s... ($retryCount/$maxRetries)');
+        await Future.delayed(Duration(seconds: delaySeconds));
       } catch (e, st) {
         _logger.severe('Failed to sync library: $e\n$st');
+        syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: 'Sync failed');
         throw AppError(
           message: 'Failed to sync library',
           originalError: e,
@@ -126,10 +197,100 @@ class LibraryService {
     }
   }
 
-  Future<List<api.LibraryEntry>> _fetchPage(String token, int page, {String? state}) async {
+  Future<void> _clearSyncProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_syncStateKey);
+    await prefs.remove(_syncTypeKey);
+    await prefs.remove(_syncPageKey);
+    await prefs.remove(_syncTotalFetchedKey);
+  }
+
+  /// Helper to sync entries for a specific state and type.
+  Future<(int, int)> _syncState(
+    String token, 
+    String state, {
+    String? type,
+    required int requestCount,
+    int initialFetched = 0,
+    int? resumePage,
+  }) async {
+    var page = resumePage ?? 1;
+    var totalFetched = initialFetched;
+    var currentRequestCount = requestCount;
+    const maxPages = 100; // API limit
+
+    final prefs = await SharedPreferences.getInstance();
+
+    while (page <= maxPages) {
+      // Check for batch pause
+      if (currentRequestCount > 0 && currentRequestCount % AppConstants.requestsPerBatch == 0) {
+        _logger.info('Batch limit reached ($currentRequestCount requests). Pausing for ${AppConstants.batchPauseSeconds}s...');
+        await Future.delayed(Duration(seconds: AppConstants.batchPauseSeconds));
+      }
+
+      final result = await _fetchPage(token, page, state: state, type: type);
+      currentRequestCount++;
+
+      final entries = result.entries;
+      _logger.info('Fetched ${entries.length} entries on page $page for state $state (type: ${type ?? 'all'})');
+      
+      await _saveEntries(entries);
+      totalFetched += entries.length;
+
+      // Persist progress
+      await prefs.setString(_syncStateKey, state);
+      if (type != null) {
+        await prefs.setString(_syncTypeKey, type);
+      } else {
+        await prefs.remove(_syncTypeKey);
+      }
+      await prefs.setInt(_syncPageKey, page);
+      await prefs.setInt(_syncTotalFetchedKey, totalFetched);
+
+      // Update progress
+      syncStatus.value = syncStatus.value.copyWith(
+        currentEntries: totalFetched,
+        error: null, // Clear error on successful page fetch
+      );
+
+      if (entries.length < LibraryConstants.pageLimit) {
+        break;
+      }
+      page++;
+    }
+    
+    // If we hit the 100-page limit and we were fetching 'all' types, 
+    // we need to slice by type to get the remaining entries.
+    if (page > maxPages && type == null) {
+      _logger.warning('Reached max page limit (100) for state $state. Slicing by type to fetch remaining entries...');
+      
+      final types = ['manga', 'manhwa', 'manhua', 'novel', 'oel'];
+      for (final t in types) {
+        _logger.info('Deep syncing state: $state, type: $t');
+        final result = await _syncState(
+          token, 
+          state, 
+          type: t, 
+          requestCount: currentRequestCount, 
+          initialFetched: totalFetched,
+        );
+        totalFetched = result.$1;
+        currentRequestCount = result.$2;
+      }
+    } else if (page > maxPages) {
+      _logger.warning('Reached max page limit (100) for state $state, type $type. Some entries might still be missing.');
+    }
+    
+    return (totalFetched, currentRequestCount);
+  }
+
+  Future<_FetchPageResult> _fetchPage(String token, int page, {String? state, String? type}) async {
     var url = '${LibraryConstants.baseUrl}?page=$page&limit=${LibraryConstants.pageLimit}';
     if (state != null) {
       url += '&state=$state';
+    }
+    if (type != null) {
+      url += '&type=$type';
     }
     final uri = Uri.parse(url);
 
@@ -162,7 +323,6 @@ class LibraryService {
       if (response.statusCode == 401) {
         throw AuthException(
           message: 'Authentication failed. Please log in again.',
-
           code: 'AUTH_FAILED',
         );
       }
@@ -180,13 +340,24 @@ class LibraryService {
       }
 
       try {
-        final data =
-            (jsonDecode(response.body)['data'] as List<dynamic>? ?? const []);
-        return data
+        final body = jsonDecode(response.body);
+        final data = (body['data'] as List<dynamic>? ?? const []);
+        
+        // Extract total entries from metadata if available
+        int total = 0;
+        if (body['meta'] != null && body['meta']['total'] != null) {
+          total = (body['meta']['total'] as num).toInt();
+        } else if (body['total'] != null) {
+          total = (body['total'] as num).toInt();
+        }
+
+        final entries = data
             .map(
               (item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>),
             )
             .toList();
+            
+        return _FetchPageResult(entries: entries, totalEntries: total);
       } catch (e, st) {
         _logger.severe('Failed to parse library page: $e\n$st');
         throw ParseException(
@@ -593,4 +764,11 @@ class LibraryService {
       _logger.severe('Failed to clear library: $e\n$st');
     }
   }
+}
+
+class _FetchPageResult {
+  final List<api.LibraryEntry> entries;
+  final int totalEntries;
+
+  _FetchPageResult({required this.entries, required this.totalEntries});
 }

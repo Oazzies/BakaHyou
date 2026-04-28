@@ -13,7 +13,9 @@ class AppConstants {
   static const String userAgent = '$appName/$appVersion (oazziesmail@gmail.com)';
   static const int networkTimeoutSeconds = 30;
   static const int maxRetries = 3;
-  static const int rateLimitRetryDelaySeconds = 2;
+  static const int rateLimitRetryDelaySeconds = 5;
+  static const int requestsPerBatch = 80;
+  static const int batchPauseSeconds = 45;
 
   // ============ Pagination ============
   static const int defaultPageLimit = 20;

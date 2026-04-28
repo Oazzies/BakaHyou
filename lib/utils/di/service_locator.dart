@@ -4,6 +4,7 @@ import 'package:bakahyou/features/series/services/series_search_service.dart';
 import 'package:bakahyou/features/series/services/metadata_service.dart';
 import 'package:bakahyou/features/library/services/library_service.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
+import 'package:bakahyou/features/profile/services/snapshot_service.dart';
 import 'package:bakahyou/utils/services/logging_service.dart';
 
 final getIt = GetIt.instance;
@@ -23,7 +24,9 @@ void setupServiceLocator() {
   getIt.registerSingleton<MetadataService>(MetadataService());
 
   // Snapshot Service (singleton for activity caching)
-  getIt.registerSingleton<SnapshotService>(SnapshotService());
+  getIt.registerSingleton<SnapshotService>(
+    SnapshotService(auth: getIt<ProfileAuthService>()),
+  );
 
   // Series Services (lazy singletons - created on first use)
   getIt.registerLazySingleton<SeriesSearchService>(() => SeriesSearchService());
