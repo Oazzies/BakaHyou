@@ -19,9 +19,12 @@ class CurrentTab extends StatefulWidget {
   State<CurrentTab> createState() => _CurrentTabState();
 }
 
-class _CurrentTabState extends State<CurrentTab> {
+class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMixin {
   final _libraryService = getIt<LibraryService>();
   final _authService = getIt<ProfileAuthService>();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -57,6 +60,7 @@ class _CurrentTabState extends State<CurrentTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required by AutomaticKeepAliveClientMixin
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), _authService, ThemeManager()]),
       builder: (context, _) {
@@ -75,6 +79,7 @@ class _CurrentTabState extends State<CurrentTab> {
         return StreamBuilder<List<LibraryEntry>>(
           stream: _libraryService.watchEntriesFromDb(),
           builder: (context, snapshot) {
+            // Only show spinner if we have no data and are waiting
             if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }

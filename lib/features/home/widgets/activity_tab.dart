@@ -19,18 +19,26 @@ class ActivityTab extends StatefulWidget {
   State<ActivityTab> createState() => _ActivityTabState();
 }
 
-class _ActivityTabState extends State<ActivityTab> {
-  final _snapshotService = SnapshotService();
+class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClientMixin {
+  final _snapshotService = getIt<SnapshotService>();
   final _authService = getIt<ProfileAuthService>();
-  final List<LibraryEntry> _activities = [];
+  List<LibraryEntry> _activities = [];
   bool _isLoading = false;
   String? _error;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
+    // Load from cache first
+    if (_snapshotService.cachedActivities != null) {
+      _activities = _snapshotService.cachedActivities!;
+    }
+
     if (_authService.isLoggedIn) {
-      _fetchActivity();
+      _fetchActivity(isInitial: _activities.isEmpty);
     }
     _authService.addListener(_onAuthChanged);
   }
@@ -44,8 +52,9 @@ class _ActivityTabState extends State<ActivityTab> {
   void _onAuthChanged() {
     if (!mounted) return;
     if (_authService.isLoggedIn) {
-      _fetchActivity();
+      _fetchActivity(isInitial: true);
     } else {
+      _snapshotService.clearCache();
       setState(() {
         _activities.clear();
         _isLoading = false;
@@ -54,7 +63,7 @@ class _ActivityTabState extends State<ActivityTab> {
     }
   }
 
-  Future<void> _fetchActivity() async {
+  Future<void> _fetchActivity({bool isInitial = false}) async {
     if (!mounted) return;
     
     setState(() {
@@ -99,17 +108,22 @@ class _ActivityTabState extends State<ActivityTab> {
         return dateB.compareTo(dateA);
       });
 
+      // Update cache
+      _snapshotService.setCachedActivities(mergedList);
+
       if (!mounted) return;
       setState(() {
-        _activities.clear();
-        _activities.addAll(mergedList);
+        _activities = mergedList;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = e.toString();
+        // Only show error if we don't have any data to show (even cached)
+        if (_activities.isEmpty) {
+          _error = e.toString();
+        }
       });
     }
   }
@@ -138,6 +152,7 @@ class _ActivityTabState extends State<ActivityTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required by AutomaticKeepAliveClientMixin
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), _authService, ThemeManager()]),
       builder: (context, _) {
@@ -153,6 +168,7 @@ class _ActivityTabState extends State<ActivityTab> {
           );
         }
 
+        // Show spinner only if loading and we have no data yet
         if (_isLoading && _activities.isEmpty) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -175,7 +191,7 @@ class _ActivityTabState extends State<ActivityTab> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _fetchActivity,
+                    onPressed: () => _fetchActivity(isInitial: true),
                     child: Text(l10n.translate('retry')),
                   ),
                 ],

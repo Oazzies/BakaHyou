@@ -12,9 +12,21 @@ import 'package:http/http.dart' as http;
 class SnapshotService {
   final _logger = LoggingService.logger;
   final ProfileAuthService _auth;
+  
+  // Simple in-memory cache for the "Activity" list
+  List<LibraryEntry>? _cachedActivities;
+  List<LibraryEntry>? get cachedActivities => _cachedActivities;
 
   SnapshotService({ProfileAuthService? auth})
     : _auth = auth ?? getIt<ProfileAuthService>();
+
+  void setCachedActivities(List<LibraryEntry> activities) {
+    _cachedActivities = activities;
+  }
+
+  void clearCache() {
+    _cachedActivities = null;
+  }
 
   Future<List<LibraryEntry>> fetchSnapshot({
     required String sortBy,

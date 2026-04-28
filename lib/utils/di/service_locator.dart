@@ -22,6 +22,9 @@ void setupServiceLocator() {
   // Metadata Service (singleton)
   getIt.registerSingleton<MetadataService>(MetadataService());
 
+  // Snapshot Service (singleton for activity caching)
+  getIt.registerSingleton<SnapshotService>(SnapshotService());
+
   // Series Services (lazy singletons - created on first use)
   getIt.registerLazySingleton<SeriesSearchService>(() => SeriesSearchService());
 
