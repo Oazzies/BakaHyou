@@ -28,6 +28,14 @@ class LibraryService {
   final ValueNotifier<LibrarySyncStatus> syncStatus = 
       ValueNotifier(LibrarySyncStatus());
 
+  bool _isSyncCancelled = false;
+
+  void cancelSync() {
+    _isSyncCancelled = true;
+    _initialSyncTask = null;
+    syncStatus.value = syncStatus.value.copyWith(isSyncing: false, clearError: true, clearInfo: true);
+  }
+
   LibraryService({required ProfileAuthService auth})
     : _auth = auth,
       _db = db.AppDatabase();
@@ -92,12 +100,17 @@ class LibraryService {
   Future<void> syncLibrary({String? state}) async {
     if (syncStatus.value.isSyncing) return;
     
+    _isSyncCancelled = false;
     syncStatus.value = LibrarySyncStatus(isSyncing: true);
 
     const maxRetries = 5; // Increased retries for better resilience
     var retryCount = 0;
 
     while (retryCount < maxRetries) {
+      if (_isSyncCancelled) {
+        _logger.info('Sync cancelled by user.');
+        return;
+      }
       try {
         final token = await _auth.getValidAccessToken();
         final prefs = await SharedPreferences.getInstance();
@@ -110,8 +123,15 @@ class LibraryService {
         final savedType = prefs.getString(_syncTypeKey);
         final savedPage = prefs.getInt(_syncPageKey);
 
+        final lastSyncTimestampStr = prefs.getString(AppConstants.lastSyncKey);
+
         if (state != null) {
           final result = await _syncState(token, state, requestCount: requestCount);
+          totalFetched = result.$1;
+          requestCount = result.$2;
+        } else if (lastSyncTimestampStr != null && savedState == null) {
+          _logger.info('Performing delta sync since $lastSyncTimestampStr');
+          final result = await _syncDelta(token, lastSyncTimestampStr, requestCount: requestCount);
           totalFetched = result.$1;
           requestCount = result.$2;
         } else {
@@ -126,6 +146,7 @@ class LibraryService {
           }
 
           for (var i = startIndex; i < states.length; i++) {
+            if (_isSyncCancelled) break;
             final s = states[i];
             
             var typeStartIndex = 0;
@@ -136,13 +157,10 @@ class LibraryService {
             }
 
             for (var j = typeStartIndex; j < types.length; j++) {
+              if (_isSyncCancelled) break;
               final type = types[j];
               
-              // Only do deep sync if we already hit the limit or we are resuming a deep sync
               if (type != null && (s != savedState || savedType == null)) {
-                 // Skip types unless we are in fallback mode
-                 // Wait, the logic in _syncState handles the fallback.
-                 // So here we only call _syncState once with type=null
                  if (type != null) continue; 
               }
 
@@ -162,7 +180,7 @@ class LibraryService {
 
         _logger.info('Library sync completed. Total entries fetched: $totalFetched');
         
-        // Clear saved progress on success
+        await prefs.setString(AppConstants.lastSyncKey, DateTime.now().toUtc().toIso8601String());
         await _clearSyncProgress();
         
         syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
@@ -210,6 +228,7 @@ class LibraryService {
     String token, 
     String state, {
     String? type,
+    String? sortBy,
     required int requestCount,
     int initialFetched = 0,
     int? resumePage,
@@ -222,13 +241,25 @@ class LibraryService {
     final prefs = await SharedPreferences.getInstance();
 
     while (page <= maxPages) {
+      if (_isSyncCancelled) {
+        _logger.info('Sync cancelled during _syncState loop');
+        break;
+      }
+      
       // Check for batch pause
       if (currentRequestCount > 0 && currentRequestCount % AppConstants.requestsPerBatch == 0) {
         _logger.info('Batch limit reached ($currentRequestCount requests). Pausing for ${AppConstants.batchPauseSeconds}s...');
+        
+        syncStatus.value = syncStatus.value.copyWith(
+          infoMessage: 'Pausing to prevent API overload for ${AppConstants.batchPauseSeconds} seconds...',
+        );
+        
         await Future.delayed(Duration(seconds: AppConstants.batchPauseSeconds));
+        
+        syncStatus.value = syncStatus.value.copyWith(clearInfo: true);
       }
 
-      final result = await _fetchPage(token, page, state: state, type: type);
+      final result = await _fetchPage(token, page, state: state, type: type, sortBy: sortBy);
       currentRequestCount++;
 
       final entries = result.entries;
@@ -277,6 +308,18 @@ class LibraryService {
         totalFetched = result.$1;
         currentRequestCount = result.$2;
       }
+    } else if (page > maxPages && type != null && sortBy != 'updated_at_asc') {
+      _logger.warning('Reached max page limit (100) for state $state, type $type. Fetching oldest entries to compensate...');
+      final result = await _syncState(
+        token, 
+        state, 
+        type: type, 
+        sortBy: 'updated_at_asc',
+        requestCount: currentRequestCount, 
+        initialFetched: totalFetched,
+      );
+      totalFetched = result.$1;
+      currentRequestCount = result.$2;
     } else if (page > maxPages) {
       _logger.warning('Reached max page limit (100) for state $state, type $type. Some entries might still be missing.');
     }
@@ -284,13 +327,82 @@ class LibraryService {
     return (totalFetched, currentRequestCount);
   }
 
-  Future<_FetchPageResult> _fetchPage(String token, int page, {String? state, String? type}) async {
+  Future<(int, int)> _syncDelta(
+    String token, 
+    String lastSyncTimestampStr, {
+    required int requestCount,
+  }) async {
+    var page = 1;
+    var totalFetched = 0;
+    var currentRequestCount = requestCount;
+    const maxPages = 100;
+    final lastSyncDate = DateTime.parse(lastSyncTimestampStr);
+
+    while (page <= maxPages) {
+      if (_isSyncCancelled) {
+        _logger.info('Sync cancelled during _syncDelta loop');
+        break;
+      }
+
+      if (currentRequestCount > 0 && currentRequestCount % AppConstants.requestsPerBatch == 0) {
+        _logger.info('Batch limit reached ($currentRequestCount requests). Pausing for ${AppConstants.batchPauseSeconds}s...');
+        await Future.delayed(Duration(seconds: AppConstants.batchPauseSeconds));
+      }
+
+      // Using updated_at_desc to get newest changes first
+      final result = await _fetchPage(token, page, sortBy: 'updated_at_desc');
+      currentRequestCount++;
+
+      final entries = result.entries;
+      _logger.info('Delta Sync: Fetched ${entries.length} entries on page $page');
+
+      if (entries.isEmpty) break;
+
+      final newEntries = <api.LibraryEntry>[];
+      var reachedOldEntries = false;
+
+      for (final entry in entries) {
+        final dateStr = entry.updatedAt ?? entry.createdAt;
+        if (dateStr != null) {
+          final entryDate = DateTime.parse(dateStr);
+          // If entry is older than or equal to last sync, we can stop
+          if (entryDate.isBefore(lastSyncDate) || entryDate.isAtSameMomentAs(lastSyncDate)) {
+            reachedOldEntries = true;
+            break;
+          }
+        }
+        newEntries.add(entry);
+      }
+
+      await _saveEntries(newEntries);
+      totalFetched += newEntries.length;
+
+      syncStatus.value = syncStatus.value.copyWith(
+        currentEntries: totalFetched,
+        error: null,
+      );
+
+      // Stop fetching pages if we hit entries we've already synced
+      if (reachedOldEntries || entries.length < LibraryConstants.pageLimit) {
+        break;
+      }
+      
+      page++;
+    }
+
+    return (totalFetched, currentRequestCount);
+  }
+
+  Future<_FetchPageResult> _fetchPage(String token, int page, {String? state, String? type, String? sortBy}) async {
     var url = '${LibraryConstants.baseUrl}?page=$page&limit=${LibraryConstants.pageLimit}';
     if (state != null) {
       url += '&state=$state';
     }
     if (type != null) {
       url += '&type=$type';
+    }
+    if (sortBy != null) {
+      url += '&sort_by=$sortBy';
     }
     final uri = Uri.parse(url);
 
@@ -340,24 +452,8 @@ class LibraryService {
       }
 
       try {
-        final body = jsonDecode(response.body);
-        final data = (body['data'] as List<dynamic>? ?? const []);
-        
-        // Extract total entries from metadata if available
-        int total = 0;
-        if (body['meta'] != null && body['meta']['total'] != null) {
-          total = (body['meta']['total'] as num).toInt();
-        } else if (body['total'] != null) {
-          total = (body['total'] as num).toInt();
-        }
-
-        final entries = data
-            .map(
-              (item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>),
-            )
-            .toList();
-            
-        return _FetchPageResult(entries: entries, totalEntries: total);
+        final result = await compute(_parseLibraryPage, response.body);
+        return _FetchPageResult(entries: result.entries, totalEntries: result.totalEntries);
       } catch (e, st) {
         _logger.severe('Failed to parse library page: $e\n$st');
         throw ParseException(
@@ -366,29 +462,26 @@ class LibraryService {
           stackTrace: st,
         );
       }
-    } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error fetching library page: $e\n$st');
+    } on http.ClientException catch (e) {
+      _logger.warning('HTTP client error fetching library page: $e');
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
         originalError: e,
-        stackTrace: st,
       );
-    } on SocketException catch (e, st) {
-      _logger.severe('Network error fetching library page: $e\n$st');
+    } on SocketException catch (e) {
+      _logger.warning('Network error fetching library page: $e');
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
         originalError: e,
-        stackTrace: st,
       );
-    } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout fetching library page: $e\n$st');
+    } on TimeoutException catch (e) {
+      _logger.warning('Request timeout fetching library page: $e');
       throw NetworkException(
         message: 'Request timed out. Please try again.',
         code: 'TIMEOUT',
         originalError: e,
-        stackTrace: st,
       );
     } on AuthException {
       rethrow;
@@ -757,9 +850,12 @@ class LibraryService {
 
   Future<void> clearLibrary() async {
     try {
+      cancelSync();
       await _db.libraryEntriesDao.deleteAllEntries();
       _hasPerformedInitialSync = false;
-      _initialSyncTask = null;
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(AppConstants.lastSyncKey);
     } catch (e, st) {
       _logger.severe('Failed to clear library: $e\n$st');
     }
@@ -771,4 +867,25 @@ class _FetchPageResult {
   final int totalEntries;
 
   _FetchPageResult({required this.entries, required this.totalEntries});
+}
+
+_FetchPageResult _parseLibraryPage(String responseBody) {
+  final body = jsonDecode(responseBody);
+  final data = (body['data'] as List<dynamic>? ?? const []);
+  
+  // Extract total entries from metadata if available
+  int total = 0;
+  if (body['meta'] != null && body['meta']['total'] != null) {
+    total = (body['meta']['total'] as num).toInt();
+  } else if (body['total'] != null) {
+    total = (body['total'] as num).toInt();
+  }
+
+  final entries = data
+      .map(
+        (item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>),
+      )
+      .toList();
+      
+  return _FetchPageResult(entries: entries, totalEntries: total);
 }

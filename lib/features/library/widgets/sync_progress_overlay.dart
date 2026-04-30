@@ -39,79 +39,101 @@ class SyncProgressOverlay extends StatelessWidget {
   }
 
   Widget _buildProgressBar(BuildContext context, LibrarySyncStatus status) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppConstants.borderColor.withOpacity(0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Importing Library...',
-                    style: TextStyle(
-                      color: AppConstants.textColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${status.currentEntries} series imported',
-                    style: TextStyle(
-                      color: AppConstants.textMutedColor,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (status.error != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      status.error!,
-                      style: TextStyle(
-                        color: AppConstants.errorColor.withOpacity(0.8),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (status.error != null) ...[
-                const SizedBox(width: 16),
-                Icon(Icons.wifi_off_outlined, color: AppConstants.errorColor, size: 20),
-              ],
-            ],
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppConstants.secondaryBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppConstants.borderColor,
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppConstants.tertiaryBackground,
+              shape: BoxShape.circle,
+            ),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: status.error != null
+                  ? Icon(Icons.warning_amber_rounded, color: AppConstants.errorColor, size: 20)
+                  : CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status.error != null ? 'Sync Interrupted' : 'Syncing Library',
+                  style: TextStyle(
+                    color: status.error != null ? AppConstants.errorColor : AppConstants.textColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${status.currentEntries} series processed',
+                  style: TextStyle(
+                    color: AppConstants.textMutedColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (status.infoMessage != null && status.error == null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 14, color: AppConstants.accentColor),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          status.infoMessage!,
+                          style: TextStyle(
+                            color: AppConstants.accentColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (status.error != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    status.error!,
+                    style: TextStyle(
+                      color: AppConstants.errorColor.withOpacity(0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

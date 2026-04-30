@@ -7,6 +7,8 @@ import 'package:bakahyou/utils/services/logging_service.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/exceptions/app_exceptions.dart';
 import 'package:bakahyou/features/profile/models/mb_profile.dart';
+import 'package:bakahyou/features/library/services/library_service.dart';
+import 'package:bakahyou/utils/di/service_locator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -115,6 +117,10 @@ class ProfileAuthService extends ChangeNotifier {
 
       await _persistTokens(response);
       _hasSessionCache = true;
+      
+      // Fetch profile before notifying listeners so UI reflects fully logged-in state
+      await fetchProfile(forceRefresh: true);
+      
       notifyListeners();
     } catch (e, st) {
       if (e is PlatformException &&
@@ -272,6 +278,14 @@ class ProfileAuthService extends ChangeNotifier {
       await _storage.delete(key: _kProfileCache);
       _cachedProfile = null;
       _hasSessionCache = false;
+
+      // Clear library and cancel any ongoing syncs on logout
+      try {
+        await getIt<LibraryService>().clearLibrary();
+      } catch (e) {
+        _logger.warning('Failed to clear library on logout: $e');
+      }
+
       notifyListeners();
     } catch (e, st) {
       _logger.severe('Failed to logout: $e\n$st');

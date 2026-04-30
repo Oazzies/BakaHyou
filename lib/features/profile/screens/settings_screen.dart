@@ -240,9 +240,32 @@ class SettingsScreen extends StatelessWidget {
                       title: l10n.translate('logout'),
                       subtitle: l10n.translate('logout_subtext'),
                       onTap: () async {
-                        await getIt<LibraryService>().clearLibrary();
-                        await getIt<ProfileAuthService>().logout();
-                        if (context.mounted) Navigator.pop(context);
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppConstants.secondaryBackground,
+                            title: Text(l10n.translate('logout'), style: TextStyle(color: AppConstants.textColor)),
+                            content: Text(
+                              'Are you sure you want to log out? Your local library data will be cleared and must be reimported when you log back in.',
+                              style: TextStyle(color: AppConstants.textMutedColor),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text(l10n.translate('cancel'), style: TextStyle(color: AppConstants.textMutedColor)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text(l10n.translate('logout'), style: TextStyle(color: AppConstants.errorColor)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldLogout == true) {
+                          await getIt<ProfileAuthService>().logout();
+                          if (context.mounted) Navigator.pop(context);
+                        }
                       },
                       isLast: true,
                     ),

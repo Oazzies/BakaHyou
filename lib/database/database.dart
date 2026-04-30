@@ -387,7 +387,7 @@ class AppDatabase extends _$AppDatabase {
       try {
         final dbFolder = await getApplicationDocumentsDirectory();
         final file = File(p.join(dbFolder.path, 'manga_db.sqlite'));
-        return NativeDatabase(file);
+        return NativeDatabase.createInBackground(file);
       } catch (e) {
         logger.severe('Failed to open database connection: $e');
         throw exc.DatabaseException(message: 'Failed to open database connection', originalError: e);
