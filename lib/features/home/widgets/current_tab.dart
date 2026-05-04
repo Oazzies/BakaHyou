@@ -129,10 +129,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
                       borderRadius: BorderRadius.circular(8),
                       child: EntryListItem(series: series),
                     ),
-                  )
-                      .animate(delay: Duration(milliseconds: 50 * index))
-                      .fadeIn(duration: const Duration(milliseconds: 300))
-                      .slideX(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+                  );
                 },
               ),
             );

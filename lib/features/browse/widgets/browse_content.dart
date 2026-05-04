@@ -5,11 +5,8 @@ import 'package:bakahyou/features/browse/widgets/browse_shortcuts.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/utils/settings/settings_enums.dart';
-
-
 import 'package:bakahyou/utils/localization/localization_service.dart';
 import 'package:bakahyou/features/browse/widgets/list_skeleton.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 class BrowseContent extends StatelessWidget {
   final List<Series> searchResults;
@@ -38,73 +35,50 @@ class BrowseContent extends StatelessWidget {
     final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
     final isGrid = activeStyle == AppListStyle.grid || activeStyle == AppListStyle.coverOnlyGrid;
     
-    return Expanded(child: ListSkeleton(isGrid: isGrid));
+    return ListSkeleton(isGrid: isGrid);
   }
 
   Widget _buildErrorState(LocalizationService l10n) {
-    return Expanded(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, color: AppConstants.errorColor, size: 48),
-            SizedBox(height: 16),
-            Text(
-              error!,
-              style: TextStyle(color: AppConstants.errorColor),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: Text(l10n.translate('retry'))),
-          ],
-        ),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: AppConstants.errorColor, size: 48),
+          SizedBox(height: 16),
+          Text(
+            error!,
+            style: TextStyle(color: AppConstants.errorColor),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: onRetry, child: Text(l10n.translate('retry'))),
+        ],
       ),
     );
   }
 
   Widget _buildResultsList(LocalizationService l10n) {
-    return Expanded(
-      child: ListenableBuilder(
-        listenable: Listenable.merge([SettingsManager(), l10n]),
-        builder: (context, _) {
-          final settings = SettingsManager();
-          final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
-          final isGrid = activeStyle == AppListStyle.grid || activeStyle == AppListStyle.coverOnlyGrid;
+    return ListenableBuilder(
+      listenable: Listenable.merge([SettingsManager(), l10n]),
+      builder: (context, _) {
+        final settings = SettingsManager();
+        final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
+        final isGrid = activeStyle == AppListStyle.grid || activeStyle == AppListStyle.coverOnlyGrid;
 
-          if (isGrid) {
-            return GridView.builder(
-              controller: scrollController,
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 160,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == searchResults.length) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final series = searchResults[index];
-                return InkWell(
-                  onTap: () => onNavigateToDetail(series),
-                  child: EntryListItem(series: series),
-                );
-              },
-            );
-          }
-
-          return ListView.builder(
+        if (isGrid) {
+          return GridView.builder(
             controller: scrollController,
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 160,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
             itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == searchResults.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const Center(child: CircularProgressIndicator());
               }
 
               final series = searchResults[index];
@@ -114,8 +88,27 @@ class BrowseContent extends StatelessWidget {
               );
             },
           );
-        },
-      ),
+        }
+
+        return ListView.builder(
+          controller: scrollController,
+          itemCount: searchResults.length + (isLoadingMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == searchResults.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final series = searchResults[index];
+            return InkWell(
+              onTap: () => onNavigateToDetail(series),
+              child: EntryListItem(series: series),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -128,7 +121,7 @@ class BrowseContent extends StatelessWidget {
         
         Widget content;
         if (searchResults.isEmpty && !isLoading && error == null) {
-          content = Expanded(child: BrowseShortcuts(onNavigate: onNavigateToResults));
+          content = BrowseShortcuts(onNavigate: onNavigateToResults);
         } else if (isLoading && searchResults.isEmpty) {
           content = _buildLoadingState();
         } else if (error != null && searchResults.isEmpty) {
@@ -139,23 +132,28 @@ class BrowseContent extends StatelessWidget {
           content = const SizedBox.shrink();
         }
 
-        return AnimatedSwitcher(
-          duration: 600.ms,
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.01),
-                  end: Offset.zero,
-                ).animate(animation),
+        return Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 600),
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
                 child: child,
-              ),
-            );
-          },
-          child: content,
+              );
+            },
+            child: content,
+          ),
         );
       },
     );

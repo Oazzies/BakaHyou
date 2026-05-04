@@ -281,13 +281,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
       transitionBuilder: (Widget child, Animation<double> animation) {
         return FadeTransition(
           opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.02),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
+          child: child,
         );
       },
       child: _results.isEmpty && _isLoading

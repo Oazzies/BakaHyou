@@ -247,10 +247,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               return GestureDetector(
                 onTap: () => _navigateToSeriesDetail(entry.series),
                 child: EntryListItem(series: entry.series, isLibrary: true),
-              )
-                  .animate(delay: Duration(milliseconds: 50 * index))
-                  .fadeIn(duration: const Duration(milliseconds: 300))
-                  .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutCubic);
+              );
             },
           );
         }
@@ -264,10 +261,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             return GestureDetector(
               onTap: () => _navigateToSeriesDetail(entry.series),
               child: EntryListItem(series: entry.series, isLibrary: true),
-            )
-                .animate(delay: Duration(milliseconds: 50 * index))
-                .fadeIn(duration: const Duration(milliseconds: 300))
-                .slideX(begin: 0.05, end: 0, curve: Curves.easeOutCubic);
+            );
           },
         );
       }(),
