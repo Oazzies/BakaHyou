@@ -44,9 +44,9 @@ class BrowseContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.error_outline, color: AppConstants.errorColor, size: 48),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
-            error!,
+            error ?? 'An unexpected error occurred.',
             style: TextStyle(color: AppConstants.errorColor),
             textAlign: TextAlign.center,
           ),
@@ -134,7 +134,7 @@ class BrowseContent extends StatelessWidget {
 
         return Expanded(
           child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 600),
+            duration: const Duration(milliseconds: 400),
             layoutBuilder: (currentChild, previousChildren) {
               return Stack(
                 alignment: Alignment.topCenter,

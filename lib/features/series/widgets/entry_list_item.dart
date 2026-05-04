@@ -15,9 +15,6 @@ class EntryListItem extends StatelessWidget {
 
   const EntryListItem({super.key, required this.series, this.ranking, this.isLibrary = false});
 
-  String capitalize(String s) =>
-      s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(

@@ -37,6 +37,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   List<SeriesLink>? _enrichedLinks;
   Series? _fullSeries;
   bool _isDataLoaded = false;
+  bool _fetchError = false;
 
   @override
   void initState() {
@@ -60,12 +61,16 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           _enrichedLinks = results[0] as List<SeriesLink>?;
           _fullSeries = results[1] as Series?;
           _isDataLoaded = true;
+          _fetchError = false;
         });
       }
     } catch (e) {
       SeriesService.logger.warning('Error fetching full data: $e');
       if (mounted) {
-        setState(() => _isDataLoaded = true); // Still show what we have
+        setState(() {
+          _isDataLoaded = true; // Still show what we have
+          _fetchError = true;
+        });
       }
     }
   }
@@ -73,10 +78,11 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
 
   void _shareLink() {
     final l10n = LocalizationService();
-    String? link = widget.series.links.firstWhere(
-      (l) => l is String && l.contains('mangabaka'), 
-      orElse: () => null,
-    ) as String?;
+    // links is List<dynamic>; find first String containing 'mangabaka'
+    final String? link = widget.series.links
+        .whereType<String>()
+        .where((l) => l.contains('mangabaka'))
+        .firstOrNull;
 
     if (link != null) {
       final box = context.findRenderObject() as RenderBox?;
@@ -162,6 +168,42 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                             onDelete: _showDeleteConfirmationDialog,
                             onCopy: _copyToClipboard,
                           ),
+                          if (_fetchError)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.errorColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: AppConstants.errorColor.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.warning_amber_rounded, color: AppConstants.errorColor, size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Could not load full details. Showing partial data.',
+                                          style: TextStyle(color: AppConstants.errorColor, fontSize: 13),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _isDataLoaded = false;
+                                            _fetchError = false;
+                                          });
+                                          _fetchFullData();
+                                        },
+                                        child: Text('Retry', style: TextStyle(color: AppConstants.errorColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: isWide ? 40.0 : 16.0),
@@ -312,6 +354,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
     setState(() => _isAdding = true);
     try {
       await _libraryService.createLibraryEntry(widget.series.id, SettingsManager().addLibraryDefaultTab);
+    } catch (e) {
+      SeriesService.logger.warning('Failed to add series to library: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add to library. Please try again.')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }

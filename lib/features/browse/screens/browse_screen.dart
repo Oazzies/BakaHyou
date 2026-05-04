@@ -17,6 +17,7 @@ import 'package:bakahyou/features/series/models/autocomplete_series_result.dart'
 import 'package:bakahyou/features/series/services/series_id_service.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
+import 'package:bakahyou/utils/transitions/app_transitions.dart';
 
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
@@ -53,7 +54,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -163,37 +163,30 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
   }
 
-  double _generateRandomSeed() {
+  static double _generateRandomSeed() {
     return Random().nextDouble();
   }
 
 
 
   void _navigateToBrowseResults(String header, String sortBy, {String? type}) {
-    double? randomSeed;
-
-
-    if (sortBy == 'random') {
-      randomSeed = _generateRandomSeed();
-    }
+    final double? randomSeed = sortBy == 'random' ? _generateRandomSeed() : null;
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => BrowseResultsScreen(
-          sortType: header,
-          sortBy: sortBy,
-          type: type,
-          randomSeed: randomSeed,
-        ),
-      ),
+      AppTransitions.slideRight(BrowseResultsScreen(
+        sortType: header,
+        sortBy: sortBy,
+        type: type,
+        randomSeed: randomSeed,
+      )),
     );
   }
 
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SeriesDetailScreen(series: series)),
+      AppTransitions.slideUp(SeriesDetailScreen(series: series)),
     );
   }
 
@@ -251,8 +244,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
               }
             }
 
-             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('No series found for "$cleanedTitle" on MangaBaka.')),
+                    ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('No series found for "$cleanedTitle".')),
             );
           }
         } else {
@@ -261,7 +254,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not find book title for this ISBN.')),
+            const SnackBar(content: Text('Could not find a book title for this barcode.')),
           );
         }
       } catch (e) {
@@ -270,7 +263,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error looking up book: $e')),
+          const SnackBar(content: Text('Failed to look up the barcode. Please try again.')),
         );
       }
     }

@@ -14,7 +14,7 @@ import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/utils/settings/settings_enums.dart';
 import 'package:bakahyou/features/series/widgets/series_list_skeleton.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:bakahyou/utils/transitions/app_transitions.dart';
 
 class CurrentTab extends StatefulWidget {
   const CurrentTab({super.key});
@@ -48,7 +48,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
       if (e is AuthCancelledException) return;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
+        const SnackBar(content: Text('Login failed. Please try again.')),
       );
     }
   }
@@ -56,9 +56,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => SeriesDetailScreen(series: series),
-      ),
+      AppTransitions.slideUp(SeriesDetailScreen(series: series)),
     );
   }
 
@@ -164,9 +162,18 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
             }
 
             return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 400),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
+              layoutBuilder: (currentChild, previousChildren) {
+                return Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    ...previousChildren,
+                    if (currentChild != null) currentChild,
+                  ],
+                );
+              },
               transitionBuilder: (Widget child, Animation<double> animation) {
                 return FadeTransition(
                   opacity: animation,

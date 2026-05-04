@@ -21,11 +21,17 @@ void main() async {
   await dotenv.load();
   setupServiceLocator();
   
+  // Init auth and metadata independently from UI prefs — do sequentially since
+  // SettingsManager may depend on auth state in the future.
   await getIt<ProfileAuthService>().init();
   await getIt<MetadataService>().init();
-  await ThemeManager().init();
-  await SettingsManager().init();
-  await LocalizationService().init();
+
+  // Theme, settings, and localization are independent — run in parallel.
+  await Future.wait([
+    ThemeManager().init(),
+    SettingsManager().init(),
+    LocalizationService().init(),
+  ]);
 
   // Set initial system UI style
   _updateSystemUI(ThemeManager().isDarkMode);
@@ -78,8 +84,8 @@ class BakaHyouApp extends StatelessWidget {
           ),
           themeMode: currentThemeMode,
           home: SettingsManager().hasCompletedOnboarding 
-              ? MainScreen() 
-              : OnboardingScreen(),
+              ? const MainScreen() 
+              : const OnboardingScreen(),
         );
       },
     );

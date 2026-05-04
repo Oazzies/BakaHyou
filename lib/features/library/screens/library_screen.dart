@@ -20,6 +20,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:bakahyou/features/profile/widgets/mb_login_prompt.dart';
 import 'package:bakahyou/features/browse/models/search_filters.dart';
+import 'package:bakahyou/features/series/widgets/series_list_skeleton.dart';
+import 'package:bakahyou/utils/transitions/app_transitions.dart';
 
 
 class LibraryScreen extends StatefulWidget {
@@ -112,7 +114,10 @@ class _LibraryScreenState extends State<LibraryScreen>
       _setupStreamAndSync();
     } catch (e) {
       if (e is AuthCancelledException) return;
-      // Handle login error
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login failed. Please try again.')),
+      );
     }
   }
 
@@ -168,8 +173,12 @@ class _LibraryScreenState extends State<LibraryScreen>
     return StreamBuilder<List<LibraryEntry>>(
       stream: _entriesStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          final settings = SettingsManager();
+          final isGrid = settings.separateListStyles
+              ? settings.libraryListStyle == AppListStyle.grid
+              : settings.currentListStyle == AppListStyle.grid;
+          return SeriesListSkeleton(isGrid: isGrid);
         }
         if (snapshot.hasError) {
           return Center(
@@ -228,19 +237,38 @@ class _LibraryScreenState extends State<LibraryScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      child: () {
-        final isGrid = SettingsManager().currentListStyle == AppListStyle.grid;
+      child: ListenableBuilder(
+        listenable: SettingsManager(),
+        builder: (context, _) {
+          final settings = SettingsManager();
+          final isGrid = settings.separateListStyles
+              ? settings.libraryListStyle == AppListStyle.grid
+              : settings.currentListStyle == AppListStyle.grid;
 
-        if (isGrid) {
-          return GridView.builder(
+          if (isGrid) {
+            return GridView.builder(
+              controller: _scrollControllers[tabKey],
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final entry = items[index];
+                return GestureDetector(
+                  onTap: () => _navigateToSeriesDetail(entry.series),
+                  child: EntryListItem(series: entry.series, isLibrary: true),
+                );
+              },
+            );
+          }
+
+          return ListView.builder(
             controller: _scrollControllers[tabKey],
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 160,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final entry = items[index];
@@ -250,29 +278,14 @@ class _LibraryScreenState extends State<LibraryScreen>
               );
             },
           );
-        }
-
-        return ListView.builder(
-          controller: _scrollControllers[tabKey],
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final entry = items[index];
-            return GestureDetector(
-              onTap: () => _navigateToSeriesDetail(entry.series),
-              child: EntryListItem(series: entry.series, isLibrary: true),
-            );
-          },
-        );
-      }(),
+        },
+      ),
     );
   }
 
   void _navigateToSeriesDetail(api.Series series) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SeriesDetailScreen(series: series),
-      ),
+      AppTransitions.slideUp(SeriesDetailScreen(series: series)),
     );
   }
 }

@@ -12,7 +12,7 @@ import 'package:bakahyou/utils/settings/settings_enums.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/features/profile/services/profile_auth_service.dart';
 import 'package:bakahyou/features/series/widgets/series_list_skeleton.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:bakahyou/utils/transitions/app_transitions.dart';
 
 class BrowseResultsScreen extends StatefulWidget {
   final String sortType;
@@ -169,7 +169,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SeriesDetailScreen(series: series)),
+      AppTransitions.slideUp(SeriesDetailScreen(series: series)),
     );
   }
 
@@ -275,9 +275,18 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
     }
 
     return AnimatedSwitcher(
-      duration: 600.ms,
+      duration: const Duration(milliseconds: 400),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
       transitionBuilder: (Widget child, Animation<double> animation) {
         return FadeTransition(
           opacity: animation,

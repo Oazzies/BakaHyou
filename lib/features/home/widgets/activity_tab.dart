@@ -14,7 +14,7 @@ import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:bakahyou/utils/settings/settings_manager.dart';
 import 'package:bakahyou/utils/settings/settings_enums.dart';
 import 'package:bakahyou/features/series/widgets/series_list_skeleton.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:bakahyou/utils/transitions/app_transitions.dart';
 
 class ActivityTab extends StatefulWidget {
   const ActivityTab({super.key});
@@ -126,7 +126,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
         _isLoading = false;
         // Only show error if we don't have any data to show (even cached)
         if (_activities.isEmpty) {
-          _error = e.toString();
+          _error = 'Failed to load activity. Please try again.';
         }
       });
     }
@@ -135,9 +135,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
   void _navigateToDetail(Series series) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => SeriesDetailScreen(series: series),
-      ),
+      AppTransitions.slideUp(SeriesDetailScreen(series: series)),
     );
   }
 
@@ -149,7 +147,7 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
       if (e is AuthCancelledException) return;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
+        const SnackBar(content: Text('Login failed. Please try again.')),
       );
     }
   }
@@ -264,9 +262,18 @@ class _ActivityTabState extends State<ActivityTab> with AutomaticKeepAliveClient
         }
 
         return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 400),
           switchInCurve: Curves.easeOutCubic,
           switchOutCurve: Curves.easeInCubic,
+          layoutBuilder: (currentChild, previousChildren) {
+            return Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                ...previousChildren,
+                if (currentChild != null) currentChild,
+              ],
+            );
+          },
           transitionBuilder: (Widget child, Animation<double> animation) {
             return FadeTransition(
               opacity: animation,

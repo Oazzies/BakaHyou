@@ -7,10 +7,10 @@ class DescriptionSection extends StatefulWidget {
   const DescriptionSection({super.key, required this.description});
 
   @override
-  State<DescriptionSection> createState() => DescriptionSectionState();
+  State<DescriptionSection> createState() => _DescriptionSectionState();
 }
 
-class DescriptionSectionState extends State<DescriptionSection> {
+class _DescriptionSectionState extends State<DescriptionSection> {
   bool expanded = false;
 
   @override
