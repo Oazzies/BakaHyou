@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bakahyou/features/series/models/series.dart';
+import 'package:bakahyou/utils/constants/app_constants.dart';
 
 class SeriesHeroCover extends StatelessWidget {
   final Series series;
@@ -22,7 +23,7 @@ class SeriesHeroCover extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: AppConstants.primaryBackground.withValues(alpha: 0.6),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

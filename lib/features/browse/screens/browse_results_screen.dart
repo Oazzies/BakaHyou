@@ -336,7 +336,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
                     );
                   },
                   backgroundColor: AppConstants.accentColor,
-                  child: const Icon(Icons.arrow_upward, color: Colors.white),
+                  child: Icon(Icons.arrow_upward, color: AppConstants.primaryBackground),
                 )
               : null,
         );

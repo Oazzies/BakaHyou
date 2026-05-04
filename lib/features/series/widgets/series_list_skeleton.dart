@@ -33,6 +33,7 @@ class SeriesListSkeleton extends StatelessWidget {
   }
 
   Widget _buildGridSkeleton() {
+    final shimmerColor = AppConstants.borderColor.withValues(alpha: 0.3);
     return Container(
       decoration: BoxDecoration(
         color: AppConstants.secondaryBackground,
@@ -43,9 +44,9 @@ class SeriesListSkeleton extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              decoration: BoxDecoration(
+                color: AppConstants.tertiaryBackground,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               ),
             ),
           ),
@@ -54,33 +55,34 @@ class SeriesListSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(width: double.infinity, height: 14, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4))),
+                Container(width: double.infinity, height: 14, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(4))),
                 const SizedBox(height: 8),
-                Container(width: 80, height: 12, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4))),
+                Container(width: 80, height: 12, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(4))),
               ],
             ),
           ),
         ],
       ),
     ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(duration: 1500.ms, color: Colors.white10.withValues(alpha: 0.1));
+     .shimmer(duration: 1500.ms, color: shimmerColor);
   }
 
   Widget _buildListSkeleton() {
+    final shimmerColor = AppConstants.borderColor.withValues(alpha: 0.3);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      height: 120, // Adjusted to match EntryListItem
+      height: 120,
       decoration: BoxDecoration(
         color: AppConstants.secondaryBackground,
-        borderRadius: BorderRadius.circular(12), // Match EntryListItem card
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Container(
-            width: 80, // Adjusted to match EntryListItem
-            decoration: const BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
+            width: 80,
+            decoration: BoxDecoration(
+              color: AppConstants.tertiaryBackground,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
             ),
           ),
           Expanded(
@@ -89,15 +91,15 @@ class SeriesListSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(width: 200, height: 16, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4))),
+                  Container(width: 200, height: 16, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(4))),
                   const SizedBox(height: 8),
-                  Container(width: 120, height: 14, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(4))),
+                  Container(width: 120, height: 14, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(4))),
                   const Spacer(),
                   Row(
                     children: [
-                      Container(width: 60, height: 28, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(16))),
+                      Container(width: 60, height: 28, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(16))),
                       const SizedBox(width: 8),
-                      Container(width: 60, height: 28, decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(16))),
+                      Container(width: 60, height: 28, decoration: BoxDecoration(color: AppConstants.tertiaryBackground, borderRadius: BorderRadius.circular(16))),
                     ],
                   ),
                 ],
@@ -107,6 +109,6 @@ class SeriesListSkeleton extends StatelessWidget {
         ],
       ),
     ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(duration: 1500.ms, color: Colors.white10.withValues(alpha: 0.1));
+     .shimmer(duration: 1500.ms, color: shimmerColor);
   }
 }

@@ -59,7 +59,7 @@ class SeriesDetailSkeleton extends StatelessWidget {
         ),
       ],
     ).animate(onPlay: (controller) => controller.repeat())
-     .shimmer(duration: 1500.ms, color: Colors.white10);
+     .shimmer(duration: 1500.ms, color: AppConstants.borderColor.withValues(alpha: 0.3));
   }
 
   Widget _skeletonBox({required double width, required double height}) {
@@ -67,7 +67,7 @@ class SeriesDetailSkeleton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppConstants.secondaryBackground,
+        color: AppConstants.tertiaryBackground,
         borderRadius: BorderRadius.circular(8),
       ),
     );

@@ -20,20 +20,20 @@ class StatusChip extends StatelessWidget {
     Color? iconColor;
 
     if (lower == 'releasing') {
-      bgColor = Color(0xFF0d542b);
+      bgColor = AppConstants.successColor.withValues(alpha: 0.15);
       icon = Icons.play_arrow_outlined;
-      textStyle = TextStyle(color: Color(0xFF81e6ca));
-      iconColor = Color(0xFF81e6ca);
+      textStyle = TextStyle(color: AppConstants.successColor);
+      iconColor = AppConstants.successColor;
     } else if (lower == 'completed') {
-      bgColor = Color(0xFF314158);
+      bgColor = AppConstants.infoColor.withValues(alpha: 0.15);
       icon = Icons.check_circle_outline_outlined;
-      textStyle = TextStyle(color: AppConstants.textColor);
-      iconColor = AppConstants.textColor;
+      textStyle = TextStyle(color: AppConstants.infoColor);
+      iconColor = AppConstants.infoColor;
     } else if (lower == 'hiatus') {
-      bgColor = const Color(0xFF733e0a);
+      bgColor = AppConstants.warningColor.withValues(alpha: 0.15);
       icon = Icons.pause_circle_outline;
-      textStyle = const TextStyle(color: Color(0xFFFCE96E));
-      iconColor = const Color(0xFFFCE96E);
+      textStyle = TextStyle(color: AppConstants.warningColor);
+      iconColor = AppConstants.warningColor;
     }
 
     return ChipBase(

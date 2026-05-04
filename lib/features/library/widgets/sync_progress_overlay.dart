@@ -45,7 +45,7 @@ class SyncProgressOverlay extends StatelessWidget {
         border: Border.all(color: AppConstants.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: AppConstants.primaryBackground.withValues(alpha: 0.6),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

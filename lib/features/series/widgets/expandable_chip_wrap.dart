@@ -97,10 +97,10 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
           children: [
             Text(
               widget.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppConstants.textColor,
                 letterSpacing: 0.5,
               ),
             ),

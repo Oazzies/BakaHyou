@@ -32,7 +32,7 @@ class VolumeChip extends StatelessWidget {
                   TextSpan(
                     text: '$progressValue',
                     style: TextStyle(
-                      color: Color(0xFF16d492),
+                      color: AppConstants.successColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

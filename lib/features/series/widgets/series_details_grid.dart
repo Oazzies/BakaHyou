@@ -35,21 +35,22 @@ class SeriesDetailsGrid extends StatelessWidget {
           children: series.genres
               .map((g) => Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppConstants.secondaryBackground,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppConstants.tertiaryBackground,
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppConstants.borderColor.withValues(alpha: 0.5),
+                        color: AppConstants.borderColor.withValues(alpha: 0.6),
                         width: 1,
                       ),
                     ),
                     child: Text(
                       metadataService.getGenreLabel(g),
                       style: TextStyle(
-                        color: AppConstants.textColor.withValues(alpha: 0.9),
+                        color: AppConstants.textColor,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
+                        height: 1.2,
                       ),
                     ),
                   ))
@@ -99,10 +100,10 @@ class SeriesDetailsGrid extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: AppConstants.textColor,
           letterSpacing: 0.5,
         ),
       ),

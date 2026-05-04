@@ -152,20 +152,20 @@ class _LibraryScreenState extends State<LibraryScreen>
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.orange.withValues(alpha: 0.12),
+      color: AppConstants.warningColor.withValues(alpha: 0.12),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+          Icon(Icons.warning_amber_rounded, color: AppConstants.warningColor, size: 18),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               'Your library exceeds 10,000 entries. Only the first 10,000 could be imported.',
-              style: TextStyle(color: Colors.orange, fontSize: 12),
+              style: TextStyle(color: AppConstants.warningColor, fontSize: 12),
             ),
           ),
           TextButton(
             onPressed: () => _libraryService.importFullLibrary(),
-            child: const Text('Re-import', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+            child: Text('Re-import', style: TextStyle(color: AppConstants.warningColor, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

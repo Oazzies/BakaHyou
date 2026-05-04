@@ -17,19 +17,19 @@ class ContentRatingChip extends StatelessWidget {
     IconData icon;
     switch (rating.toLowerCase()) {
       case 'suggestive':
-        color = const Color(0xFFFBC8CF);
+        color = AppConstants.warningColor;
         icon = Icons.whatshot;
         break;
       case 'erotica':
-        color = const Color(0xFFF8617B);
+        color = AppConstants.errorColor;
         icon = Icons.whatshot;
         break;
       case 'pornographic':
-        color = Color(0xFFE8003E);
+        color = AppConstants.errorColor;
         icon = Icons.whatshot;
         break;
       case 'safe':
-        color = Color(0xFF6CD292);
+        color = AppConstants.successColor;
         icon = Icons.local_hospital;
         break;
       default:

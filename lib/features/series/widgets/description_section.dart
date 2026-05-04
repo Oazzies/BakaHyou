@@ -38,7 +38,7 @@ class _DescriptionSectionState extends State<DescriptionSection> {
                 overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       height: 1.6,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: AppConstants.textColor.withValues(alpha: 0.9),
                       fontSize: 15,
                     ),
               ),

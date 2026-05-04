@@ -10,10 +10,10 @@ class WidgetUtils {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppConstants.textColor,
             letterSpacing: 0.5,
           ),
         ),
@@ -23,21 +23,22 @@ class WidgetUtils {
           runSpacing: 10,
           children: items
               .map((e) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: color ?? AppConstants.secondaryBackground,
-                      borderRadius: BorderRadius.circular(12),
+                      color: color ?? AppConstants.tertiaryBackground,
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppConstants.borderColor.withValues(alpha: 0.5),
+                        color: AppConstants.borderColor.withValues(alpha: 0.6),
                         width: 1,
                       ),
                     ),
                     child: Text(
                       e,
                       style: TextStyle(
-                        color: AppConstants.textColor.withValues(alpha: 0.9),
+                        color: AppConstants.textColor,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
+                        height: 1.2,
                       ),
                     ),
                   ))
@@ -53,12 +54,12 @@ class WidgetUtils {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Links',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppConstants.textColor,
             letterSpacing: 0.5,
           ),
         ),
@@ -119,13 +120,13 @@ class WidgetUtils {
                       faviconUrl,
                       width: 18,
                       height: 18,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.link, size: 18, color: Colors.white70),
+                      errorBuilder: (_, __, ___) => Icon(Icons.link, size: 18, color: AppConstants.textMutedColor),
                     ),
                     const SizedBox(width: 10),
                     Text(
                       displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppConstants.textColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -135,13 +136,13 @@ class WidgetUtils {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white10,
+                          color: AppConstants.tertiaryBackground,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           language,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: AppConstants.textMutedColor,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),

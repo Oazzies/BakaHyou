@@ -44,7 +44,6 @@ Series
 * Multiple series covers
 * Collections
 * Works
-* Better Tags Display
 
 Profile
 * More Statistics

@@ -111,8 +111,19 @@ class LibraryService {
 
   // ─── Full library import ───────────────────────────────────────────────────
 
-  /// Fetches the entire library with no filters, page by page.
-  /// If the API's 100-page limit is hit, marks the library as incomplete.
+  // Library states and media types used to slice large libraries.
+  static const _importStates = [
+    'reading', 'completed', 'plan_to_read', 'paused',
+    'dropped', 'rereading', 'considering',
+  ];
+  static const _mediaTypes = [
+    'manga', 'manhwa', 'manhua', 'novel', 'oel',
+  ];
+  static const _apiPageCap = 100; // Hard per-query page limit
+
+  /// Fetches the entire library by iterating over each state to avoid the
+  /// 100-page per-query API cap. For states that still exceed 100 pages,
+  /// further slices by media type.
   Future<void> importFullLibrary() async {
     if (syncStatus.value.isSyncing) return;
 
@@ -121,52 +132,53 @@ class LibraryService {
 
     try {
       final token = await _auth.getValidAccessToken();
-      var page = 1;
       var totalFetched = 0;
-      var hitPageLimit = false;
+      var anyStateIncomplete = false;
 
-      const maxPages = AppConstants.libraryMaxPages;
-
-      while (page <= maxPages) {
+      for (final state in _importStates) {
         if (_isSyncCancelled) break;
 
-        final result = await _fetchPage(token, page);
-        final entries = result.entries;
-
-        _logger.info('Import: fetched ${entries.length} entries on page $page');
-
-        await _saveEntries(entries);
-        totalFetched += entries.length;
-
-        syncStatus.value = syncStatus.value.copyWith(
-          currentEntries: totalFetched,
-          error: null,
+        _logger.info('Importing state: $state');
+        final result = await _importSlice(
+          token, state: state,
+          onProgress: (n) {
+            totalFetched += n;
+            syncStatus.value = syncStatus.value.copyWith(
+              currentEntries: totalFetched, error: null);
+          },
         );
 
-        if (entries.length < LibraryConstants.pageLimit) {
-          // Last page — we're done.
-          break;
-        }
-
-        if (page == maxPages) {
-          // Hit the hard limit; there may be more entries on the server.
-          hitPageLimit = true;
+        if (result.hitCap) {
+          // State exceeded 100 pages — slice by type to get the rest.
           _logger.warning(
-              'Import hit the 100-page API limit. Library may be incomplete.');
-          break;
+              'State "$state" hit the page cap. Slicing by type...');
+          for (final type in _mediaTypes) {
+            if (_isSyncCancelled) break;
+            final typeResult = await _importSlice(
+              token, state: state, type: type,
+              onProgress: (n) {
+                totalFetched += n;
+                syncStatus.value = syncStatus.value.copyWith(
+                  currentEntries: totalFetched, error: null);
+              },
+            );
+            if (typeResult.hitCap) {
+              _logger.warning(
+                  'State "$state" type "$type" still hit the cap. Some entries may be missing.');
+              anyStateIncomplete = true;
+            }
+          }
         }
-
-        page++;
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_isIncompleteKey, hitPageLimit);
+      await prefs.setBool(_isIncompleteKey, anyStateIncomplete);
       await prefs.setString(
           _lastSyncKey, DateTime.now().toUtc().toIso8601String());
 
       syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
       _logger.info(
-          'Full library import completed. Total: $totalFetched. Incomplete: $hitPageLimit');
+          'Full library import completed. Total: $totalFetched. Incomplete: $anyStateIncomplete');
     } on AuthException catch (e) {
       syncStatus.value =
           syncStatus.value.copyWith(isSyncing: false, error: e.message);
@@ -186,6 +198,43 @@ class LibraryService {
         stackTrace: st,
       );
     }
+  }
+
+  /// Paginates a single (state, type?) slice up to [_apiPageCap] pages.
+  /// Returns whether the cap was hit (meaning there may be more entries).
+  Future<({bool hitCap})> _importSlice(
+    String token, {
+    required String state,
+    String? type,
+    required void Function(int fetched) onProgress,
+  }) async {
+    var page = 1;
+
+    while (page <= _apiPageCap) {
+      if (_isSyncCancelled) return (hitCap: false);
+
+      final result = await _fetchPage(token, page, state: state, type: type);
+      final entries = result.entries;
+
+      _logger.info(
+          'Import [$state${type != null ? '/$type' : ''}] page $page: '
+          '${entries.length} entries');
+
+      await _saveEntries(entries);
+      onProgress(entries.length);
+
+      if (entries.isEmpty || entries.length < LibraryConstants.pageLimit) {
+        return (hitCap: false); // Natural end of data
+      }
+
+      if (page == _apiPageCap) {
+        return (hitCap: true); // Hit the wall
+      }
+
+      page++;
+    }
+
+    return (hitCap: false);
   }
 
   // ─── Recents sync ─────────────────────────────────────────────────────────
@@ -286,6 +335,7 @@ class LibraryService {
     String token,
     int page, {
     String? state,
+    String? type,
     String? sortBy,
   }) async {
     final queryParams = <String, String>{
@@ -293,6 +343,7 @@ class LibraryService {
       'limit': LibraryConstants.pageLimit.toString(),
     };
     if (state != null) queryParams['state'] = state;
+    if (type != null) queryParams['type'] = type;
     if (sortBy != null) queryParams['sort_by'] = sortBy;
 
     final uri = Uri.parse(LibraryConstants.baseUrl)
@@ -324,6 +375,12 @@ class LibraryService {
           message: 'Authentication failed. Please log in again.',
           code: 'AUTH_FAILED',
         );
+      }
+
+      // 400 = page out of range (no more data). Return empty to stop the loop.
+      if (response.statusCode == 400) {
+        _logger.info('Page $page returned 400 — no more data.');
+        return _FetchPageResult(entries: [], totalEntries: 0);
       }
 
       if (response.statusCode != 200) {

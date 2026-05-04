@@ -234,9 +234,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           return FloatingActionButton.extended(
             onPressed: _isAdding ? null : _addSeriesToLibrary,
             backgroundColor: AppConstants.accentColor,
-            foregroundColor: Colors.white,
+            foregroundColor: AppConstants.primaryBackground,
             label: _isAdding 
-              ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primaryBackground))
               : Text(l10n.translate('add_to_library'), style: const TextStyle(fontWeight: FontWeight.bold)),
             icon: _isAdding ? null : const Icon(Icons.add),
           ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack);
@@ -345,7 +345,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)),
+      child: Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppConstants.textColor, letterSpacing: 0.5)),
     );
   }
 

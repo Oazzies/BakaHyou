@@ -80,10 +80,10 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                     children: [
                       Text(
                         header.toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white70,
+                          color: AppConstants.textMutedColor,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -103,7 +103,7 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: AppConstants.textMutedColor,
                                   ),
                                 ),
                               ),
@@ -136,8 +136,7 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                                     .join(' > ') +
                                                 ' > ',
                                             style: TextStyle(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.35),
+                                              color: AppConstants.textMutedColor,
                                               fontSize: 11,
                                               height: 1.2,
                                             ),
@@ -145,8 +144,8 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                         ],
                                         TextSpan(
                                           text: tagParts.last,
-                                          style: const TextStyle(
-                                            color: Colors.white,
+                                          style: TextStyle(
+                                            color: AppConstants.textColor,
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500,
                                             height: 1.2,
@@ -263,10 +262,10 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: AppConstants.textColor,
           letterSpacing: 0.5,
         ),
       ),
