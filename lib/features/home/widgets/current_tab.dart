@@ -23,9 +23,13 @@ class CurrentTab extends StatefulWidget {
   State<CurrentTab> createState() => _CurrentTabState();
 }
 
-class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMixin {
+class _CurrentTabState extends State<CurrentTab>
+    with AutomaticKeepAliveClientMixin {
   final _libraryService = getIt<LibraryService>();
   final _authService = getIt<ProfileAuthService>();
+
+  // Cached stream — do NOT recreate on every build.
+  late final Stream<List<LibraryEntry>> _stream;
 
   @override
   bool get wantKeepAlive => true;
@@ -33,6 +37,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    _stream = _libraryService.watchEntriesFromDb();
     if (_authService.isLoggedIn) {
       _libraryService.performInitialSyncIfNeeded();
     }
@@ -41,9 +46,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
   Future<void> _handleLogin() async {
     try {
       await _authService.login();
-      if (_authService.isLoggedIn) {
-        await _libraryService.syncLibrary(state: 'reading');
-      }
+      // The LibraryScreen detects auth changes and kicks off the import.
     } catch (e) {
       if (e is AuthCancelledException) return;
       if (!mounted) return;
@@ -63,6 +66,8 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required by AutomaticKeepAliveClientMixin
+
+    // Auth & theme changes rebuild the outer shell only — not the StreamBuilder.
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), _authService, ThemeManager()]),
       builder: (context, _) {
@@ -78,27 +83,63 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
           );
         }
 
-        return StreamBuilder<List<LibraryEntry>>(
-          stream: _libraryService.watchEntriesFromDb(),
-          builder: (context, snapshot) {
+        return _CurrentTabContent(
+          stream: _stream,
+          l10n: l10n,
+          libraryService: _libraryService,
+          onNavigate: _navigateToDetail,
+        );
+      },
+    );
+  }
+}
+
+/// Separated into its own StatelessWidget so that SettingsManager changes
+/// (list-style toggles) only rebuild this subtree, not the StreamBuilder above.
+class _CurrentTabContent extends StatelessWidget {
+  final Stream<List<LibraryEntry>> stream;
+  final LocalizationService l10n;
+  final LibraryService libraryService;
+  final void Function(Series) onNavigate;
+
+  const _CurrentTabContent({
+    required this.stream,
+    required this.l10n,
+    required this.libraryService,
+    required this.onNavigate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<LibraryEntry>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        // Settings listenable only wraps the list rendering, not the stream.
+        return ListenableBuilder(
+          listenable: SettingsManager(),
+          builder: (context, _) {
             final settings = SettingsManager();
-            final isGrid = settings.currentListStyle == AppListStyle.grid || 
-                           settings.currentListStyle == AppListStyle.coverOnlyGrid;
+            final isGrid = settings.separateListStyles
+                ? settings.libraryListStyle == AppListStyle.grid ||
+                    settings.libraryListStyle == AppListStyle.coverOnlyGrid
+                : settings.currentListStyle == AppListStyle.grid ||
+                    settings.currentListStyle == AppListStyle.coverOnlyGrid;
 
             Widget content;
 
-            // Only show skeleton if we have no data and are waiting
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              content = SeriesListSkeleton(isGrid: isGrid);
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              content = SeriesListSkeleton(
+                key: const ValueKey('skeleton'),
+                isGrid: isGrid,
+              );
             } else {
               final entries = snapshot.data ?? [];
               final currentlyReading = entries
                   .where((e) => e.state.toLowerCase() == 'reading')
                   .map((e) => e.series)
-                  .toList();
-
-              // Sort by most recently updated first
-              currentlyReading.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
+                  .toList()
+                ..sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
 
               if (currentlyReading.isEmpty) {
                 content = Center(
@@ -106,11 +147,13 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.menu_book_outlined, color: AppConstants.textMutedColor, size: 48),
+                      Icon(Icons.menu_book_outlined,
+                          color: AppConstants.textMutedColor, size: 48),
                       const SizedBox(height: 16),
                       Text(
                         l10n.translate('no_entries_category'),
-                        style: TextStyle(color: AppConstants.textMutedColor),
+                        style:
+                            TextStyle(color: AppConstants.textMutedColor),
                       ),
                     ],
                   ),
@@ -118,45 +161,46 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
               } else {
                 content = RefreshIndicator(
                   key: const ValueKey('list'),
-                  onRefresh: () => _libraryService.syncLibrary(state: 'reading'),
+                  onRefresh: () => libraryService.syncLibrary(),
                   color: AppConstants.accentColor,
                   backgroundColor: AppConstants.secondaryBackground,
-                  child: isGrid 
-                    ? GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 160,
-                          childAspectRatio: 0.65,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        itemCount: currentlyReading.length,
-                        itemBuilder: (context, index) {
-                          final series = currentlyReading[index];
-                          return InkWell(
-                            onTap: () => _navigateToDetail(series),
-                            child: EntryListItem(series: series),
-                          );
-                        },
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        itemCount: currentlyReading.length,
-                        itemBuilder: (context, index) {
-                          final series = currentlyReading[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: InkWell(
-                              onTap: () => _navigateToDetail(series),
-                              borderRadius: BorderRadius.circular(8),
+                  child: isGrid
+                      ? GridView.builder(
+                          padding: const EdgeInsets.all(12),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 160,
+                            childAspectRatio: 0.65,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
+                          itemCount: currentlyReading.length,
+                          itemBuilder: (context, index) {
+                            final series = currentlyReading[index];
+                            return InkWell(
+                              onTap: () => onNavigate(series),
                               child: EntryListItem(series: series),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          itemCount: currentlyReading.length,
+                          itemBuilder: (context, index) {
+                            final series = currentlyReading[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: InkWell(
+                                onTap: () => onNavigate(series),
+                                borderRadius: BorderRadius.circular(8),
+                                child: EntryListItem(series: series),
+                              ),
+                            );
+                          },
+                        ),
                 );
               }
             }
@@ -175,10 +219,7 @@ class _CurrentTabState extends State<CurrentTab> with AutomaticKeepAliveClientMi
                 );
               },
               transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
+                return FadeTransition(opacity: animation, child: child);
               },
               child: content,
             );

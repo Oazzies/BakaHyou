@@ -63,21 +63,25 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
 
     final chips = widget.items
         .map((e) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppConstants.secondaryBackground,
-                borderRadius: BorderRadius.circular(12),
+                color: widget.color != null
+                    ? widget.color!.withValues(alpha: 0.15)
+                    : AppConstants.tertiaryBackground,
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppConstants.borderColor.withValues(alpha: 0.5),
+                  color: widget.color ??
+                      AppConstants.borderColor.withValues(alpha: 0.6),
                   width: 1,
                 ),
               ),
               child: Text(
                 e,
                 style: TextStyle(
-                  color: AppConstants.textColor.withValues(alpha: 0.9),
+                  color: widget.color ?? AppConstants.textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
+                  height: 1.2,
                 ),
               ),
             ))

@@ -14,12 +14,11 @@ class AppConstants {
   static const int networkTimeoutSeconds = 30;
   static const int maxRetries = 3;
   static const int rateLimitRetryDelaySeconds = 5;
-  static const int requestsPerBatch = 80;
-  static const int batchPauseSeconds = 45;
 
   // ============ Pagination ============
   static const int defaultPageLimit = 20;
-  static const int libraryPageLimit = 50; // API max
+  static const int libraryPageLimit = 100; // entries per page (API max)
+  static const int libraryMaxPages = 10000; // API max pages
   static const double scrollThresholdPx = 100;
 
   // ============ UI Colors ============

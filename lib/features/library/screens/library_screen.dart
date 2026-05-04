@@ -42,6 +42,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   String _query = '';
   SearchFilters _filters = SearchFilters();
   Stream<List<LibraryEntry>>? _entriesStream;
+  bool _isLibraryIncomplete = false;
 
   @override
   void initState() {
@@ -102,8 +103,11 @@ class _LibraryScreenState extends State<LibraryScreen>
     setState(() {
       _entriesStream = _libraryService.watchEntriesFromDb();
     });
-    // Only sync if it's the first time; otherwise use cached data
-    _libraryService.performInitialSyncIfNeeded();
+    // Full import only on first load; recents sync on subsequent ones.
+    _libraryService.performInitialSyncIfNeeded().then((_) async {
+      final incomplete = await _libraryService.isLibraryIncomplete();
+      if (mounted) setState(() => _isLibraryIncomplete = incomplete);
+    }).catchError((_) {});
   }
 
   Future<void> _loginAndReload() async {
@@ -133,9 +137,38 @@ class _LibraryScreenState extends State<LibraryScreen>
         return Scaffold(
           backgroundColor: LibraryScreenConstants.backgroundColor,
           appBar: _buildAppBar(),
-          body: _buildBody(),
+          body: Column(
+            children: [
+              if (_isLibraryIncomplete) _buildIncompleteWarning(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildIncompleteWarning() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.orange.withValues(alpha: 0.12),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Your library exceeds 10,000 entries. Only the first 10,000 could be imported.',
+              style: TextStyle(color: Colors.orange, fontSize: 12),
+            ),
+          ),
+          TextButton(
+            onPressed: () => _libraryService.importFullLibrary(),
+            child: const Text('Re-import', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

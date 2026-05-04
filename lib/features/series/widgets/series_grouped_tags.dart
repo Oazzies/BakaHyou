@@ -115,13 +115,14 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                 final tagParts = tag.split(' > ');
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
+                                      horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: AppConstants.secondaryBackground,
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: AppConstants.tertiaryBackground,
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: AppConstants.borderColor
-                                          .withValues(alpha: 0.3),
+                                          .withValues(alpha: 0.6),
+                                      width: 1,
                                     ),
                                   ),
                                   child: Text.rich(
@@ -136,8 +137,9 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                                 ' > ',
                                             style: TextStyle(
                                               color: Colors.white
-                                                  .withValues(alpha: 0.3),
-                                              fontSize: 12,
+                                                  .withValues(alpha: 0.35),
+                                              fontSize: 11,
+                                              height: 1.2,
                                             ),
                                           ),
                                         ],
@@ -145,8 +147,9 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                                           text: tagParts.last,
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: 12,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w500,
+                                            height: 1.2,
                                           ),
                                         ),
                                       ],

@@ -43,7 +43,6 @@ class SeriesDetailAppBar extends StatelessWidget {
         icon: const Icon(Icons.arrow_back),
         onPressed: onBack,
         style: IconButton.styleFrom(
-          backgroundColor: Colors.black26,
           foregroundColor: Colors.white,
         ),
       ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
@@ -52,7 +51,6 @@ class SeriesDetailAppBar extends StatelessWidget {
           icon: const Icon(Icons.share),
           onPressed: onShare,
           style: IconButton.styleFrom(
-            backgroundColor: Colors.black26,
             foregroundColor: Colors.white,
           ),
         ).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
@@ -61,7 +59,6 @@ class SeriesDetailAppBar extends StatelessWidget {
             icon: const Icon(Icons.delete_outline),
             onPressed: onDelete,
             style: IconButton.styleFrom(
-              backgroundColor: Colors.black26,
               foregroundColor: Colors.white,
             ),
           ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),

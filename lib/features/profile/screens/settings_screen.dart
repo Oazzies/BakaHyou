@@ -13,7 +13,6 @@ import 'package:bakahyou/features/profile/widgets/settings_components.dart';
 import 'package:bakahyou/features/library/services/library_service.dart';
 import 'dart:io';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:bakahyou/utils/localization/localization_service.dart';
 
@@ -53,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
               bottom: 80, // Padding for system navbar / player etc
             ),
             children: [
-              SettingsSectionHeader(title: l10n.translate('display')).animate().fadeIn().slideX(begin: -0.1, end: 0),
+              SettingsSectionHeader(title: l10n.translate('display')),
               SettingsGroup(
                 children: [
                   SettingsItem(
@@ -117,7 +116,7 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              SettingsSectionHeader(title: l10n.translate('list')).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
+              SettingsSectionHeader(title: l10n.translate('list')),
               SettingsGroup(
                 children: [
                   SettingsItem(
@@ -178,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              SettingsSectionHeader(title: l10n.translate('content')).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+              SettingsSectionHeader(title: l10n.translate('content')),
               SettingsGroup(
                 children: [
                   SettingsItem(

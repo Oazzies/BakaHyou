@@ -19,13 +19,14 @@ class LibraryService {
   final ProfileAuthService _auth;
   final db.AppDatabase _db;
   bool _hasPerformedInitialSync = false;
-  
-  static const String _syncStateKey = '${AppConstants.prefixStorageKey}library_sync_last_state';
-  static const String _syncTypeKey = '${AppConstants.prefixStorageKey}library_sync_last_type';
-  static const String _syncPageKey = '${AppConstants.prefixStorageKey}library_sync_last_page';
-  static const String _syncTotalFetchedKey = '${AppConstants.prefixStorageKey}library_sync_total_fetched';
 
-  final ValueNotifier<LibrarySyncStatus> syncStatus = 
+  // ─── Prefs keys ───────────────────────────────────────────────────────────
+  static const String _lastSyncKey = AppConstants.lastSyncKey;
+  static const String _isIncompleteKey =
+      '${AppConstants.prefixStorageKey}library_is_incomplete';
+
+  // ─── Sync state notifier ──────────────────────────────────────────────────
+  final ValueNotifier<LibrarySyncStatus> syncStatus =
       ValueNotifier(LibrarySyncStatus());
 
   bool _isSyncCancelled = false;
@@ -33,12 +34,15 @@ class LibraryService {
   void cancelSync() {
     _isSyncCancelled = true;
     _initialSyncTask = null;
-    syncStatus.value = syncStatus.value.copyWith(isSyncing: false, clearError: true, clearInfo: true);
+    syncStatus.value = syncStatus.value
+        .copyWith(isSyncing: false, clearError: true, clearInfo: true);
   }
 
   LibraryService({required ProfileAuthService auth})
-    : _auth = auth,
-      _db = db.AppDatabase();
+      : _auth = auth,
+        _db = db.AppDatabase();
+
+  // ─── DB streams ───────────────────────────────────────────────────────────
 
   /// Watches a single library entry by series ID.
   Stream<api.LibraryEntry?> watchEntryFromDb(String seriesId) {
@@ -64,17 +68,25 @@ class LibraryService {
         )
         .handleError((error, stackTrace) {
           _logger.severe('Error watching entries from db: $error\n$stackTrace');
-          return [];
+          return <api.LibraryEntry>[];
         }, test: (error) => true);
   }
 
+  // ─── Incomplete library flag ───────────────────────────────────────────────
+
+  /// Returns true if the full import hit the 100-page API limit.
+  Future<bool> isLibraryIncomplete() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isIncompleteKey) ?? false;
+  }
+
+  // ─── Initial sync ─────────────────────────────────────────────────────────
+
   Future<void>? _initialSyncTask;
 
-  /// Performs initial sync only once on first app load.
+  /// Performs a full import only once on first app load.
   Future<void> performInitialSyncIfNeeded() async {
     if (_hasPerformedInitialSync) return;
-    
-    // If a sync is already in progress, wait for it
     if (_initialSyncTask != null) return _initialSyncTask;
 
     _initialSyncTask = _doInitialSync();
@@ -83,353 +95,228 @@ class LibraryService {
 
   Future<void> _doInitialSync() async {
     try {
-      await syncLibrary();
+      await importFullLibrary();
       _hasPerformedInitialSync = true;
     } on NetworkException catch (e) {
-      _logger.warning('Initial sync failed due to network error: $e. Using local data.');
-      _initialSyncTask = null; 
+      _logger.warning(
+          'Initial import failed due to network error: $e. Using local data.');
+      _initialSyncTask = null;
       rethrow;
     } catch (e, st) {
-      _logger.severe('Failed to perform initial sync: $e\n$st');
+      _logger.severe('Failed to perform initial import: $e\n$st');
       _initialSyncTask = null;
       rethrow;
     }
   }
 
-  /// Performs a full sync with the remote API.
-  Future<void> syncLibrary({String? state}) async {
+  // ─── Full library import ───────────────────────────────────────────────────
+
+  /// Fetches the entire library with no filters, page by page.
+  /// If the API's 100-page limit is hit, marks the library as incomplete.
+  Future<void> importFullLibrary() async {
     if (syncStatus.value.isSyncing) return;
-    
+
     _isSyncCancelled = false;
     syncStatus.value = LibrarySyncStatus(isSyncing: true);
 
-    const maxRetries = 5; // Increased retries for better resilience
-    var retryCount = 0;
+    try {
+      final token = await _auth.getValidAccessToken();
+      var page = 1;
+      var totalFetched = 0;
+      var hitPageLimit = false;
 
-    while (retryCount < maxRetries) {
-      if (_isSyncCancelled) {
-        _logger.info('Sync cancelled by user.');
-        return;
+      const maxPages = AppConstants.libraryMaxPages;
+
+      while (page <= maxPages) {
+        if (_isSyncCancelled) break;
+
+        final result = await _fetchPage(token, page);
+        final entries = result.entries;
+
+        _logger.info('Import: fetched ${entries.length} entries on page $page');
+
+        await _saveEntries(entries);
+        totalFetched += entries.length;
+
+        syncStatus.value = syncStatus.value.copyWith(
+          currentEntries: totalFetched,
+          error: null,
+        );
+
+        if (entries.length < LibraryConstants.pageLimit) {
+          // Last page — we're done.
+          break;
+        }
+
+        if (page == maxPages) {
+          // Hit the hard limit; there may be more entries on the server.
+          hitPageLimit = true;
+          _logger.warning(
+              'Import hit the 100-page API limit. Library may be incomplete.');
+          break;
+        }
+
+        page++;
       }
-      try {
-        final token = await _auth.getValidAccessToken();
-        final prefs = await SharedPreferences.getInstance();
-        
-        // Load saved progress if resuming
-        var totalFetched = prefs.getInt(_syncTotalFetchedKey) ?? 0;
-        var requestCount = 0;
-        
-        final savedState = prefs.getString(_syncStateKey);
-        final savedType = prefs.getString(_syncTypeKey);
-        final savedPage = prefs.getInt(_syncPageKey);
 
-        final lastSyncTimestampStr = prefs.getString(AppConstants.lastSyncKey);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_isIncompleteKey, hitPageLimit);
+      await prefs.setString(
+          _lastSyncKey, DateTime.now().toUtc().toIso8601String());
 
-        if (state != null) {
-          final result = await _syncState(token, state, requestCount: requestCount);
-          totalFetched = result.$1;
-          requestCount = result.$2;
-        } else if (lastSyncTimestampStr != null && savedState == null) {
-          _logger.info('Performing delta sync since $lastSyncTimestampStr');
-          final result = await _syncDelta(token, lastSyncTimestampStr, requestCount: requestCount);
-          totalFetched = result.$1;
-          requestCount = result.$2;
-        } else {
-          final states = AppConstants.libraryStates.toList();
-          final types = [null, 'manga', 'manhwa', 'manhua', 'novel', 'oel'];
-          
-          var startIndex = 0;
-          if (savedState != null) {
-            startIndex = states.indexOf(savedState);
-            if (startIndex == -1) startIndex = 0;
-            _logger.info('Resuming sync from state: $savedState');
-          }
+      syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
+      _logger.info(
+          'Full library import completed. Total: $totalFetched. Incomplete: $hitPageLimit');
+    } on AuthException catch (e) {
+      syncStatus.value =
+          syncStatus.value.copyWith(isSyncing: false, error: e.message);
+      rethrow;
+    } on NetworkException catch (e) {
+      syncStatus.value = syncStatus.value.copyWith(
+          isSyncing: false, error: 'Connection failed. Try again later.');
+      _logger.warning('Network error during import: $e');
+      rethrow;
+    } catch (e, st) {
+      _logger.severe('Failed to import library: $e\n$st');
+      syncStatus.value =
+          syncStatus.value.copyWith(isSyncing: false, error: 'Import failed.');
+      throw AppError(
+        message: 'Failed to import library',
+        originalError: e,
+        stackTrace: st,
+      );
+    }
+  }
 
-          for (var i = startIndex; i < states.length; i++) {
-            if (_isSyncCancelled) break;
-            final s = states[i];
-            
-            var typeStartIndex = 0;
-            if (s == savedState && savedType != null) {
-              typeStartIndex = types.indexOf(savedType);
-              if (typeStartIndex == -1) typeStartIndex = 0;
-              _logger.info('Resuming sync for state $s from type: $savedType');
-            }
+  // ─── Recents sync ─────────────────────────────────────────────────────────
 
-            for (var j = typeStartIndex; j < types.length; j++) {
-              if (_isSyncCancelled) break;
-              final type = types[j];
-              
-              if (type != null && (s != savedState || savedType == null)) {
-                 if (type != null) continue; 
+  /// Syncs only recent changes (sorted by `updated_at_desc`).
+  /// Stops early once all entries on a page are older than the last sync.
+  /// This is cheap and fast — call it on pull-to-refresh.
+  Future<void> syncLibrary({String? state}) async {
+    if (syncStatus.value.isSyncing) return;
+
+    _isSyncCancelled = false;
+    syncStatus.value = LibrarySyncStatus(isSyncing: true);
+
+    try {
+      final token = await _auth.getValidAccessToken();
+      final prefs = await SharedPreferences.getInstance();
+      final lastSyncStr = prefs.getString(_lastSyncKey);
+      final lastSync = lastSyncStr != null ? DateTime.tryParse(lastSyncStr) : null;
+
+      var page = 1;
+      var totalFetched = 0;
+      // Fetch at most 10 pages of recents (1000 entries) — more than enough
+      // for normal sync intervals.
+      const maxSyncPages = 10;
+
+      while (page <= maxSyncPages) {
+        if (_isSyncCancelled) break;
+
+        final result = await _fetchPage(
+          token,
+          page,
+          sortBy: 'updated_at_desc',
+          state: state,
+        );
+        final entries = result.entries;
+
+        if (entries.isEmpty) break;
+
+        // If we know the last sync time, stop once we hit already-seen entries.
+        bool reachedKnown = false;
+        if (lastSync != null) {
+          final newEntries = <api.LibraryEntry>[];
+          for (final e in entries) {
+            final dateStr = e.updatedAt ?? e.createdAt;
+            if (dateStr != null) {
+              final entryDate = DateTime.tryParse(dateStr);
+              if (entryDate != null &&
+                  !entryDate.isAfter(lastSync)) {
+                reachedKnown = true;
+                break;
               }
-
-              final result = await _syncState(
-                token, 
-                s, 
-                type: type,
-                requestCount: requestCount,
-                initialFetched: totalFetched,
-                resumePage: (s == savedState && type == savedType) ? savedPage : null,
-              );
-              totalFetched = result.$1;
-              requestCount = result.$2;
             }
+            newEntries.add(e);
           }
+          await _saveEntries(newEntries);
+          totalFetched += newEntries.length;
+        } else {
+          await _saveEntries(entries);
+          totalFetched += entries.length;
         }
 
-        _logger.info('Library sync completed. Total entries fetched: $totalFetched');
-        
-        await prefs.setString(AppConstants.lastSyncKey, DateTime.now().toUtc().toIso8601String());
-        await _clearSyncProgress();
-        
-        syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
-        return; // Success
-      } on AuthException catch (e) {
-        syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: e.message);
-        rethrow;
-      } on NetworkException catch (e) {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          _logger.severe('Failed to sync library after $maxRetries attempts: $e');
-          syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: 'Connection failed. Will resume later.');
-          rethrow;
-        }
-        
-        final delaySeconds = (retryCount * 15).clamp(5, 60);
-        syncStatus.value = syncStatus.value.copyWith(
-          error: 'Connection lost. Retrying in ${delaySeconds}s... ($retryCount/$maxRetries)',
-        );
-        
-        _logger.warning('Network error during sync. Retrying in ${delaySeconds}s... ($retryCount/$maxRetries)');
-        await Future.delayed(Duration(seconds: delaySeconds));
-      } catch (e, st) {
-        _logger.severe('Failed to sync library: $e\n$st');
-        syncStatus.value = syncStatus.value.copyWith(isSyncing: false, error: 'Sync failed');
-        throw AppError(
-          message: 'Failed to sync library',
-          originalError: e,
-          stackTrace: st,
-        );
+        syncStatus.value =
+            syncStatus.value.copyWith(currentEntries: totalFetched, error: null);
+
+        if (reachedKnown || entries.length < LibraryConstants.pageLimit) break;
+
+        page++;
       }
+
+      await prefs.setString(
+          _lastSyncKey, DateTime.now().toUtc().toIso8601String());
+      syncStatus.value = syncStatus.value.copyWith(isSyncing: false);
+      _logger.info('Recents sync completed. Fetched $totalFetched entries.');
+    } on AuthException catch (e) {
+      syncStatus.value =
+          syncStatus.value.copyWith(isSyncing: false, error: e.message);
+      rethrow;
+    } on NetworkException catch (e) {
+      syncStatus.value = syncStatus.value
+          .copyWith(isSyncing: false, error: 'Connection failed.');
+      _logger.warning('Network error during sync: $e');
+      rethrow;
+    } catch (e, st) {
+      _logger.severe('Failed to sync library: $e\n$st');
+      syncStatus.value =
+          syncStatus.value.copyWith(isSyncing: false, error: 'Sync failed.');
+      throw AppError(
+        message: 'Failed to sync library',
+        originalError: e,
+        stackTrace: st,
+      );
     }
   }
 
-  Future<void> _clearSyncProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_syncStateKey);
-    await prefs.remove(_syncTypeKey);
-    await prefs.remove(_syncPageKey);
-    await prefs.remove(_syncTotalFetchedKey);
-  }
+  // ─── HTTP helpers ─────────────────────────────────────────────────────────
 
-  /// Helper to sync entries for a specific state and type.
-  Future<(int, int)> _syncState(
-    String token, 
-    String state, {
-    String? type,
+  Future<_FetchPageResult> _fetchPage(
+    String token,
+    int page, {
+    String? state,
     String? sortBy,
-    required int requestCount,
-    int initialFetched = 0,
-    int? resumePage,
   }) async {
-    var page = resumePage ?? 1;
-    var totalFetched = initialFetched;
-    var currentRequestCount = requestCount;
-    const maxPages = 100; // API limit
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': LibraryConstants.pageLimit.toString(),
+    };
+    if (state != null) queryParams['state'] = state;
+    if (sortBy != null) queryParams['sort_by'] = sortBy;
 
-    final prefs = await SharedPreferences.getInstance();
-
-    while (page <= maxPages) {
-      if (_isSyncCancelled) {
-        _logger.info('Sync cancelled during _syncState loop');
-        break;
-      }
-      
-      // Check for batch pause
-      if (currentRequestCount > 0 && currentRequestCount % AppConstants.requestsPerBatch == 0) {
-        _logger.info('Batch limit reached ($currentRequestCount requests). Pausing for ${AppConstants.batchPauseSeconds}s...');
-        
-        syncStatus.value = syncStatus.value.copyWith(
-          infoMessage: 'Pausing to prevent API overload for ${AppConstants.batchPauseSeconds} seconds...',
-        );
-        
-        await Future.delayed(Duration(seconds: AppConstants.batchPauseSeconds));
-        
-        syncStatus.value = syncStatus.value.copyWith(clearInfo: true);
-      }
-
-      final result = await _fetchPage(token, page, state: state, type: type, sortBy: sortBy);
-      currentRequestCount++;
-
-      final entries = result.entries;
-      _logger.info('Fetched ${entries.length} entries on page $page for state $state (type: ${type ?? 'all'})');
-      
-      await _saveEntries(entries);
-      totalFetched += entries.length;
-
-      // Persist progress
-      await prefs.setString(_syncStateKey, state);
-      if (type != null) {
-        await prefs.setString(_syncTypeKey, type);
-      } else {
-        await prefs.remove(_syncTypeKey);
-      }
-      await prefs.setInt(_syncPageKey, page);
-      await prefs.setInt(_syncTotalFetchedKey, totalFetched);
-
-      // Update progress
-      syncStatus.value = syncStatus.value.copyWith(
-        currentEntries: totalFetched,
-        error: null, // Clear error on successful page fetch
-      );
-
-      if (entries.length < LibraryConstants.pageLimit) {
-        break;
-      }
-      page++;
-    }
-    
-    // If we hit the 100-page limit and we were fetching 'all' types, 
-    // we need to slice by type to get the remaining entries.
-    if (page > maxPages && type == null) {
-      _logger.warning('Reached max page limit (100) for state $state. Slicing by type to fetch remaining entries...');
-      
-      final types = ['manga', 'manhwa', 'manhua', 'novel', 'oel'];
-      for (final t in types) {
-        _logger.info('Deep syncing state: $state, type: $t');
-        final result = await _syncState(
-          token, 
-          state, 
-          type: t, 
-          requestCount: currentRequestCount, 
-          initialFetched: totalFetched,
-        );
-        totalFetched = result.$1;
-        currentRequestCount = result.$2;
-      }
-    } else if (page > maxPages && type != null && sortBy != 'updated_at_asc') {
-      _logger.warning('Reached max page limit (100) for state $state, type $type. Fetching oldest entries to compensate...');
-      final result = await _syncState(
-        token, 
-        state, 
-        type: type, 
-        sortBy: 'updated_at_asc',
-        requestCount: currentRequestCount, 
-        initialFetched: totalFetched,
-      );
-      totalFetched = result.$1;
-      currentRequestCount = result.$2;
-    } else if (page > maxPages) {
-      _logger.warning('Reached max page limit (100) for state $state, type $type. Some entries might still be missing.');
-    }
-    
-    return (totalFetched, currentRequestCount);
-  }
-
-  Future<(int, int)> _syncDelta(
-    String token, 
-    String lastSyncTimestampStr, {
-    required int requestCount,
-  }) async {
-    var page = 1;
-    var totalFetched = 0;
-    var currentRequestCount = requestCount;
-    const maxPages = 100;
-    final lastSyncDate = DateTime.parse(lastSyncTimestampStr);
-
-    while (page <= maxPages) {
-      if (_isSyncCancelled) {
-        _logger.info('Sync cancelled during _syncDelta loop');
-        break;
-      }
-
-      if (currentRequestCount > 0 && currentRequestCount % AppConstants.requestsPerBatch == 0) {
-        _logger.info('Batch limit reached ($currentRequestCount requests). Pausing for ${AppConstants.batchPauseSeconds}s...');
-        await Future.delayed(Duration(seconds: AppConstants.batchPauseSeconds));
-      }
-
-      // Using updated_at_desc to get newest changes first
-      final result = await _fetchPage(token, page, sortBy: 'updated_at_desc');
-      currentRequestCount++;
-
-      final entries = result.entries;
-      _logger.info('Delta Sync: Fetched ${entries.length} entries on page $page');
-
-      if (entries.isEmpty) break;
-
-      final newEntries = <api.LibraryEntry>[];
-      var reachedOldEntries = false;
-
-      for (final entry in entries) {
-        final dateStr = entry.updatedAt ?? entry.createdAt;
-        if (dateStr != null) {
-          final entryDate = DateTime.parse(dateStr);
-          // If entry is older than or equal to last sync, we can stop
-          if (entryDate.isBefore(lastSyncDate) || entryDate.isAtSameMomentAs(lastSyncDate)) {
-            reachedOldEntries = true;
-            break;
-          }
-        }
-        newEntries.add(entry);
-      }
-
-      await _saveEntries(newEntries);
-      totalFetched += newEntries.length;
-
-      syncStatus.value = syncStatus.value.copyWith(
-        currentEntries: totalFetched,
-        error: null,
-      );
-
-      // Stop fetching pages if we hit entries we've already synced
-      if (reachedOldEntries || entries.length < LibraryConstants.pageLimit) {
-        break;
-      }
-      
-      page++;
-    }
-
-    return (totalFetched, currentRequestCount);
-  }
-
-  Future<_FetchPageResult> _fetchPage(String token, int page, {String? state, String? type, String? sortBy}) async {
-    var url = '${LibraryConstants.baseUrl}?page=$page&limit=${LibraryConstants.pageLimit}';
-    if (state != null) {
-      url += '&state=$state';
-    }
-    if (type != null) {
-      url += '&type=$type';
-    }
-    if (sortBy != null) {
-      url += '&sort_by=$sortBy';
-    }
-    final uri = Uri.parse(url);
+    final uri = Uri.parse(LibraryConstants.baseUrl)
+        .replace(queryParameters: queryParams);
 
     try {
       final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'User-Agent': LibraryConstants.userAgent,
-            },
-          )
+          .get(uri, headers: {
+            'Authorization': 'Bearer $token',
+            'User-Agent': LibraryConstants.userAgent,
+          })
           .timeout(
             Duration(seconds: AppConstants.networkTimeoutSeconds),
             onTimeout: () => throw TimeoutException('Library fetch timed out'),
           );
 
-      _logger.fine('Library fetch page $page completed');
+      _logger.fine('Library fetch page $page completed (${response.statusCode})');
 
       if (response.statusCode == 429) {
         _logger.warning(
-          'Rate limited fetching library page $page. Retrying after delay...',
-        );
+            'Rate limited on page $page. Waiting ${AppConstants.rateLimitRetryDelaySeconds}s...');
         await Future.delayed(
-          Duration(seconds: AppConstants.rateLimitRetryDelaySeconds),
-        );
-        return _fetchPage(token, page, state: state);
+            Duration(seconds: AppConstants.rateLimitRetryDelaySeconds));
+        return _fetchPage(token, page, state: state, sortBy: sortBy);
       }
 
       if (response.statusCode == 401) {
@@ -441,8 +328,7 @@ class LibraryService {
 
       if (response.statusCode != 200) {
         _logger.severe(
-          'Failed to fetch library page. Status: ${response.statusCode}, Body: ${response.body}',
-        );
+            'Failed to fetch library page. Status: ${response.statusCode}');
         throw ApiException(
           message: 'Failed to fetch library page',
           statusCode: response.statusCode,
@@ -453,7 +339,7 @@ class LibraryService {
 
       try {
         final result = await compute(_parseLibraryPage, response.body);
-        return _FetchPageResult(entries: result.entries, totalEntries: result.totalEntries);
+        return result;
       } catch (e, st) {
         _logger.severe('Failed to parse library page: $e\n$st');
         throw ParseException(
@@ -463,26 +349,20 @@ class LibraryService {
         );
       }
     } on http.ClientException catch (e) {
-      _logger.warning('HTTP client error fetching library page: $e');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-      );
+          message: 'Network error. Please check your connection.',
+          code: 'NETWORK_ERROR',
+          originalError: e);
     } on SocketException catch (e) {
-      _logger.warning('Network error fetching library page: $e');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-      );
+          message: 'Network error. Please check your connection.',
+          code: 'NETWORK_ERROR',
+          originalError: e);
     } on TimeoutException catch (e) {
-      _logger.warning('Request timeout fetching library page: $e');
       throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-      );
+          message: 'Request timed out. Please try again.',
+          code: 'TIMEOUT',
+          originalError: e);
     } on AuthException {
       rethrow;
     } on ApiException {
@@ -492,12 +372,10 @@ class LibraryService {
     } on NetworkException {
       rethrow;
     } catch (e, st) {
-      _logger.severe('Unexpected error fetching library page: $e\n$st');
       throw AppError(
-        message: 'Unexpected error fetching library page',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Unexpected error fetching library page',
+          originalError: e,
+          stackTrace: st);
     }
   }
 
@@ -516,9 +394,10 @@ class LibraryService {
     }
   }
 
+  // ─── CRUD operations ──────────────────────────────────────────────────────
+
   Future<void> updateLibraryEntryState(String seriesId, String state) async {
     final token = await _auth.getValidAccessToken();
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
       final response = await http
@@ -537,19 +416,11 @@ class LibraryService {
                 throw TimeoutException('Update state request timed out'),
           );
 
-      _logger.fine('Library entry state update completed');
-
       if (response.statusCode == 401) {
         throw AuthException(
-          message: 'Authentication failed. Please log in again.',
-          code: 'AUTH_FAILED',
-        );
+            message: 'Authentication failed.', code: 'AUTH_FAILED');
       }
-
       if (response.statusCode != 200) {
-        _logger.severe(
-          'Failed to update entry state. Status: ${response.statusCode}, Body: ${response.body}',
-        );
         throw ApiException(
           message: 'Failed to update entry state',
           statusCode: response.statusCode,
@@ -558,32 +429,16 @@ class LibraryService {
         );
       }
 
-      // Update the local database entry
       await _db.libraryEntriesDao.updateEntryState(seriesId, state);
     } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error updating entry state: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on SocketException catch (e, st) {
-      _logger.severe('Network error updating entry state: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout updating entry state: $e\n$st');
       throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Request timed out.', code: 'TIMEOUT', originalError: e, stackTrace: st);
     } on AuthException {
       rethrow;
     } on ApiException {
@@ -593,16 +448,12 @@ class LibraryService {
     } catch (e, st) {
       _logger.severe('Unexpected error updating entry state: $e\n$st');
       throw AppError(
-        message: 'Failed to update entry state',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Failed to update entry state', originalError: e, stackTrace: st);
     }
   }
 
   Future<void> updateLibraryEntryRating(String seriesId, int rating) async {
     final token = await _auth.getValidAccessToken();
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
       final response = await http
@@ -620,20 +471,12 @@ class LibraryService {
             onTimeout: () =>
                 throw TimeoutException('Update rating request timed out'),
           );
-      
-      _logger.fine('Library entry rating update completed');
 
       if (response.statusCode == 401) {
         throw AuthException(
-          message: 'Authentication failed. Please log in again.',
-          code: 'AUTH_FAILED',
-        );
+            message: 'Authentication failed.', code: 'AUTH_FAILED');
       }
-
       if (response.statusCode != 200) {
-        _logger.severe(
-          'Failed to update entry rating. Status: ${response.statusCode}, Body: ${response.body}',
-        );
         throw ApiException(
           message: 'Failed to update entry rating',
           statusCode: response.statusCode,
@@ -644,29 +487,14 @@ class LibraryService {
 
       await _db.libraryEntriesDao.updateEntryRating(seriesId, rating);
     } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error updating entry rating: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on SocketException catch (e, st) {
-      _logger.severe('Network error updating entry rating: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout updating entry rating: $e\n$st');
       throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Request timed out.', code: 'TIMEOUT', originalError: e, stackTrace: st);
     } on AuthException {
       rethrow;
     } on ApiException {
@@ -676,16 +504,13 @@ class LibraryService {
     } catch (e, st) {
       _logger.severe('Unexpected error updating entry rating: $e\n$st');
       throw AppError(
-        message: 'Failed to update entry rating',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Failed to update entry rating', originalError: e, stackTrace: st);
     }
   }
 
+  /// Creates a new library entry, then does a cheap recents sync to pull it back.
   Future<void> createLibraryEntry(String seriesId, String state) async {
     final token = await _auth.getValidAccessToken();
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
       final response = await http
@@ -703,22 +528,17 @@ class LibraryService {
             onTimeout: () =>
                 throw TimeoutException('Create entry request timed out'),
           );
-      
-      _logger.fine('Library entry creation completed');
 
       if (response.statusCode == 401) {
         throw AuthException(
-          message: 'Authentication failed. Please log in again.',
-          code: 'AUTH_FAILED',
-        );
+            message: 'Authentication failed.', code: 'AUTH_FAILED');
       }
-
       if (response.statusCode == 201) {
+        // Fetch just the first page of recents to pick up the new entry quickly.
         await syncLibrary();
       } else {
         _logger.severe(
-          'Failed to create library entry. Status: ${response.statusCode}, Body: ${response.body}',
-        );
+            'Failed to create library entry. Status: ${response.statusCode}');
         throw ApiException(
           message: 'Failed to create library entry',
           statusCode: response.statusCode,
@@ -727,29 +547,14 @@ class LibraryService {
         );
       }
     } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error creating entry: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on SocketException catch (e, st) {
-      _logger.severe('Network error creating entry: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout creating entry: $e\n$st');
       throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Request timed out.', code: 'TIMEOUT', originalError: e, stackTrace: st);
     } on AuthException {
       rethrow;
     } on ApiException {
@@ -759,48 +564,34 @@ class LibraryService {
     } catch (e, st) {
       _logger.severe('Unexpected error creating entry: $e\n$st');
       throw AppError(
-        message: 'Failed to create library entry',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Failed to create library entry', originalError: e, stackTrace: st);
     }
   }
 
   Future<void> deleteEntry(String seriesId) async {
     final token = await _auth.getValidAccessToken();
-
     final url = Uri.parse('${LibraryConstants.baseUrl}/$seriesId');
     try {
       final response = await http
-          .delete(
-            url,
-            headers: {
-              'Authorization': 'Bearer $token',
-              'User-Agent': LibraryConstants.userAgent,
-            },
-          )
+          .delete(url, headers: {
+            'Authorization': 'Bearer $token',
+            'User-Agent': LibraryConstants.userAgent,
+          })
           .timeout(
             Duration(seconds: AppConstants.networkTimeoutSeconds),
             onTimeout: () =>
                 throw TimeoutException('Delete entry request timed out'),
           );
 
-      _logger.fine('Library entry deletion completed');
-
       if (response.statusCode == 401) {
         throw AuthException(
-          message: 'Authentication failed. Please log in again.',
-          code: 'AUTH_FAILED',
-        );
+            message: 'Authentication failed.', code: 'AUTH_FAILED');
       }
-
       if (response.statusCode == 200 || response.statusCode == 404) {
-        // Also delete from local DB
         await _db.libraryEntriesDao.deleteEntry(seriesId);
       } else {
-        _logger.severe(
-          'Failed to delete entry. Status: ${response.statusCode}, Body: ${response.body}',
-        );
+        _logger
+            .severe('Failed to delete entry. Status: ${response.statusCode}');
         throw ApiException(
           message: 'Failed to delete library entry',
           statusCode: response.statusCode,
@@ -809,29 +600,14 @@ class LibraryService {
         );
       }
     } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error deleting entry: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on SocketException catch (e, st) {
-      _logger.severe('Network error deleting entry: $e\n$st');
       throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Network error.', code: 'NETWORK_ERROR', originalError: e, stackTrace: st);
     } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout deleting entry: $e\n$st');
       throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Request timed out.', code: 'TIMEOUT', originalError: e, stackTrace: st);
     } on AuthException {
       rethrow;
     } on ApiException {
@@ -841,10 +617,7 @@ class LibraryService {
     } catch (e, st) {
       _logger.severe('Unexpected error deleting entry: $e\n$st');
       throw AppError(
-        message: 'Failed to delete library entry',
-        originalError: e,
-        stackTrace: st,
-      );
+          message: 'Failed to delete library entry', originalError: e, stackTrace: st);
     }
   }
 
@@ -853,14 +626,17 @@ class LibraryService {
       cancelSync();
       await _db.libraryEntriesDao.deleteAllEntries();
       _hasPerformedInitialSync = false;
-      
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(AppConstants.lastSyncKey);
+      await prefs.remove(_lastSyncKey);
+      await prefs.remove(_isIncompleteKey);
     } catch (e, st) {
       _logger.severe('Failed to clear library: $e\n$st');
     }
   }
 }
+
+// ─── Private parse helpers (run in isolate) ──────────────────────────────────
 
 class _FetchPageResult {
   final List<api.LibraryEntry> entries;
@@ -870,22 +646,20 @@ class _FetchPageResult {
 }
 
 _FetchPageResult _parseLibraryPage(String responseBody) {
-  final body = jsonDecode(responseBody);
+  final body = jsonDecode(responseBody) as Map<String, dynamic>;
   final data = (body['data'] as List<dynamic>? ?? const []);
-  
-  // Extract total entries from metadata if available
+
   int total = 0;
-  if (body['meta'] != null && body['meta']['total'] != null) {
-    total = (body['meta']['total'] as num).toInt();
-  } else if (body['total'] != null) {
-    total = (body['total'] as num).toInt();
+  final pagination = body['pagination'] as Map<String, dynamic>?;
+  if (pagination != null) {
+    // API returns count = items on this page, not the grand total.
+    // We use 'count' only for internal checks; there is no total exposed.
+    total = (pagination['count'] as num?)?.toInt() ?? 0;
   }
 
   final entries = data
-      .map(
-        (item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>),
-      )
+      .map((item) => api.LibraryEntry.fromJson(item as Map<String, dynamic>))
       .toList();
-      
+
   return _FetchPageResult(entries: entries, totalEntries: total);
 }
