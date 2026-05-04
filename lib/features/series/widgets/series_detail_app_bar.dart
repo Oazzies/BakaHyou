@@ -5,12 +5,14 @@ import 'package:bakahyou/features/series/models/series.dart';
 import 'package:bakahyou/features/library/models/library_entry.dart';
 import 'package:bakahyou/utils/constants/app_constants.dart';
 import 'package:bakahyou/features/series/widgets/series_hero_cover.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SeriesDetailAppBar extends StatelessWidget {
   final Series series;
   final String title;
   final LibraryEntry? entry;
   final bool isWide;
+  final bool isLoaded;
   final VoidCallback onBack;
   final VoidCallback onShare;
   final VoidCallback onDelete;
@@ -22,6 +24,7 @@ class SeriesDetailAppBar extends StatelessWidget {
     required this.title,
     this.entry,
     required this.isWide,
+    required this.isLoaded,
     required this.onBack,
     required this.onShare,
     required this.onDelete,
@@ -43,7 +46,7 @@ class SeriesDetailAppBar extends StatelessWidget {
           backgroundColor: Colors.black26,
           foregroundColor: Colors.white,
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
       actions: [
         IconButton(
           icon: const Icon(Icons.share),
@@ -52,7 +55,7 @@ class SeriesDetailAppBar extends StatelessWidget {
             backgroundColor: Colors.black26,
             foregroundColor: Colors.white,
           ),
-        ),
+        ).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
         if (entry != null)
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -61,7 +64,7 @@ class SeriesDetailAppBar extends StatelessWidget {
               backgroundColor: Colors.black26,
               foregroundColor: Colors.white,
             ),
-          ),
+          ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -92,21 +95,29 @@ class SeriesDetailAppBar extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: [
+            // Base overlay to ensure buttons are visible and transition is smooth from start
+            Container(
+              color: Colors.black.withValues(alpha: 0.2),
+            ),
             if (series.coverUrl.isNotEmpty)
               Image.network(
                 series.coverUrl,
                 fit: BoxFit.cover,
                 gaplessPlayback: true,
                 cacheWidth: isWide ? 1200 : 800,
-              ),
+              ).animate(target: isLoaded ? 1 : 0)
+               .fadeIn(duration: 1200.ms, curve: Curves.easeOut)
+               .scale(begin: const Offset(1.05, 1.05), end: const Offset(1, 1), curve: Curves.easeOut),
             ClipRRect(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: Colors.black.withValues(alpha: 0.3), // Slightly lighter overlay when blurred
                 ),
               ),
-            ),
+            ).animate(target: isLoaded ? 1 : 0)
+             .fadeIn(duration: 1200.ms, curve: Curves.easeOut),
+            // Persistent gradient for smooth blending with content
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -114,10 +125,11 @@ class SeriesDetailAppBar extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    AppConstants.primaryBackground.withValues(alpha: 0.8),
+                    AppConstants.primaryBackground.withValues(alpha: 0.4),
+                    AppConstants.primaryBackground.withValues(alpha: 0.9),
                     AppConstants.primaryBackground,
                   ],
-                  stops: const [0.4, 0.8, 1.0],
+                  stops: const [0.0, 0.5, 0.85, 1.0],
                 ),
               ),
             ),
@@ -132,10 +144,13 @@ class SeriesDetailAppBar extends StatelessWidget {
                     series: series,
                     height: isWide ? 220 : 180,
                     width: isWide ? 150 : 125,
-                  ),
+                  ).animate().fadeIn(duration: 600.ms).slideX(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildMainInfo(context),
+                    child: _buildMainInfo(context)
+                        .animate(target: isLoaded ? 1 : 0)
+                        .fadeIn(duration: 600.ms)
+                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                   ),
                 ],
               ),

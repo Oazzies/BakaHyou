@@ -19,6 +19,7 @@ import 'package:bakahyou/features/series/widgets/series_hero_cover.dart';
 import 'package:bakahyou/utils/localization/localization_service.dart';
 import 'package:bakahyou/utils/theme/theme_manager.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:bakahyou/features/series/widgets/series_detail_skeleton.dart';
 
 class SeriesDetailScreen extends StatefulWidget {
   final Series series;
@@ -34,35 +35,41 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   Stream<LibraryEntry?>? _entryStream;
   bool _isAdding = false;
   List<SeriesLink>? _enrichedLinks;
+  Series? _fullSeries;
+  bool _isDataLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _libraryService = getIt<LibraryService>();
     _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
-    _fetchEnrichedLinks();
+    _fullSeries = widget.series; // Start with partial data
+    _fetchFullData();
   }
 
-  @override
-  void didUpdateWidget(SeriesDetailScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.series.id != widget.series.id) {
-      _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
-      _enrichedLinks = null;
-      _fetchEnrichedLinks();
-    }
-  }
-
-  Future<void> _fetchEnrichedLinks() async {
+  Future<void> _fetchFullData() async {
     try {
-      final links = await SeriesService.fetchSeriesLinks(widget.series.id);
-      if (mounted && links.isNotEmpty) {
-        setState(() => _enrichedLinks = links);
+      // Start fetching links and full series in parallel
+      final results = await Future.wait([
+        SeriesService.fetchSeriesLinks(widget.series.id),
+        SeriesService.fetchSeries(widget.series.id),
+      ]);
+      
+      if (mounted) {
+        setState(() {
+          _enrichedLinks = results[0] as List<SeriesLink>?;
+          _fullSeries = results[1] as Series?;
+          _isDataLoaded = true;
+        });
       }
     } catch (e) {
-      SeriesService.logger.warning('Error fetching enriched links: $e');
+      SeriesService.logger.warning('Error fetching full data: $e');
+      if (mounted) {
+        setState(() => _isDataLoaded = true); // Still show what we have
+      }
     }
   }
+
 
   void _shareLink() {
     final l10n = LocalizationService();
@@ -145,10 +152,11 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
                         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                         slivers: [
                           SeriesDetailAppBar(
-                            series: widget.series,
-                            title: preferredTitle,
+                            series: _fullSeries ?? widget.series,
+                            title: (_fullSeries ?? widget.series).getDisplayTitle(settings.defaultTitleLanguage),
                             entry: entry,
                             isWide: isWide || isTablet,
+                            isLoaded: _isDataLoaded,
                             onBack: () => Navigator.pop(context),
                             onShare: _shareLink,
                             onDelete: _showDeleteConfirmationDialog,
@@ -197,36 +205,50 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
   }
 
   Widget _buildMobileLayout(LibraryEntry? entry, LocalizationService l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SeriesMetadataChips(series: widget.series, entry: entry)
-            .animate()
-            .fadeIn(duration: 400.ms)
-            .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
-        const SizedBox(height: 16),
-        SeriesActionBar(
-          entry: entry, 
-          l10n: l10n,
-          onStateChanged: (s) => _libraryService.updateLibraryEntryState(widget.series.id, s),
-          onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(widget.series.id, r),
-        ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
-        const SizedBox(height: 20),
-        if (widget.series.description.isNotEmpty) ...[
-          _buildSectionHeader('Description').animate().fadeIn(delay: 200.ms),
-          DescriptionSection(description: widget.series.description).animate().fadeIn(delay: 250.ms).slideY(begin: 0.1, end: 0),
-          const SizedBox(height: 20),
-        ],
-        SeriesDetailsGrid(series: widget.series, enrichedLinks: _enrichedLinks, l10n: l10n)
-            .animate()
-            .fadeIn(delay: 300.ms)
-            .slideY(begin: 0.1, end: 0),
-        const SizedBox(height: 100),
-      ],
+    final series = _fullSeries ?? widget.series;
+    
+    return AnimatedSwitcher(
+      duration: 600.ms,
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: _isDataLoaded 
+        ? Column(
+            key: const ValueKey('full_layout'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SeriesMetadataChips(series: series, entry: entry),
+              const SizedBox(height: 16),
+              SeriesActionBar(
+                entry: entry, 
+                l10n: l10n,
+                onStateChanged: (s) => _libraryService.updateLibraryEntryState(series.id, s),
+                onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(series.id, r),
+              ),
+              const SizedBox(height: 20),
+              if (series.description.isNotEmpty) ...[
+                _buildSectionHeader('Description'),
+                DescriptionSection(description: series.description),
+                const SizedBox(height: 20),
+              ],
+              SeriesDetailsGrid(series: series, enrichedLinks: _enrichedLinks, l10n: l10n),
+            ],
+          ).animate()
+           .fadeIn(duration: 600.ms)
+           .slideY(begin: 0.02, end: 0, curve: Curves.easeOutCubic)
+        : Column(
+            key: const ValueKey('skeleton_layout'),
+            children: [
+              const SeriesDetailSkeleton(),
+              const SizedBox(height: 400),
+            ],
+          ).animate()
+           .fadeIn(duration: 400.ms)
+           .slideY(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
     );
   }
 
   Widget _buildWideLayout(LibraryEntry? entry, LocalizationService l10n) {
+    final series = _fullSeries ?? widget.series;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,41 +257,43 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SeriesHeroCover(series: widget.series, height: 420, width: 300)
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), curve: Curves.easeOutBack),
+              SeriesHeroCover(series: series, height: 420, width: 300),
               const SizedBox(height: 32),
-              SeriesMetadataChips(series: widget.series, entry: entry, isVertical: true)
-                  .animate()
-                  .fadeIn(delay: 200.ms)
-                  .slideX(begin: -0.1, end: 0),
+              if (_isDataLoaded)
+                SeriesMetadataChips(series: series, entry: entry, isVertical: true)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideX(begin: -0.1, end: 0),
             ],
           ),
         ),
         const SizedBox(width: 48),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SeriesActionBar(
-                entry: entry, 
-                l10n: l10n,
-                onStateChanged: (s) => _libraryService.updateLibraryEntryState(widget.series.id, s),
-                onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(widget.series.id, r),
-              ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
-              const SizedBox(height: 20),
-              if (widget.series.description.isNotEmpty) ...[
-                _buildSectionHeader('Description').animate().fadeIn(delay: 200.ms),
-                DescriptionSection(description: widget.series.description).animate().fadeIn(delay: 250.ms).slideY(begin: 0.05, end: 0),
-                const SizedBox(height: 24),
-              ],
-              SeriesDetailsGrid(series: widget.series, enrichedLinks: _enrichedLinks, isWide: true, l10n: l10n)
-                  .animate()
-                  .fadeIn(delay: 300.ms)
-                  .slideY(begin: 0.05, end: 0),
-              const SizedBox(height: 100),
-            ],
+          child: AnimatedSwitcher(
+            duration: 600.ms,
+            child: _isDataLoaded 
+              ? Column(
+                  key: const ValueKey('wide_full_layout'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SeriesActionBar(
+                      entry: entry, 
+                      l10n: l10n,
+                      onStateChanged: (s) => _libraryService.updateLibraryEntryState(series.id, s),
+                      onRatingChanged: (r) => _libraryService.updateLibraryEntryRating(series.id, r),
+                    ),
+                    const SizedBox(height: 20),
+                    if (series.description.isNotEmpty) ...[
+                      _buildSectionHeader('Description'),
+                      DescriptionSection(description: series.description),
+                      const SizedBox(height: 24),
+                    ],
+                    SeriesDetailsGrid(series: series, enrichedLinks: _enrichedLinks, isWide: true, l10n: l10n),
+                  ].animate(interval: 50.ms)
+                   .fadeIn(duration: 500.ms)
+                   .slideY(begin: 0.02, end: 0, curve: Curves.easeOutCubic),
+                )
+              : const SeriesDetailSkeleton(key: ValueKey('wide_skeleton'), isWide: true),
           ),
         ),
       ],

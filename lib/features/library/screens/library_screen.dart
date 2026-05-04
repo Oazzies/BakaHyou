@@ -274,33 +274,11 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  Future<void> _navigateToSeriesDetail(api.Series series) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+  void _navigateToSeriesDetail(api.Series series) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SeriesDetailScreen(series: series),
+      ),
     );
-
-    try {
-      final fullSeries = await SeriesService.fetchSeries(series.id);
-      if (!mounted) return;
-
-      Navigator.of(context).pop();
-
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => SeriesDetailScreen(series: fullSeries),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load details: $e'),
-          backgroundColor: AppConstants.errorColor,
-        ),
-      );
-    }
   }
 }

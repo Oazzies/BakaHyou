@@ -276,28 +276,36 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
   }
 
-  Future<void> _handleResultSelected(AutocompleteSeriesResult result) async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  void _handleResultSelected(AutocompleteSeriesResult result) {
+    // Create a partial Series object from the autocomplete result
+    final series = Series(
+      id: result.id.toString(),
+      state: '',
+      title: result.title,
+      nativeTitle: '',
+      romanizedTitle: '',
+      secondaryTitles: [],
+      coverUrl: result.thumbnailUrl,
+      authors: [],
+      artists: [],
+      description: '',
+      year: '',
+      status: '',
+      isLicensed: '',
+      hasAnime: '',
+      contentRating: '',
+      type: '',
+      rating: '',
+      finalVolume: '',
+      totalChapters: '',
+      links: [],
+      publishers: [],
+      genres: [],
+      tags: [],
+      lastUpdated: DateTime.now().toIso8601String(),
+    );
 
-    try {
-      final fullSeries = await SeriesService.fetchSeries(result.id.toString());
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      _navigateToDetail(fullSeries);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Failed to load series details: $e';
-      });
-    }
+    _navigateToDetail(series);
   }
 
   @override
