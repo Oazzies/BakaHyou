@@ -1,26 +1,31 @@
-﻿import 'dart:convert';
-import 'dart:io';
-import 'dart:async';
-import 'package:mangabaka_app/core/logging/logging_service.dart';
-import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
-import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/network/backend_health_service.dart';
-import 'package:mangabaka_app/core/utils/uri_utils.dart';
-import 'package:mangabaka_app/features/series/services/metadata_service.dart';
-import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:http/http.dart' as http;
-import 'package:mangabaka_app/features/series/models/series.dart';
+import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/di/service_locator.dart';
+import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/network/api_client.dart';
+import 'package:mangabaka_app/core/network/api_envelope.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
+import 'package:mangabaka_app/features/series/services/metadata_service.dart';
+import 'package:mangabaka_app/features/series/services/series_search_filter.dart';
 import 'package:mangabaka_app/features/series/services/series_service.dart';
 
+/// Reads `/series/search` and exposes the genre/tag vocabularies the search
+/// filters are built from.
+///
+/// Request plumbing lives in [ApiClient]; the client-side result filtering
+/// that the backend cannot express lives in [SeriesSearchFilter].
 class SeriesSearchService {
   static final String _baseUrl = '${AppConstants.baseApiUrl}/series/search';
+
   final _logger = LoggingService.logger;
   final _metadataService = getIt<MetadataService>();
   final _seriesService = getIt<SeriesService>();
-  final http.Client _client;
+  final ApiClient _api;
 
-  SeriesSearchService({http.Client? client}) : _client = client ?? http.Client();
+  SeriesSearchService({http.Client? client, ApiClient? api})
+      : _api =
+            api ?? ApiClient(healthContext: 'series-search', client: client);
 
   Future<List<Map<String, dynamic>>> getGenres() async {
     if (!_metadataService.isInitialized) {
@@ -42,12 +47,11 @@ class SeriesSearchService {
     String? type,
     Map<String, dynamic>? extraParams,
   }) async {
-    final result = await _executeSearch(
+    final result = await searchSeries(
       query,
       sortBy: sortBy,
       type: type,
       extraParams: extraParams,
-      removeSortByWithQuery: true,
     );
     return result.series;
   }
@@ -58,164 +62,67 @@ class SeriesSearchService {
     String? type,
     Map<String, dynamic>? extraParams,
   }) async {
-    return _executeSearch(
-      query,
+    final contentPrefs = SettingsManager().contentPreferences;
+    final params = _buildParams(
+      query: query,
       sortBy: sortBy,
       type: type,
+      contentPrefs: contentPrefs,
       extraParams: extraParams,
-      removeSortByWithQuery: true,
     );
+
+    final filter = SeriesSearchFilter(
+      contentPreferences: contentPrefs,
+      ratingLower: (extraParams?['rating_lower'] as num?)?.toDouble(),
+      ratingUpper: (extraParams?['rating_upper'] as num?)?.toDouble(),
+      sortBy: sortBy,
+    );
+
+    final result = await _api.getJson(
+      ApiClient.uri(_baseUrl, params),
+      operation: 'search series',
+      parse: (json) => SeriesSearchResult(
+        series: parseDataList(json, Series.fromJson).where(filter.allows).toList(),
+        total: totalCount(json),
+      ),
+    );
+
+    _logger.info(
+      'Search successful. Found ${result.series.length} results '
+      '(total: ${result.total})',
+    );
+    for (final series in result.series) {
+      _seriesService.precacheSeries(series);
+    }
+    return result;
   }
 
-  Future<SeriesSearchResult> _executeSearch(
-    String query, {
-    String? sortBy,
-    String? type,
-    Map<String, dynamic>? extraParams,
-    bool removeSortByWithQuery = false,
-  }) async {
-    final queryParams = <String, String>{};
-    if (query.isNotEmpty) queryParams['q'] = query;
-    if (sortBy != null && sortBy.isNotEmpty && (query.isEmpty || !removeSortByWithQuery)) {
-      queryParams['sort_by'] = sortBy;
-    }
-    if (type != null && type.isNotEmpty) queryParams['type'] = type;
-
-    final contentPrefs = SettingsManager().contentPreferences;
-
-    final finalQueryParams = <String, dynamic>{
-      ...queryParams,
+  /// Assembles the query string.
+  ///
+  /// `sort_by` is stripped whenever a text query is present: the backend
+  /// ignores it in that case, and leaving it in would imply the results were
+  /// server-sorted when the locally-applied sort in `BrowseController` is
+  /// actually the source of truth.
+  Map<String, dynamic> _buildParams({
+    required String query,
+    required String? sortBy,
+    required String? type,
+    required List<String> contentPrefs,
+    required Map<String, dynamic>? extraParams,
+  }) {
+    final hasQuery = query.isNotEmpty;
+    final params = <String, dynamic>{
+      if (hasQuery) 'q': query,
+      if (!hasQuery) 'sort_by': sortBy,
+      'type': type,
       'content_rating': contentPrefs,
+      ...?extraParams,
     };
-
-    if (extraParams != null) {
-      finalQueryParams.addAll(extraParams);
-      // Backend ignores 'sort_by' when 'q' is present — strip it so the
-      // locally-applied sort in BrowseController is the source of truth.
-      if (query.isNotEmpty) finalQueryParams.remove('sort_by');
-    }
-
-    final uri = Uri.parse(_baseUrl).replace(
-      queryParameters: UriUtils.encodeQueryParameters(finalQueryParams),
-    );
-
-    _logger.info('Performing series search. URI: $uri');
-
-    try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series search request timed out'),
-          );
-
-      _logger.fine('Series search response status: ${response.statusCode}');
-
-      reportApiOutcome(
-        ok: !isServerErrorStatus(response.statusCode),
-        context: 'series-search',
-        statusCode: response.statusCode,
-      );
-
-      if (response.statusCode == 200) {
-        try {
-          final json = jsonDecode(response.body);
-          final total = json['total'] as int? ?? 0;
-          final List data = json['data'] ?? [];
-
-          final results = data
-              .map((item) => Series.fromJson(item as Map<String, dynamic>))
-              .where((s) {
-                if (contentPrefs.isNotEmpty &&
-                    !contentPrefs.contains(s.contentRating.toLowerCase())) {
-                  return false;
-                }
-
-                // Local rating filtering to ensure it matches our calculated combined average
-                final ratingLower = extraParams?['rating_lower'] as num?;
-                final ratingUpper = extraParams?['rating_upper'] as num?;
-                if (ratingLower != null || ratingUpper != null) {
-                  final rawRating = double.tryParse(s.rating) ?? 0.0;
-                  final rating = rawRating <= 10.0 ? rawRating * 10 : rawRating;
-                  if (ratingLower != null && rating < ratingLower) return false;
-                  if (ratingUpper != null && rating > ratingUpper) return false;
-                } else if (sortBy != null && sortBy.startsWith('score_')) {
-                  // Explicitly exclude unrated series when sorting by community rating
-                  final rating = double.tryParse(s.rating) ?? 0;
-                  if (rating == 0) return false;
-                }
-
-                return true;
-              })
-              .toList();
-
-          _logger.info('Search successful. Found ${results.length} results (total: $total)');
-          for (final series in results) {
-            _seriesService.precacheSeries(series);
-          }
-
-          return SeriesSearchResult(series: results, total: total);
-        } catch (e, st) {
-          _logger.severe('Failed to parse series search response', e, st);
-          throw ParseException(
-            message: 'Failed to parse series search response',
-            originalError: e,
-            stackTrace: st,
-          );
-        }
-      } else {
-        _logger.severe(
-          'Series search failed. Status: ${response.statusCode}, Body: ${response.body}',
-        );
-        throw ApiException(
-          message: 'Failed to search series',
-          statusCode: response.statusCode,
-          responseBody: response.body,
-          code: 'SEARCH_FAILED',
-        );
-      }
-    } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error during series search', e, st);
-      reportApiOutcome(ok: false, context: 'series-search', error: e);
-      throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on SocketException catch (e, st) {
-      _logger.severe('Network error during series search', e, st);
-      reportApiOutcome(ok: false, context: 'series-search', error: e);
-      throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout during series search', e, st);
-      reportApiOutcome(ok: false, context: 'series-search', error: 'timeout');
-      throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on ParseException {
-      rethrow;
-    } on ApiException {
-      rethrow;
-    } on NetworkException {
-      rethrow;
-    } catch (e, st) {
-      _logger.severe('Unexpected error during series search', e, st);
-      throw AppError(
-        message: 'An unexpected error occurred while searching for series',
-        originalError: e,
-        stackTrace: st,
-      );
-    }
+    if (hasQuery) params.remove('sort_by');
+    return params;
   }
+
+  void dispose() => _api.close();
 }
 
 class SeriesSearchResult {

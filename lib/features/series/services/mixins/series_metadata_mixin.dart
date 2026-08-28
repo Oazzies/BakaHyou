@@ -1,200 +1,103 @@
-import 'package:mangabaka_app/features/series/models/series.dart';
-import 'package:mangabaka_app/features/series/models/series_link.dart';
-import 'package:mangabaka_app/features/series/models/series_cover.dart';
-import 'package:mangabaka_app/features/series/models/series_collection.dart';
-import 'package:mangabaka_app/features/series/models/series_work.dart';
-import 'package:mangabaka_app/features/news/models/news.dart';
-import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:http/http.dart' as http;
+import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/network/api_client.dart';
+import 'package:mangabaka_app/core/network/api_envelope.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
-import 'dart:convert';
-import 'dart:async';
+import 'package:mangabaka_app/features/news/models/news.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
+import 'package:mangabaka_app/features/series/models/series_collection.dart';
+import 'package:mangabaka_app/features/series/models/series_cover.dart';
+import 'package:mangabaka_app/features/series/models/series_link.dart';
+import 'package:mangabaka_app/features/series/models/series_work.dart';
 
+/// The optional sub-resources of a series: links, covers, related titles,
+/// news, collections, works and similar titles.
+///
+/// These populate the tabs of the series detail screen and are all *additive*:
+/// each one fills a section that is simply absent when the fetch fails. So
+/// every method here degrades to an empty list and logs, rather than
+/// propagating — a failed "similar titles" call must not take down a detail
+/// page whose main content already loaded.
+///
+/// The seven methods were previously seven copies of the same request block
+/// differing only in path and model; they now share [_fetchList].
 mixin SeriesMetadataMixin {
   final _logger = LoggingService.logger;
 
-  Future<List<SeriesLink>> fetchSeriesLinks(String id) async {
+  /// Overridable so a test can inject a client; defaults to the shared one.
+  ApiClient get metadataApi => _defaultApi;
+  static final ApiClient _defaultApi = ApiClient(healthContext: 'series-meta');
+
+  Future<List<SeriesLink>> fetchSeriesLinks(String id) =>
+      _fetchList(id, 'links', SeriesLink.fromJson);
+
+  Future<List<SeriesCover>> fetchSeriesCovers(String id) =>
+      _fetchList(id, 'images', SeriesCover.fromJson, params: {'limit': 50});
+
+  Future<List<News>> fetchSeriesNews(String id) =>
+      _fetchList(id, 'news', News.fromJson);
+
+  Future<List<SeriesCollection>> fetchSeriesCollections(String id) =>
+      _fetchList(id, 'collections', SeriesCollection.fromJson);
+
+  Future<List<SeriesWork>> fetchSeriesWorks(String id) =>
+      _fetchList(id, 'works', SeriesWork.fromJson);
+
+  Future<List<Series>> fetchSeriesRelated(String id) async =>
+      _allowedByContentRating(
+        await _fetchList(id, 'related', Series.fromJson),
+      );
+
+  /// Similar titles come back wrapped (`{series: {...}, score: …}`) and in the
+  /// lean v2 shape, hence the different unwrap and constructor.
+  Future<List<Series>> fetchSeriesSimilar(String id) async =>
+      _allowedByContentRating(
+        await _fetchList(
+          id,
+          'similar',
+          (item) {
+            final nested = item['series'];
+            if (nested is! Map) return null;
+            return Series.fromSimilarJson(nested.cast<String, dynamic>());
+          },
+          params: {'limit': 20},
+        ),
+      );
+
+  /// Fetches `/series/{id}/{path}` and maps its `data` array through
+  /// [fromJson], skipping items that fail to parse.
+  Future<List<T>> _fetchList<T>(
+    String id,
+    String path,
+    T? Function(Map<String, dynamic> item) fromJson, {
+    Map<String, dynamic>? params,
+  }) async {
     try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/links");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series links fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          return rawData.map((l) => SeriesLink.fromJson(l)).toList();
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching links for $id: $e');
-      return [];
-    }
-  }
-
-  Future<List<SeriesCover>> fetchSeriesCovers(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/images?limit=50");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series covers fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          return rawData.map((l) => SeriesCover.fromJson(l)).toList();
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching covers for $id: $e');
-      return [];
-    }
-  }
-
-  Future<List<Series>> fetchSeriesRelated(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/related");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series related fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          final results = rawData.map((l) => Series.fromJson(l)).toList();
-          final contentPrefs = SettingsManager().contentPreferences;
-          if (contentPrefs.isNotEmpty) {
-            return results.where((s) => contentPrefs.contains(s.contentRating.toLowerCase())).toList();
+      return await metadataApi.getJson(
+        ApiClient.uri('${AppConstants.baseApiUrl}/series/$id/$path', params),
+        operation: 'fetch series $path',
+        parse: (json) => parseDataList(json, (item) {
+          try {
+            return fromJson(item);
+          } catch (e) {
+            _logger.fine('Skipping malformed $path item for $id: $e');
+            return null;
           }
-          return results;
-        }
-      }
-      return [];
+        }),
+      );
     } catch (e) {
-      _logger.warning('Error fetching related for $id: $e');
-      return [];
+      _logger.warning('Error fetching $path for $id: $e');
+      return const [];
     }
   }
 
-  Future<List<News>> fetchSeriesNews(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/news");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series news fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          return rawData.map((l) => News.fromJson(l)).toList();
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching news for $id: $e');
-      return [];
-    }
-  }
-
-  Future<List<SeriesCollection>> fetchSeriesCollections(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/collections");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series collections fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          return rawData.map((l) => SeriesCollection.fromJson(l)).toList();
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching collections for $id: $e');
-      return [];
-    }
-  }
-
-  Future<List<SeriesWork>> fetchSeriesWorks(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/works");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series works fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          return rawData.map((l) => SeriesWork.fromJson(l)).toList();
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching works for $id: $e');
-      return [];
-    }
-  }
-
-  Future<List<Series>> fetchSeriesSimilar(String id) async {
-    try {
-      final url = Uri.parse("${AppConstants.baseApiUrl}/series/$id/similar?limit=20");
-      final response = await http
-          .get(url, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Series similar fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawData = data['data'];
-        if (rawData is List) {
-          final results = rawData
-              .map((item) => Series.fromSimilarJson(
-                    (item['series'] as Map<String, dynamic>),
-                  ))
-              .toList();
-          final contentPrefs = SettingsManager().contentPreferences;
-          if (contentPrefs.isNotEmpty) {
-            return results
-                .where((s) => contentPrefs.contains(s.contentRating.toLowerCase()))
-                .toList();
-          }
-          return results;
-        }
-      }
-      return [];
-    } catch (e) {
-      _logger.warning('Error fetching similar for $id: $e');
-      return [];
-    }
+  /// Drops series the user has chosen not to see. An empty preference list
+  /// means no preference has been recorded, which permits everything.
+  List<Series> _allowedByContentRating(List<Series> series) {
+    final prefs = SettingsManager().contentPreferences;
+    if (prefs.isEmpty) return series;
+    return series
+        .where((s) => prefs.contains(s.contentRating.toLowerCase()))
+        .toList();
   }
 }

@@ -1,23 +1,26 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/network/api_client.dart';
+import 'package:mangabaka_app/core/network/api_envelope.dart';
 import 'package:mangabaka_app/features/browse/models/mix_result.dart';
+import 'package:mangabaka_app/features/browse/services/mix_series_json.dart';
 import 'package:mangabaka_app/features/series/models/autocomplete_series_result.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
-import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
-import 'package:mangabaka_app/core/logging/logging_service.dart';
-import 'package:mangabaka_app/core/utils/uri_utils.dart';
 
+/// Reads the `/series/mix` recommendation endpoints.
+///
+/// Request plumbing lives in [ApiClient]; the mix-specific JSON shape is
+/// handled by [normalizeMixSeriesJson].
 class MixService {
   static const String _mixUrl = '${AppConstants.baseApiUrl}/series/mix';
   static const String _seedsUrl = '${AppConstants.baseApiUrl}/series/mix/seeds';
 
   final _logger = LoggingService.logger;
-  final http.Client _client;
+  final ApiClient _api;
 
-  MixService({http.Client? client}) : _client = client ?? http.Client();
+  MixService({http.Client? client, ApiClient? api})
+      : _api = api ?? ApiClient(healthContext: 'mix', client: client);
 
   /// Fetch mix recommendations based on seed series IDs.
   Future<MixResult> fetchMix({
@@ -28,191 +31,93 @@ class MixService {
     String? blendUserId,
     String? excludeUserLibrary,
   }) async {
-    final params = <String, dynamic>{
-      'limit': limit.toString(),
-    };
+    final url = ApiClient.uri(_mixUrl, {
+      'limit': limit,
+      'series': seriesIds,
+      'content_rating': contentRating,
+      if (strict) 'strict': 'true',
+      'blend_user_id': blendUserId,
+      'exclude_user_library': excludeUserLibrary,
+    });
 
-    for (final id in seriesIds) {
-      params['series'] ??= <String>[];
-      (params['series'] as List<String>).add(id.toString());
-    }
-
-    if (contentRating != null && contentRating.isNotEmpty) {
-      params['content_rating'] = contentRating;
-    }
-
-    if (strict) params['strict'] = 'true';
-    if (blendUserId != null && blendUserId.isNotEmpty) {
-      params['blend_user_id'] = blendUserId;
-    }
-    if (excludeUserLibrary != null && excludeUserLibrary.isNotEmpty) {
-      params['exclude_user_library'] = excludeUserLibrary;
-    }
-
-    final uri = Uri.parse(_mixUrl).replace(
-      queryParameters: UriUtils.encodeQueryParameters(params),
+    final result = await _api.getJson(
+      url,
+      operation: 'fetch recommendations',
+      parse: _parseMixResult,
     );
 
-    _logger.info('MixService.fetchMix URI: $uri');
-
-    try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
-
-      _logger.fine('MixService.fetchMix status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final dataList = (json['data'] as List?) ?? [];
-        final dnaList = (json['dna'] as List?) ?? [];
-        final seedCount = (json['seed_count'] as int?) ?? 0;
-
-        final series = dataList
-            .map((item) => _seriesFromMixItem(item as Map<String, dynamic>))
-            .whereType<Series>()
-            .toList();
-
-        final dna = dnaList
-            .map((d) => MixDnaTag.fromJson(d as Map<String, dynamic>))
-            .where((d) => d.name.isNotEmpty)
-            .toList();
-
-        // Sort DNA by weight descending for display
-        dna.sort((a, b) => b.weight.compareTo(a.weight));
-
-        _logger.info('MixService: ${series.length} recommendations, ${dna.length} DNA tags');
-        return MixResult(series: series, dna: dna, seedCount: seedCount);
-      } else {
-        _logger.warning('MixService.fetchMix failed: ${response.statusCode}');
-        throw ApiException(
-          message: 'Mix request failed',
-          statusCode: response.statusCode,
-          responseBody: response.body,
-        );
-      }
-    } on SocketException catch (e, st) {
-      _logger.severe('MixService network error: $e');
-      throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on TimeoutException catch (e, st) {
-      _logger.severe('MixService request timed out');
-      throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
-    }
+    _logger.info(
+      'MixService: ${result.series.length} recommendations, '
+      '${result.dna.length} DNA tags',
+    );
+    return result;
   }
 
   /// Fetch suggested additional seeds given 2+ existing seed IDs.
+  ///
+  /// Suggestions are an optional enhancement to the seed picker, so any
+  /// failure degrades to "no suggestions" rather than propagating: the user
+  /// can still search for seeds by hand, and an error banner here would
+  /// interrupt a flow that is otherwise working. The failure is logged so it
+  /// is still visible in diagnostics.
   Future<List<AutocompleteSeriesResult>> fetchSeedSuggestions(
     List<int> seriesIds,
   ) async {
-    if (seriesIds.length < 2) return [];
-
-    final queryParams = seriesIds.map((id) => 'series=${Uri.encodeComponent(id.toString())}').join('&');
-    final uri = Uri.parse('$_seedsUrl?$queryParams');
-
-    _logger.info('MixService.fetchSeedSuggestions URI: $uri');
+    if (seriesIds.length < 2) return const [];
 
     try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
-
-      _logger.fine('MixService.fetchSeedSuggestions status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final dataList = (json['data'] as List?) ?? [];
-
-        return dataList
-            .map((item) {
-              final m = item as Map<String, dynamic>;
-              final seriesMap = m['series'] as Map<String, dynamic>?;
-              if (seriesMap == null) return null;
-              return AutocompleteSeriesResult.fromJson(_normalizeMixSeriesJson(seriesMap));
-            })
-            .whereType<AutocompleteSeriesResult>()
-            .toList();
-      } else {
-        _logger.warning('MixService.fetchSeedSuggestions failed: ${response.statusCode}');
-        return [];
-      }
+      return await _api.getJson(
+        ApiClient.uri(_seedsUrl, {'series': seriesIds}),
+        operation: 'fetch seed suggestions',
+        parse: (json) => parseDataList(
+          json,
+          (item) => _mapNestedSeries(item, AutocompleteSeriesResult.fromJson),
+        ),
+      );
     } catch (e) {
-      _logger.warning('MixService.fetchSeedSuggestions error: $e');
-      return [];
+      _logger.warning('MixService.fetchSeedSuggestions failed: $e');
+      return const [];
     }
   }
 
-  /// Parses a mix data item (which has `series` nested inside) into a [Series].
-  Series? _seriesFromMixItem(Map<String, dynamic> item) {
+  MixResult _parseMixResult(dynamic json) {
+    final series = parseDataList(
+      json,
+      (item) => _mapNestedSeries(item, Series.fromJson),
+    );
+
+    final dnaJson = (json is Map ? json['dna'] : null);
+    final dna = (dnaJson is List ? dnaJson : const [])
+        .whereType<Map>()
+        .map((d) => MixDnaTag.fromJson(d.cast<String, dynamic>()))
+        .where((d) => d.name.isNotEmpty)
+        .toList()
+      // Heaviest traits first: the DNA strip is a summary, and the tail is
+      // truncated on narrow screens.
+      ..sort((a, b) => b.weight.compareTo(a.weight));
+
+    final seedCount = (json is Map ? json['seed_count'] as int? : null) ?? 0;
+    return MixResult(series: series, dna: dna, seedCount: seedCount);
+  }
+
+  /// Mix items wrap the series one level deep (`{series: {...}, ...}`).
+  ///
+  /// A single unparseable item yields null and is skipped by
+  /// [parseDataList] — one malformed recommendation should not empty the
+  /// whole rail.
+  T? _mapNestedSeries<T>(
+    Map<String, dynamic> item,
+    T Function(Map<String, dynamic> json) fromJson,
+  ) {
+    final seriesMap = item['series'];
+    if (seriesMap is! Map) return null;
     try {
-      final seriesMap = item['series'] as Map<String, dynamic>?;
-      if (seriesMap == null) return null;
-      return Series.fromJson(_normalizeMixSeriesJson(seriesMap));
+      return fromJson(normalizeMixSeriesJson(seriesMap.cast<String, dynamic>()));
     } catch (e) {
       _logger.warning('MixService: failed to parse series item: $e');
       return null;
     }
   }
 
-  /// Normalizes the mix API series object to match the field names expected
-  /// by [Series.fromJson]. The mix API uses `titles[]`, `genres_v2[]`, `tags_v2[]`
-  /// whereas the search API uses flat `title`, `genres`, `tags`.
-  Map<String, dynamic> _normalizeMixSeriesJson(Map<String, dynamic> json) {
-    final normalized = Map<String, dynamic>.from(json);
-
-    // --- Genre normalization ---
-    // Mix uses `genres_v2` array of objects; search uses `genres` array of strings
-    if (!normalized.containsKey('genres') || normalized['genres'] == null) {
-      final genresV2 = json['genres_v2'] as List?;
-      if (genresV2 != null) {
-        normalized['genres'] = genresV2
-            .whereType<Map>()
-            .where((g) => g['is_genre'] == true)
-            .map((g) => g['name']?.toString() ?? '')
-            .where((n) => n.isNotEmpty)
-            .toList();
-      }
-    }
-
-    // --- Tag normalization ---
-    if (!normalized.containsKey('tags') || normalized['tags'] == null) {
-      final tagsV2 = json['tags_v2'] as List?;
-      if (tagsV2 != null) {
-        normalized['tags'] = tagsV2
-            .whereType<Map>()
-            .where((t) => t['is_genre'] != true)
-            .map((t) => t['name']?.toString() ?? '')
-            .where((n) => n.isNotEmpty)
-            .toList();
-      }
-    }
-
-    // --- Publishers normalization ---
-    // Mix uses `publishers` array of objects; search does too — already compatible.
-
-    // --- Published year ---
-    if (!normalized.containsKey('year') || normalized['year'] == null) {
-      final published = json['published'] as Map?;
-      if (published != null) {
-        final startDate = published['start_date']?.toString() ?? '';
-        if (startDate.length >= 4) {
-          normalized['year'] = int.tryParse(startDate.substring(0, 4));
-        }
-      }
-    }
-
-    // Ensure cover is present (same structure)
-    normalized.putIfAbsent('cover', () => null);
-
-    return normalized;
-  }
+  void dispose() => _api.close();
 }

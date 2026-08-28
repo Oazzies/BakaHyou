@@ -1,19 +1,36 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:mangabaka_app/core/logging/logging_service.dart';
-import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/utils/uri_utils.dart';
+import 'package:mangabaka_app/core/network/api_client.dart';
+import 'package:mangabaka_app/core/network/api_envelope.dart';
 import 'package:mangabaka_app/features/publisher/models/publisher.dart';
 
+/// Reads the `/publishers` endpoints.
+///
+/// Request plumbing — timeout, User-Agent, status handling, backend-health
+/// reporting and failure translation — lives in [ApiClient]; what remains here
+/// is the parameter shaping and JSON mapping specific to publishers.
 class PublisherSearchService {
-  static final String _baseUrl = '${AppConstants.baseApiUrl}/publishers/search';
-  final _logger = LoggingService.logger;
-  final http.Client _client;
+  static final String _searchUrl = '${AppConstants.baseApiUrl}/publishers/search';
 
-  PublisherSearchService({http.Client? client}) : _client = client ?? http.Client();
+  /// Parameters the search endpoint understands. Anything else in a caller's
+  /// map is dropped rather than forwarded, so a stray UI-only key cannot turn
+  /// into a 400.
+  static const Set<String> _allowedSearchKeys = {
+    'q',
+    'page',
+    'limit',
+    'type',
+    'closed',
+    'year_lower',
+    'year_upper',
+    'sort_by',
+  };
+
+  final ApiClient _api;
+
+  PublisherSearchService({http.Client? client, ApiClient? api})
+      : _api = api ??
+            ApiClient(healthContext: 'publisher-search', client: client);
 
   Future<List<Publisher>> searchPublishers({
     String? query,
@@ -25,171 +42,50 @@ class PublisherSearchService {
     int? limit,
     String? sortBy,
   }) async {
-    final queryParams = <String, String>{};
-    if (query != null && query.isNotEmpty) queryParams['q'] = query;
-    if (type != null && type.isNotEmpty) queryParams['type'] = type;
-    if (closed != null) queryParams['closed'] = closed.toString();
-    if (yearLower != null) queryParams['year_lower'] = yearLower.toString();
-    if (yearUpper != null) queryParams['year_upper'] = yearUpper.toString();
-    if (page != null) queryParams['page'] = page.toString();
-    if (limit != null) queryParams['limit'] = limit.toString();
-    if (sortBy != null && sortBy.isNotEmpty) queryParams['sort_by'] = sortBy;
-    
-    final uri = Uri.parse(_baseUrl).replace(
-      queryParameters: UriUtils.encodeQueryParameters(queryParams),
+    final result = await search({
+      'q': query,
+      'type': type,
+      'closed': closed,
+      'year_lower': yearLower,
+      'year_upper': yearUpper,
+      'page': page,
+      'limit': limit,
+      'sort_by': sortBy,
+    });
+    return result.publishers;
+  }
+
+  Future<PublisherSearchResult> search(Map<String, dynamic> params) {
+    final cleaned = <String, dynamic>{
+      for (final entry in params.entries)
+        if (_allowedSearchKeys.contains(entry.key)) entry.key: entry.value,
+    };
+
+    return _api.getJson(
+      ApiClient.uri(_searchUrl, cleaned),
+      operation: 'search publishers',
+      parse: (json) => PublisherSearchResult(
+        publishers: parseDataList(json, Publisher.fromJson),
+        total: totalCount(json),
+      ),
     );
+  }
 
-    _logger.info('Performing publisher search. URI: $uri');
-
-    try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Publisher search request timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        try {
-          final json = jsonDecode(response.body);
-          final List data = json['data'] ?? [];
-          final results = data
-              .map((item) => Publisher.fromJson(item as Map<String, dynamic>))
-              .toList();
-          
-          _logger.info('Search successful. Found ${results.length} results');
-          return results;
-        } catch (e, st) {
-          _logger.severe('Failed to parse publisher search response', e, st);
-          throw ParseException(
-            message: 'Failed to parse publisher search response',
-            originalError: e,
-            stackTrace: st,
-          );
+  Future<Publisher> getPublisherFull(String id) {
+    return _api.getJson(
+      ApiClient.uri('${AppConstants.baseApiUrl}/publishers/$id/full'),
+      operation: 'fetch publisher details',
+      parse: (json) {
+        final data = dataObject(json);
+        if (data == null) {
+          throw const FormatException('publisher response has no data object');
         }
-      } else {
-        _logger.severe(
-          'Publisher search failed. Status: ${response.statusCode}, Body: ${response.body}',
-        );
-        throw ApiException(
-          message: 'Failed to search publishers',
-          statusCode: response.statusCode,
-          responseBody: response.body,
-          code: 'SEARCH_FAILED',
-        );
-      }
-    } on http.ClientException catch (e, st) {
-      _logger.severe('HTTP client error during publisher search', e, st);
-      throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on SocketException catch (e, st) {
-      _logger.severe('Network error during publisher search', e, st);
-      throw NetworkException(
-        message: 'Network error. Please check your connection.',
-        code: 'NETWORK_ERROR',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on TimeoutException catch (e, st) {
-      _logger.severe('Request timeout during publisher search', e, st);
-      throw NetworkException(
-        message: 'Request timed out. Please try again.',
-        code: 'TIMEOUT',
-        originalError: e,
-        stackTrace: st,
-      );
-    } on AppException {
-      rethrow;
-    } catch (e, st) {
-      _logger.severe('Unexpected error during publisher search', e, st);
-      throw AppError(
-        message: 'An unexpected error occurred while searching for publishers',
-        originalError: e,
-        stackTrace: st,
-      );
-    }
-  }
-
-  Future<Publisher> getPublisherFull(String id) async {
-    final uri = Uri.parse('${AppConstants.baseApiUrl}/publishers/$id/full');
-    _logger.info('Fetching full publisher details. URI: $uri');
-
-    try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Publisher full fetch timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        return Publisher.fromJson(json['data'] as Map<String, dynamic>);
-      } else {
-        throw ApiException(
-          message: 'Failed to fetch publisher details',
-          statusCode: response.statusCode,
-          responseBody: response.body,
-        );
-      }
-    } catch (e, st) {
-      _logger.severe('Error fetching full publisher details', e, st);
-      rethrow;
-    }
-  }
-
-  Future<PublisherSearchResult> search(Map<String, dynamic> params) async {
-    final allowedKeys = {'q', 'page', 'limit', 'type', 'closed', 'year_lower', 'year_upper', 'sort_by'};
-    final cleanParams = <String, dynamic>{};
-    for (final entry in params.entries) {
-      if (allowedKeys.contains(entry.key)) {
-        cleanParams[entry.key] = entry.value;
-      }
-    }
-
-    final uri = Uri.parse(_baseUrl).replace(
-      queryParameters: UriUtils.encodeQueryParameters(cleanParams),
+        return Publisher.fromJson(data);
+      },
     );
-
-    _logger.info('Performing publisher search. URI: $uri');
-
-    try {
-      final response = await _client
-          .get(uri, headers: {'User-Agent': AppConstants.userAgent})
-          .timeout(
-            Duration(seconds: AppConstants.networkTimeoutSeconds),
-            onTimeout: () => throw TimeoutException('Publisher search request timed out'),
-          );
-
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final List data = json['data'] ?? [];
-        final total = json['total'] as int? ?? 0;
-
-        final results = data
-            .map((item) => Publisher.fromJson(item as Map<String, dynamic>))
-            .toList();
-
-        return PublisherSearchResult(publishers: results, total: total);
-      } else {
-        _logger.severe(
-          'Publisher search failed. Status: ${response.statusCode}, Body: ${response.body}',
-        );
-        throw ApiException(
-          message: 'Failed to search publishers',
-          statusCode: response.statusCode,
-          responseBody: response.body,
-        );
-      }
-    } catch (e) {
-      _logger.severe('Error during publisher search: $e');
-      rethrow;
-    }
   }
+
+  void dispose() => _api.close();
 }
 
 class PublisherSearchResult {
