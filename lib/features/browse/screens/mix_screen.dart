@@ -111,7 +111,7 @@ class _MixScreenState extends State<MixScreen> {
   Widget build(BuildContext context) {
     final l10n = LocalizationService();
     return ListenableBuilder(
-      listenable: Listenable.merge([_controller, l10n]),
+      listenable: Listenable.merge([_controller, l10n, SettingsManager()]),
       builder: (context, _) {
         final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
         if (isLandscape) return _buildLandscapeScaffold(l10n);
@@ -205,7 +205,7 @@ class _MixScreenState extends State<MixScreen> {
                         _controller.error == null &&
                         _controller.results.isNotEmpty)
                       SliverToBoxAdapter(child: _buildResultsHeader(l10n)),
-                    _buildResultsSliver(l10n, availableWidth: constraints.maxWidth),
+                    _buildResultsSliver(l10n),
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   ],
                 );
@@ -860,7 +860,7 @@ class _MixScreenState extends State<MixScreen> {
 
   // ─── Results Sliver ───────────────────────────────────────────────────────
 
-  Widget _buildResultsSliver(LocalizationService l10n, {double? availableWidth}) {
+  Widget _buildResultsSliver(LocalizationService l10n) {
     if (!_controller.hasSeeds) {
       return SliverFillRemaining(
         hasScrollBody: false,
@@ -903,32 +903,51 @@ class _MixScreenState extends State<MixScreen> {
         ? settings.browseListStyle
         : settings.currentListStyle;
 
+    final itemDelegate = SliverChildBuilderDelegate(
+      (context, index) {
+        final series = _controller.results[index];
+        return InkWell(
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+          onTap: () => _navigateToDetail(series),
+          child: EntryListItem(
+            key: ValueKey('mix_${series.id}'),
+            series: series,
+          ),
+        );
+      },
+      childCount: _controller.results.length,
+    );
+
+    // The list styles are row layouts, not cells — forcing them through a grid
+    // delegate squeezes them into cover-shaped boxes.
+    if (!activeStyle.isGrid) {
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList(delegate: itemDelegate),
+      );
+    }
+
+    final columns = settings.separateGridColumnCounts
+        ? settings.browseGridColumnCount
+        : settings.gridColumnCount;
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final series = _controller.results[index];
-            return InkWell(
-              borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-              onTap: () => _navigateToDetail(series),
-              child: EntryListItem(
-                key: ValueKey('mix_${series.id}'),
-                series: series,
+        delegate: itemDelegate,
+        gridDelegate: columns > 0
+            ? SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                childAspectRatio: activeStyle.childAspectRatio,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              )
+            : SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                childAspectRatio: activeStyle.childAspectRatio,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
               ),
-            );
-          },
-          childCount: _controller.results.length,
-        ),
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: settings.browseGridColumnCount > 0
-              ? (availableWidth ?? MediaQuery.of(context).size.width) /
-                  settings.browseGridColumnCount
-              : 160,
-          childAspectRatio: activeStyle.childAspectRatio,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-        ),
       ),
     );
   }

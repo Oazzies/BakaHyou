@@ -198,10 +198,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     if (!_scrollController.hasClients) return;
 
     final settings = SettingsManager();
-    final activeStyle = _activeTab == 0
-        ? settings.libraryListStyle
-        : settings.browseListStyle;
-    final selectedIndex = AppListStyle.values.indexOf(activeStyle);
+    final selectedIndex = AppListStyle.values.indexOf(_activeStyle(settings));
     if (selectedIndex == -1) return;
 
     final itemWidth = 116.0; // 108 width + 8 spacing
@@ -219,6 +216,24 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
       );
     } else {
       _scrollController.jumpTo(targetOffset);
+    }
+  }
+
+  /// The style the active tab edits. When [SettingsManager.separateListStyles]
+  /// is off both tabs read and write the single shared style, exactly the way
+  /// the grid column counter falls back to the shared count.
+  AppListStyle _activeStyle(SettingsManager settings) {
+    if (!settings.separateListStyles) return settings.currentListStyle;
+    return _activeTab == 0 ? settings.libraryListStyle : settings.browseListStyle;
+  }
+
+  void _setActiveStyle(SettingsManager settings, AppListStyle style) {
+    if (!settings.separateListStyles) {
+      settings.setListStyle(style);
+    } else if (_activeTab == 0) {
+      settings.setLibraryListStyle(style);
+    } else {
+      settings.setBrowseListStyle(style);
     }
   }
 
@@ -432,8 +447,11 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Library/Browse Tab Selector
-        _buildTabSelector(settings),
+        // 1. Library/Browse Tab Selector. Hidden while both lists share their
+        //    style and column count, since every control below would then be
+        //    identical on either tab.
+        if (settings.separateListStyles || settings.separateGridColumnCounts)
+          _buildTabSelector(settings),
 
         // 2. Everything below the tab selector slides in horizontally whenever
         //    the active tab changes, so it reads as a different list even when
@@ -459,9 +477,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
   }
 
   Widget _buildTabContent(BuildContext context, SettingsManager settings) {
-    final activeStyle = _activeTab == 0
-        ? settings.libraryListStyle
-        : settings.browseListStyle;
+    final activeStyle = _activeStyle(settings);
 
     final showColumns = activeStyle == AppListStyle.coverOnlyGrid ||
         activeStyle == AppListStyle.compactGrid;
@@ -477,8 +493,6 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
             ? settings.libraryGridColumnCount
             : settings.browseGridColumnCount)
         : settings.gridColumnCount;
-
-    final isSmallDevice = MediaQuery.of(context).size.width < 600;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -512,7 +526,11 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            widget.l10n.translate('list_style'),
+            settings.separateListStyles
+                ? (_activeTab == 0
+                    ? widget.l10n.translate('library_list_style')
+                    : widget.l10n.translate('browse_list_style'))
+                : widget.l10n.translate('list_style'),
             style: AppTypography.sans(
               color: AppConstants.textColor,
               fontSize: 14,
@@ -537,11 +555,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
                 isSelected: isSelected,
                 label: ListStyleDialogs.getListStyleName(style),
                 onTap: () {
-                  if (_activeTab == 0) {
-                    settings.setLibraryListStyle(style);
-                  } else {
-                    settings.setBrowseListStyle(style);
-                  }
+                  _setActiveStyle(settings, style);
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToSelected(animated: true);
                   });
@@ -576,28 +590,67 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
             ),
           ],
         ],
-        if (!isSmallDevice) ...[
-          const SizedBox(height: 16),
-          SettingsGroup(
-            children: [
-              SettingsSwitchItem(
-                icon: Icons.grid_on_outlined,
-                title: widget.l10n.translate('separate_grid_columns'),
-                subtitle: widget.l10n.translate('separate_grid_columns_subtitle'),
-                value: settings.separateGridColumnCounts,
-                onChanged: (val) {
-                  settings.setSeparateGridColumnCounts(val);
-                  if (!val) {
-                    _switchTab(0);
-                  }
-                },
-                isFirst: true,
-                isLast: true,
-                iconColor: AppConstants.infoColor, // Blue
-              ),
-            ],
-          ),
-        ],
+        const SizedBox(height: 16),
+        SettingsGroup(
+          children: [
+            SettingsSwitchItem(
+              icon: Icons.splitscreen_outlined,
+              title: widget.l10n.translate('separate_list_styles'),
+              subtitle: widget.l10n.translate('separate_list_styles_subtitle'),
+              value: settings.separateListStyles,
+              onChanged: (val) {
+                // Turning separation on seeds both lists with the style that
+                // was in use, so nothing visibly changes until the user picks
+                // a different one for a tab.
+                if (val) {
+                  final shared = settings.currentListStyle;
+                  settings.setLibraryListStyle(shared);
+                  settings.setBrowseListStyle(shared);
+                } else {
+                  settings.setListStyle(
+                    _activeTab == 0
+                        ? settings.libraryListStyle
+                        : settings.browseListStyle,
+                  );
+                }
+                settings.setSeparateListStyles(val);
+                if (!val && !settings.separateGridColumnCounts) {
+                  _switchTab(0);
+                }
+              },
+              isFirst: true,
+              iconColor: const Color(0xFFAC4BFF), // Purple
+            ),
+            const SettingsDivider(),
+            SettingsSwitchItem(
+              icon: Icons.grid_on_outlined,
+              title: widget.l10n.translate('separate_grid_columns'),
+              subtitle: widget.l10n.translate('separate_grid_columns_subtitle'),
+              value: settings.separateGridColumnCounts,
+              onChanged: (val) {
+                // Same idea as above: carry the shared count into both lists
+                // (and back out again) so toggling never changes the layout.
+                if (val) {
+                  final shared = settings.gridColumnCount;
+                  settings.setLibraryGridColumnCount(shared);
+                  settings.setBrowseGridColumnCount(shared);
+                } else {
+                  settings.setGridColumnCount(
+                    _activeTab == 0
+                        ? settings.libraryGridColumnCount
+                        : settings.browseGridColumnCount,
+                  );
+                }
+                settings.setSeparateGridColumnCounts(val);
+                if (!val && !settings.separateListStyles) {
+                  _switchTab(0);
+                }
+              },
+              isLast: true,
+              iconColor: AppConstants.infoColor, // Blue
+            ),
+          ],
+        ),
         
         // 4. Progress Tracking section
         const SizedBox(height: 16),
@@ -659,47 +712,57 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
           ],
         ),
 
-        // 5. Copy settings helper button
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: () {
-            if (_activeTab == 0) {
-              settings.setBrowseListStyle(settings.libraryListStyle);
-              settings.setBrowseGridColumnCount(settings.libraryGridColumnCount);
+        // 5. Copy settings helper button. Only meaningful while at least one
+        //    of the two lists is configured independently.
+        if (settings.separateListStyles || settings.separateGridColumnCounts) ...[
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              final toBrowse = _activeTab == 0;
+              if (settings.separateListStyles) {
+                if (toBrowse) {
+                  settings.setBrowseListStyle(settings.libraryListStyle);
+                } else {
+                  settings.setLibraryListStyle(settings.browseListStyle);
+                }
+              }
+              if (settings.separateGridColumnCounts) {
+                if (toBrowse) {
+                  settings.setBrowseGridColumnCount(
+                    settings.libraryGridColumnCount,
+                  );
+                } else {
+                  settings.setLibraryGridColumnCount(
+                    settings.browseGridColumnCount,
+                  );
+                }
+              }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    widget.l10n.translate('copied_to_browse'),
+                    widget.l10n.translate(
+                      toBrowse ? 'copied_to_browse' : 'copied_to_library',
+                    ),
                   ),
                 ),
               );
-            } else {
-              settings.setLibraryListStyle(settings.browseListStyle);
-              settings.setLibraryGridColumnCount(settings.browseGridColumnCount);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    widget.l10n.translate('copied_to_library'),
-                  ),
-                ),
-              );
-            }
-          },
-          icon: const Icon(Icons.copy_all_outlined),
-          label: Text(
-            _activeTab == 0
-                ? widget.l10n.translate('copy_to_browse')
-                : widget.l10n.translate('copy_to_library'),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppConstants.accentColor,
-            side: BorderSide(color: AppConstants.accentColor.withValues(alpha: 0.5)),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+            },
+            icon: const Icon(Icons.copy_all_outlined),
+            label: Text(
+              _activeTab == 0
+                  ? widget.l10n.translate('copy_to_browse')
+                  : widget.l10n.translate('copy_to_library'),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppConstants.accentColor,
+              side: BorderSide(color: AppConstants.accentColor.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-        ),
+        ],
 
         // 6. Show Tab counts setting (isolated)
         const SizedBox(height: 16),

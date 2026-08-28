@@ -62,7 +62,7 @@ class SeriesRelatedTab extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, constraints) {
                   if (style.isGrid) {
-                    return _buildGrid(context, settings, finalRelated, constraints.maxWidth);
+                    return _buildGrid(context, settings, style, finalRelated, constraints.maxWidth);
                   }
                   return _buildList(context, finalRelated);
                 },
@@ -101,7 +101,7 @@ class SeriesRelatedTab extends StatelessWidget {
     );
   }
 
-  Widget _buildGrid(BuildContext context, SettingsManager settings, List<Series> series, double maxWidth) {
+  Widget _buildGrid(BuildContext context, SettingsManager settings, AppListStyle style, List<Series> series, double maxWidth) {
     final seriesService = getIt<SeriesService>();
     final columnCount = settings.separateGridColumnCounts
         ? settings.browseGridColumnCount
@@ -109,7 +109,9 @@ class SeriesRelatedTab extends StatelessWidget {
     const spacing = 10.0;
     final cols = columnCount > 0 ? columnCount : (maxWidth / 160).floor().clamp(2, 6);
     final itemWidth = (maxWidth - spacing * (cols - 1)) / cols;
-    final itemHeight = itemWidth / 0.65;
+    // Compact grid needs room for the title rows under the cover, so take the
+    // ratio from the style rather than assuming a bare cover.
+    final itemHeight = itemWidth / style.childAspectRatio;
 
     return Wrap(
       spacing: spacing,

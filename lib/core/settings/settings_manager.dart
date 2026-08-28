@@ -88,7 +88,7 @@ class SettingsManager extends ChangeNotifier {
   TitleLanguage _defaultTitleLanguage = TitleLanguage.defaultLang;
   TitleLanguage get defaultTitleLanguage => _defaultTitleLanguage;
 
-  bool _separateListStyles = true;
+  bool _separateListStyles = false;
   bool get separateListStyles => _separateListStyles;
 
   AppListStyle _libraryListStyle = AppListStyle.compactGrid;

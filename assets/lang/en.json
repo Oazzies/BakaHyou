@@ -235,6 +235,8 @@
     "grid_columns_subtitle": "Customize the number of columns in grid view",
     "grid_columns_portrait": "Grid Columns (Portrait)",
     "grid_columns_landscape": "Grid Columns (Landscape)",
+    "separate_list_styles": "Separate List Styles",
+    "separate_list_styles_subtitle": "Use a different list style for Library and Browse",
     "separate_grid_columns": "Separate Grid Column Counts",
     "separate_grid_columns_subtitle": "Set different column counts for Library and Browse",
     "library_grid_columns": "Library Grid Columns",

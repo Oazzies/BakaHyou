@@ -141,7 +141,7 @@ class _EntryListItemState extends State<EntryListItem> {
             child: _buildProgressBar(context, entry, style),
           ),
 
-        if (!style.isGrid)
+        if (!style.isGrid && settings.showQuickProgress)
           Positioned(
             bottom: style == AppListStyle.comfortable ? 12 : 8,
             right: style == AppListStyle.comfortable ? 12 : 10,
