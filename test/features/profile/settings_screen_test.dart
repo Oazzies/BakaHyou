@@ -74,22 +74,22 @@ void main() {
 
     // Verify dialog is open and shows main settings
     expect(find.byType(Dialog), findsOneWidget);
-    expect(find.text('settings'), findsWidgets);
+    expect(find.text('SETTINGS'), findsWidgets);
 
     // Tap general settings item
-    await tester.tap(find.text('general'));
+    await tester.tap(find.text('GENERAL'));
     await tester.pumpAndSettle();
 
     // Verify dialog is still open and shows general settings title
     expect(find.byType(Dialog), findsOneWidget);
-    expect(find.text('general'), findsOneWidget);
+    expect(find.text('GENERAL'), findsOneWidget);
 
     // Tap back button
     await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
 
     // Verify we are back to main settings list
-    expect(find.text('settings'), findsWidgets);
+    expect(find.text('SETTINGS'), findsWidgets);
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();

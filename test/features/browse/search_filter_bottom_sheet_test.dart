@@ -48,10 +48,10 @@ void main() {
     await tester.pump(); // Handle metadata loading
 
     // Check for headers (using translated keys if they aren't translated in tests)
-    expect(find.text('filters'), findsOneWidget);
-    expect(find.text('sort_by'), findsAtLeast(1));
-    expect(find.text('genres'), findsOneWidget);
-    expect(find.text('tags'), findsOneWidget);
+    expect(find.text('FILTERS'), findsOneWidget);
+    expect(find.text('SORT_BY'), findsAtLeast(1));
+    expect(find.text('GENRES'), findsOneWidget);
+    expect(find.text('TAGS'), findsOneWidget);
   });
 
   testWidgets('Reset button clears filters', (WidgetTester tester) async {

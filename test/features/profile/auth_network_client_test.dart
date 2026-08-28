@@ -46,7 +46,7 @@ void main() {
       expect(capturedHeaders!['Authorization'], 'Bearer access-tok');
     });
 
-    test('falls back to /me when /userinfo fails', () async {
+    test('falls back to /my/profile when /userinfo fails', () async {
       final calls = <String>[];
       final mockClient = MockClient((req) async {
         calls.add(req.url.path);
@@ -75,7 +75,7 @@ void main() {
       expect(profile.role, 'admin');
       expect(profile.scopes, ['admin', 'user']);
       expect(calls.any((p) => p.endsWith('/userinfo')), isTrue);
-      expect(calls.any((p) => p.endsWith('/me')), isTrue);
+      expect(calls.any((p) => p.endsWith('/my/profile')), isTrue);
     });
 
     test('throws AuthException when both endpoints fail', () async {

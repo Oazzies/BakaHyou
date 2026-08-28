@@ -44,17 +44,17 @@ void main() {
     await tester.pump();
 
     // Check for "app_name" which is the first thing on WelcomePage
-    expect(find.text('app_name'), findsOneWidget);
+    expect(find.text('APP_NAME'), findsOneWidget);
 
     // Check for Next button (translated key)
-    final nextButton = find.text('onboarding_next');
+    final nextButton = find.text('ONBOARDING_NEXT');
     expect(nextButton, findsOneWidget);
 
     await tester.tap(nextButton);
     await tester.pumpAndSettle();
 
     // Should be on LanguagePage now (translated key 'onboarding_language_title')
-    expect(find.text('onboarding_language_title'), findsOneWidget);
+    expect(find.text('ONBOARDING_LANGUAGE_TITLE'), findsOneWidget);
   });
 
   testWidgets('OnboardingScreen allows skipping', (WidgetTester tester) async {

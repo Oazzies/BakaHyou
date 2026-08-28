@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mangabaka_app/core/widgets/design/mb_starburst_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
@@ -204,7 +205,7 @@ void main() {
     
     final fabFinder = find.byKey(const Key('add_to_library_fab'));
     expect(fabFinder, findsOneWidget);
-    expect(tester.widget<FloatingActionButton>(fabFinder).onPressed, isNotNull);
+    expect(tester.widget<MbStarburstButton>(fabFinder).onPressed, isNotNull);
     
     // Use standard tap instead of tapAt to be more robust
     await tester.tap(fabFinder);
@@ -222,7 +223,7 @@ void main() {
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.pumpAndSettle();
     
-    final coverTabFinder = find.text('Covers');
+    final coverTabFinder = find.text('COVERS');
     await tester.ensureVisible(coverTabFinder);
     await tester.pumpAndSettle();
 

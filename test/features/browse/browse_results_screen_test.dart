@@ -100,7 +100,7 @@ void main() {
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.pumpAndSettle();
 
-    expect(find.text('Test Search'), findsOneWidget);
+    expect(find.text('TEST SEARCH'), findsOneWidget);
     expect(find.text('Result 1'), findsAtLeast(1));
   });
 

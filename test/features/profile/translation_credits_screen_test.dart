@@ -16,7 +16,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('translation_credits'), findsOneWidget);
+    expect(find.text('TRANSLATION_CREDITS'), findsOneWidget);
     // ListView is always rendered; languages list itself may be empty in tests
     // (LocalizationService isn't init'd here), so we just check the scaffold.
     expect(find.byType(ListView), findsOneWidget);

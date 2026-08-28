@@ -6,6 +6,7 @@ import 'package:mangabaka_app/features/browse/screens/browse_screen.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/features/profile/models/mb_profile.dart';
+import 'package:mangabaka_app/core/widgets/design/mb_nav.dart';
 
 class MockProfileAuthService extends Fake implements ProfileAuthService {
   @override
@@ -31,7 +32,7 @@ void main() {
   });
 
   testWidgets('MainScreen starts on Browse tab by default', (WidgetTester tester) async {
-    // Set mobile size to ensure NavigationBar is used instead of NavigationRail
+    // Set mobile size to ensure the bottom bar is used instead of the rail
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.reset());
@@ -44,8 +45,8 @@ void main() {
     // Verify BrowseScreen is visible
     expect(find.byType(BrowseScreen), findsOneWidget);
     
-    // Verify NavigationBar has Browse selected (index 2)
-    final navBar = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(navBar.selectedIndex, 2); 
+    // Verify the bottom nav has Browse selected (index 2)
+    final navBar = tester.widget<MbBottomNav>(find.byType(MbBottomNav));
+    expect(navBar.selectedIndex, 2);
   });
 }
