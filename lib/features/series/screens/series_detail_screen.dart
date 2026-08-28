@@ -1,4 +1,5 @@
 import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'dart:async';
 import 'dart:ui' show PathMetric;
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
@@ -80,6 +81,55 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
   late final AnimationController _filterAnimationController;
   late final AnimationController _marchingAntsController;
   late final Animation<Offset> _drawerSlideAnimation;
+
+  // Completes once the route push transition has settled. Everything heavier
+  // than the app bar (the full info body, network results, filter metadata) is
+  // held until then: the detail page's real content is a big widget tree, and
+  // building it mid-slide drops enough frames to swallow the transition whole.
+  // During the slide we show the lightweight skeleton; the instant it settles
+  // we render real content from the Series we were handed — no network wait.
+  final Completer<void> _canApplyData = Completer<void>();
+  bool _routeAnimListenerAttached = false;
+  bool _transitionSettled = false;
+
+  void _completeCanApplyData() {
+    if (_canApplyData.isCompleted) return;
+    _canApplyData.complete();
+    if (!mounted) {
+      _transitionSettled = true;
+      return;
+    }
+    setState(() => _transitionSettled = true);
+  }
+
+  @override
+  Future<void> whenReadyToApplyData() => _canApplyData.future;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_routeAnimListenerAttached) return;
+    _routeAnimListenerAttached = true;
+
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null ||
+        animation.status == AnimationStatus.completed ||
+        animation.status == AnimationStatus.dismissed) {
+      // No transition to wait on (already settled, or pushed without one).
+      // Set the flag directly — first build hasn't run, so no setState needed.
+      if (!_canApplyData.isCompleted) _canApplyData.complete();
+      _transitionSettled = true;
+      return;
+    }
+    void listener(AnimationStatus status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        animation.removeStatusListener(listener);
+        _completeCanApplyData();
+      }
+    }
+    animation.addStatusListener(listener);
+  }
 
   void _updateFilters(SearchFilters Function(SearchFilters? current) updateFn) {
     final wasNull = _drawerFilters == null;
@@ -332,6 +382,9 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
 
   @override
   void dispose() {
+    // Unblock any fetch still awaiting the transition gate so its async
+    // continuation isn't left suspended forever.
+    if (!_canApplyData.isCompleted) _canApplyData.complete();
     _filterAnimationController.dispose();
     _marchingAntsController.dispose();
     super.dispose();
@@ -365,8 +418,13 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
     _seriesService = getIt<SeriesService>();
     _searchService = getIt<SeriesSearchService>();
     _entryStream = _libraryService.watchEntryFromDb(widget.series.id);
-    fullSeries = widget.series; 
-    _loadMetadata(); 
+    fullSeries = widget.series;
+
+    // Metadata only feeds the filter drawer (tag/genre long-press). Load it once
+    // the push transition has settled so it never competes with the first frame.
+    _canApplyData.future.then((_) {
+      if (mounted) _loadMetadata();
+    });
 
     _filterAnimationController = AnimationController(
       vsync: this,
@@ -425,7 +483,19 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth > 900;
     final isTablet = screenWidth > 600 && screenWidth <= 900;
-    final displayLoaded = isDataLoaded;
+
+    // Once the push transition has settled, render the real body immediately
+    // from the Series we were handed — the common navigation paths (search,
+    // browse, library, home) all pass a fully-populated, precached Series, so
+    // there's no network wait. The richer `fullSeries` from the network then
+    // swaps into the same widgets without a layout jump. During the transition,
+    // and for sparse entrances (e.g. a bare reference) until the fetch resolves,
+    // the lightweight skeleton shows instead.
+    final displaySeries = fullSeries ?? widget.series;
+    final hasInitialContent = displaySeries.description.isNotEmpty ||
+        displaySeries.genres.isNotEmpty;
+    final displayLoaded =
+        isDataLoaded || (_transitionSettled && hasInitialContent);
 
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), getIt<ProfileAuthService>()]),

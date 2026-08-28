@@ -7,6 +7,7 @@ import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:mangabaka_app/core/logging/logging_service.dart';
 
 class WidgetUtils {
   static Widget responsiveConstraint(Widget child, {double maxWidth = 800}) {
@@ -59,6 +60,10 @@ class WidgetUtils {
             memCacheHeight: memCacheHeight,
             placeholder: (context, url) => placeholder ?? Container(color: AppConstants.secondaryBackground),
             errorWidget: (context, url, error) {
+              // Surface the failing host + error so image outages (dead CDN,
+              // TLS handshake, cleartext block, rate limit) are diagnosable from
+              // the in-app log rather than a silent broken-image icon.
+              LoggingService.logger.warning('Image load failed: $url — $error');
               final iconSize = (width != null && width.isFinite) ? width : 24.0;
               return errorWidget ?? Icon(Icons.broken_image, size: iconSize, color: AppConstants.textMutedColor);
             },

@@ -72,8 +72,11 @@ class LoggingService {
     }
     final logMessage = buffer.toString();
 
-    // Console output is noise (and an avoidable cost) in release builds.
-    if (kDebugMode) {
+    // Console output is noise (and an avoidable cost) in release builds, but
+    // profile builds are only ever run from `flutter run` — surfacing logs
+    // there makes field diagnosis (network failures, rate limits) possible
+    // without the in-app viewer.
+    if (kDebugMode || kProfileMode) {
       // ignore: avoid_print
       print(logMessage);
     }

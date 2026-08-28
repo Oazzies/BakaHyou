@@ -10,6 +10,11 @@ abstract final class AppTransitions {
   static Widget _fadeThroughOutgoing(Animation<double> secondary, Widget child) {
     // The outgoing page dims and recedes a touch; barely perceptible on its
     // own, but it is what stops a push from feeling flat.
+    //
+    // The dim is a scrim overlay rather than an `Opacity` on the whole page:
+    // fading a full-screen subtree forces a `saveLayer` every frame of the
+    // transition, which is exactly the kind of cost that makes a push stutter.
+    // A `ColoredBox` painting into the existing layer is effectively free.
     final curved = CurvedAnimation(
       parent: secondary,
       curve: AppMotion.emphasized,
@@ -17,11 +22,22 @@ abstract final class AppTransitions {
     return AnimatedBuilder(
       animation: curved,
       builder: (context, inner) {
-        return Opacity(
-          opacity: 1 - (curved.value * 0.35),
-          child: Transform.scale(
-            scale: 1 - (curved.value * 0.02),
-            child: inner,
+        final t = curved.value;
+        if (t == 0) return inner!;
+        return Transform.scale(
+          scale: 1 - (t * 0.02),
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              inner!,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: t * 0.35),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },

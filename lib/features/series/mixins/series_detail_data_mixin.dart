@@ -24,6 +24,12 @@ mixin SeriesDetailDataMixin<T extends StatefulWidget> on State<T> {
   bool isDataLoaded = false;
   bool fetchError = false;
 
+  /// Hook the host screen can override to hold freshly-fetched data until it is
+  /// safe to rebuild — e.g. until the route push transition has finished — so a
+  /// mid-transition `setState` never drops frames. Defaults to no delay.
+  @protected
+  Future<void> whenReadyToApplyData() async {}
+
   Future<void> fetchTabData(String tab) async {
     if (!mounted) return;
     final id = series.id;
@@ -83,7 +89,9 @@ mixin SeriesDetailDataMixin<T extends StatefulWidget> on State<T> {
       if (selectedTab != 'Info') {
         fetchTabData(selectedTab);
       }
-      
+
+      await whenReadyToApplyData();
+
       if (mounted) {
         setState(() {
           enrichedLinks = results[0] as List<SeriesLink>?;
@@ -94,9 +102,10 @@ mixin SeriesDetailDataMixin<T extends StatefulWidget> on State<T> {
       }
     } catch (e) {
       seriesService.logger.warning('Error fetching full data: $e');
+      await whenReadyToApplyData();
       if (mounted) {
         setState(() {
-          isDataLoaded = true; 
+          isDataLoaded = true;
           fetchError = true;
         });
       }
