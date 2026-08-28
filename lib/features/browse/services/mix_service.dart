@@ -169,50 +169,6 @@ class MixService {
   Map<String, dynamic> _normalizeMixSeriesJson(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
 
-    // --- Title normalization ---
-    // Mix uses `titles` array; search uses flat `title`, `native_title`, `romanized_title`
-    if (!normalized.containsKey('title') || (normalized['title'] == null)) {
-      final titles = json['titles'] as List?;
-      if (titles != null && titles.isNotEmpty) {
-        // Prefer primary english title, then any primary, then first
-        Map? primaryEn;
-        Map? primary;
-        Map? first;
-
-        for (final t in titles) {
-          if (t is! Map) continue;
-          first ??= t;
-          if (t['is_primary'] == true) {
-            primary ??= t;
-            final lang = t['language']?.toString() ?? '';
-            if (lang == 'en') {
-              primaryEn ??= t;
-            }
-          }
-        }
-
-        final chosen = primaryEn ?? primary ?? first;
-        normalized['title'] = chosen?['title']?.toString() ?? '';
-
-        // Native / romanized — pick jp and romanized from traits
-        for (final t in titles) {
-          if (t is! Map) continue;
-          final lang = t['language']?.toString() ?? '';
-          final traits = (t['traits'] as List?)?.cast<String>() ?? [];
-          if (lang == 'ja' || lang == 'ja-ro') {
-            if (traits.contains('romanized') && !normalized.containsKey('romanized_title')) {
-              normalized['romanized_title'] = t['title']?.toString() ?? '';
-            } else if (!traits.contains('romanized') && !normalized.containsKey('native_title')) {
-              normalized['native_title'] = t['title']?.toString() ?? '';
-            }
-          }
-        }
-      }
-    }
-
-    normalized.putIfAbsent('native_title', () => '');
-    normalized.putIfAbsent('romanized_title', () => '');
-
     // --- Genre normalization ---
     // Mix uses `genres_v2` array of objects; search uses `genres` array of strings
     if (!normalized.containsKey('genres') || normalized['genres'] == null) {

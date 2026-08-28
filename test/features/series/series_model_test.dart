@@ -43,5 +43,39 @@ void main() {
       expect(series.getDisplayTitle(TitleLanguage.native), 'テスト漫画');
       expect(series.getDisplayTitle(TitleLanguage.romanized), 'Test Manga Romanized');
     });
+
+    test('Series.fromJson parses titles array correctly', () {
+      final mockJsonWithTitles = {
+        'id': '124',
+        'titles': [
+          {'title': 'The Apothecary Diaries', 'language': 'en', 'is_primary': true},
+          {'title': '薬屋のひとりごと', 'language': 'ja', 'is_primary': true},
+          {'title': 'Kusuriya no Hitorigoto', 'language': 'ja-ro', 'is_primary': true, 'traits': ['romanized']},
+          {'title': 'Alternative Title 1', 'language': 'en', 'is_primary': false},
+        ],
+        'authors': ['Author 1'],
+        'artists': ['Artist 1'],
+        'description': 'Description',
+        'year': 2021,
+        'status': 'ongoing',
+        'type': 'manga',
+        'rating': 4.5,
+        'total_chapters': 100,
+        'genres': ['Action'],
+        'tags': ['Tag 1'],
+        'last_updated_at': '2021-01-01',
+      };
+
+      final series = Series.fromJson(mockJsonWithTitles);
+
+      expect(series.id, '124');
+      expect(series.title, 'The Apothecary Diaries');
+      expect(series.nativeTitle, '薬屋のひとりごと');
+      expect(series.romanizedTitle, 'Kusuriya no Hitorigoto');
+      expect(series.secondaryTitles, contains('Alternative Title 1'));
+      expect(series.secondaryTitles, contains('薬屋のひとりごと'));
+      expect(series.secondaryTitles, contains('Kusuriya no Hitorigoto'));
+      expect(series.secondaryTitles, isNot(contains('The Apothecary Diaries')));
+    });
   });
 }

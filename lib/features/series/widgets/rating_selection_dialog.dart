@@ -65,12 +65,12 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppConstants.warningColor.withValues(alpha: 0.1),
+                  color: AppConstants.starColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.star_rounded,
-                  color: AppConstants.warningColor,
+                  color: AppConstants.starColor,
                   size: 24,
                 ),
               ),
@@ -100,7 +100,7 @@ class _RatingSelectionDialogState extends State<RatingSelectionDialog> {
                 children: [
                   Icon(
                     _currentRating.toInt() == 0 ? Icons.star_outline : Icons.star,
-                    color: _currentRating.toInt() == 0 ? AppConstants.textMutedColor : AppConstants.warningColor,
+                    color: _currentRating.toInt() == 0 ? AppConstants.textMutedColor : AppConstants.starColor,
                     size: 28,
                   ),
                   const SizedBox(width: 12),

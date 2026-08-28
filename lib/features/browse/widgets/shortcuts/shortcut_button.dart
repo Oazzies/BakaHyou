@@ -7,11 +7,13 @@ class ShortcutButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  final Color? iconColor;
 
   const ShortcutButton({
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.iconColor,
     super.key,
   });
 
@@ -37,7 +39,7 @@ class ShortcutButton extends StatelessWidget {
                 color: AppConstants.tertiaryBackground,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppConstants.accentColor, size: 19),
+              child: Icon(icon, color: iconColor ?? AppConstants.accentColor, size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(

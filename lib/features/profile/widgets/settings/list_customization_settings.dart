@@ -562,6 +562,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                 },
                 isFirst: true,
                 isLast: true,
+                iconColor: AppConstants.infoColor, // Blue
               ),
             ],
           ),
@@ -579,6 +580,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
               value: settings.showLibraryProgress,
               onChanged: (val) => settings.setShowLibraryProgress(val),
               isFirst: true,
+              iconColor: AppConstants.accentColor, // Green
             ),
             ClipRect(
               child: AnimatedSize(
@@ -597,6 +599,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                         ),
                         onTap: () => GeneralSettingsDialogs
                             .showLibraryProgressTypeSelectionDialog(context),
+                        iconColor: AppConstants.accentColor, // Green
                       ),
                     ],
                   ],
@@ -610,6 +613,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
               subtitle: widget.l10n.translate('show_remaining_progress_subtitle'),
               value: settings.showRemainingProgress,
               onChanged: (val) => settings.setShowRemainingProgress(val),
+              iconColor: AppConstants.starColor, // Yellow
             ),
             const SettingsDivider(),
             SettingsSwitchItem(
@@ -619,6 +623,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
               value: settings.showQuickProgress,
               onChanged: (val) => settings.setShowQuickProgress(val),
               isLast: true,
+              iconColor: const Color(0xFF4FBEC4), // Teal
             ),
           ],
         ),
@@ -677,6 +682,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
               onChanged: (val) => settings.setShowLibraryTabCounts(val),
               isFirst: true,
               isLast: true,
+              iconColor: const Color(0xFFD71F75), // Pink
             ),
           ],
         ),

@@ -109,6 +109,7 @@ List<Widget> _buildSettingsGroups(
           onTap: () => _navigateToGeneral(context, l10n),
           isFirst: true,
           isLast: true,
+          iconColor: AppConstants.textColor, // White
         ),
       ],
     ),
@@ -122,6 +123,7 @@ List<Widget> _buildSettingsGroups(
           onTap: () => _navigateToListCustomization(context, l10n),
           isFirst: true,
           isLast: true,
+          iconColor: AppConstants.infoColor, // Blue
         ),
       ],
     ),
@@ -135,6 +137,7 @@ List<Widget> _buildSettingsGroups(
           onTap: () => _navigateToContent(context, l10n),
           isFirst: true,
           isLast: true,
+          iconColor: AppConstants.starColor, // Yellow
         ),
       ],
     ),
@@ -149,6 +152,7 @@ List<Widget> _buildSettingsGroups(
             onTap: () => _navigateToAccount(context, l10n, auth),
             isFirst: true,
             isLast: true,
+            iconColor: AppConstants.accentColor, // Green
           ),
         ],
       ),
@@ -163,6 +167,7 @@ List<Widget> _buildSettingsGroups(
           onTap: () => _navigateToAdvanced(context, l10n),
           isFirst: true,
           isLast: true,
+          iconColor: AppConstants.errorColor, // Red
         ),
       ],
     ),
@@ -182,6 +187,7 @@ List<Widget> _buildSettingsGroups(
             size: 18,
           ),
           isFirst: true,
+          iconColor: const Color(0xFF5865F2), // Discord Blue
         ),
         const SettingsDivider(),
         SettingsItem(
@@ -196,6 +202,7 @@ List<Widget> _buildSettingsGroups(
             color: AppConstants.textMutedColor,
             size: 18,
           ),
+          iconColor: const Color(0xFFAC4BFF), // GitHub Purple
         ),
         const SettingsDivider(),
         SettingsItem(
@@ -208,6 +215,7 @@ List<Widget> _buildSettingsGroups(
             ),
           ),
           isLast: true,
+          iconColor: AppConstants.textColor, // White
         ),
       ],
     ),
@@ -238,6 +246,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
               onTap: () =>
                   GeneralSettingsDialogs.showLanguageSelectionDialog(ctx),
               isFirst: true,
+              iconColor: AppConstants.infoColor, // Blue
             ),
             const SettingsDivider(),
             SettingsItem(
@@ -248,6 +257,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
               ),
               onTap: () =>
                   GeneralSettingsDialogs.showAppStartPageSelectionDialog(ctx),
+              iconColor: AppConstants.accentColor, // Green
             ),
             const SettingsDivider(),
             SettingsItem(
@@ -258,6 +268,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
               ),
               onTap: () =>
                   GeneralSettingsDialogs.showLandscapeAppBarPositionDialog(ctx),
+              iconColor: const Color(0xFFAC4BFF), // Purple
             ),
             const SettingsDivider(),
             SettingsItem(
@@ -268,6 +279,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
               ),
               onTap: () =>
                   GeneralSettingsDialogs.showTitleLanguageSelectionDialog(ctx),
+              iconColor: const Color(0xFFD71F75), // Pink
             ),
             if (!isSmallDevice) ...[
               const SettingsDivider(),
@@ -277,6 +289,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
                 subtitle: l10n.translate('show_tooltips_subtext'),
                 value: SettingsManager().showTooltips,
                 onChanged: (val) => SettingsManager().setShowTooltips(val),
+                iconColor: AppConstants.starColor, // Yellow
               ),
             ],
             const SettingsDivider(),
@@ -287,6 +300,7 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
               value: SettingsManager().autoSuggestBrowse,
               onChanged: (val) => SettingsManager().setAutoSuggestBrowse(val),
               isLast: true,
+              iconColor: const Color(0xFF4FBEC4), // Teal
             ),
           ],
         ),
@@ -323,6 +337,7 @@ void _navigateToContent(BuildContext context, LocalizationService l10n) {
             onTap: () =>
                 GeneralSettingsDialogs.showRatingSliderStepSelectionDialog(ctx),
             isFirst: true,
+            iconColor: AppConstants.starColor, // Yellow
           ),
           const SettingsDivider(),
           SettingsItem(
@@ -335,6 +350,7 @@ void _navigateToContent(BuildContext context, LocalizationService l10n) {
                 GeneralSettingsDialogs.showAddLibraryDefaultTabSelectionDialog(
                   ctx,
                 ),
+            iconColor: AppConstants.infoColor, // Blue
           ),
           const SettingsDivider(),
           SettingsItem(
@@ -345,6 +361,7 @@ void _navigateToContent(BuildContext context, LocalizationService l10n) {
             ),
             onTap: () =>
                 ContentPreferencesDialogs.showContentPreferencesDialog(ctx),
+            iconColor: AppConstants.errorColor, // Red
           ),
           const SettingsDivider(),
           SettingsSwitchItem(
@@ -355,6 +372,7 @@ void _navigateToContent(BuildContext context, LocalizationService l10n) {
             onChanged: (val) =>
                 SettingsManager().setHideLibrarySeriesInBrowse(val),
             isLast: true,
+            iconColor: const Color(0xFFAC4BFF), // Purple
           ),
         ],
       ),
@@ -387,12 +405,14 @@ void _navigateToAccount(
               size: 20,
             ),
             isFirst: true,
+            iconColor: AppConstants.accentColor, // Green
           ),
           const SettingsDivider(),
           SettingsItem(
             icon: Icons.logout_outlined,
             title: l10n.translate('logout'),
             subtitle: l10n.translate('logout_subtext'),
+            iconColor: AppConstants.errorColor, // Red
             onTap: () async {
               final shouldLogout =
                   await LogoutDialog.showLogoutConfirmationDialog(ctx);
@@ -440,6 +460,7 @@ void _navigateToAdvanced(BuildContext context, LocalizationService l10n) {
               ),
             ),
             isFirst: true,
+            iconColor: const Color(0xFFF98F3A), // Orange
           ),
           const SettingsDivider(),
           SettingsItem(
@@ -451,6 +472,7 @@ void _navigateToAdvanced(BuildContext context, LocalizationService l10n) {
               MaterialPageRoute(builder: (context) => const LogsScreen()),
             ),
             isLast: true,
+            iconColor: AppConstants.errorColor, // Red
           ),
         ],
       ),

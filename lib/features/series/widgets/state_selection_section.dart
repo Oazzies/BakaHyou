@@ -65,7 +65,7 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
               },
               leadingIcon: Icon(
                 _getIconForState(activeState),
-                color: AppConstants.onAccent,
+                color: AppConstants.getOnColorForState(activeState),
                 size: 20,
               ),
               dropdownMenuEntries: LibraryScreenConstants.tabs.map((tab) {
@@ -75,17 +75,17 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
                   label: l10n.translate(tab.key).toUpperCase(),
                   leadingIcon: Icon(
                     _getIconForState(tab.key),
-                    color: _getColorForState(tab.key),
+                    color: AppConstants.getColorForState(tab.key),
                     size: 20,
                   ),
                   trailingIcon: isSelected 
-                      ? Icon(Icons.check, color: AppConstants.accentColor, size: 18)
+                      ? Icon(Icons.check, color: AppConstants.getColorForState(tab.key), size: 18)
                       : null,
                   style: MenuItemButton.styleFrom(
                     foregroundColor: AppConstants.textColor,
                     textStyle: AppTypography.display(fontSize: 13),
                     backgroundColor: isSelected
-                        ? AppConstants.accentColor.withValues(alpha: 0.14)
+                        ? AppConstants.getColorForState(tab.key).withValues(alpha: 0.14)
                         : null,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
@@ -93,7 +93,7 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
               }).toList(),
               inputDecorationTheme: InputDecorationTheme(
                 filled: true,
-                fillColor: AppConstants.accentColor,
+                fillColor: AppConstants.getColorForState(activeState),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppConstants.pillRadius),
@@ -108,10 +108,10 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
                   borderSide: BorderSide.none,
                 ),
               ),
-              trailingIcon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.onAccent, size: 20),
-              selectedTrailingIcon: Icon(Icons.keyboard_arrow_up_rounded, color: AppConstants.onAccent, size: 20),
+              trailingIcon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.getOnColorForState(activeState), size: 20),
+              selectedTrailingIcon: Icon(Icons.keyboard_arrow_up_rounded, color: AppConstants.getOnColorForState(activeState), size: 20),
               textStyle: AppTypography.display(
-                color: AppConstants.onAccent,
+                color: AppConstants.getOnColorForState(activeState),
                 fontSize: 14,
               ),
               menuStyle: MenuStyle(
@@ -150,25 +150,4 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
       default:
         return Icons.help_outline;
     }
-  }
-
-  Color _getColorForState(String state) {
-    switch (state) {
-      case 'reading':
-      case 'rereading':
-        return AppConstants.successColor;
-      case 'completed':
-        return AppConstants.textColor;
-      case 'paused':
-        return AppConstants.warningColor;
-      case 'dropped':
-        return AppConstants.errorColor;
-      case 'plan_to_read':
-        return AppConstants.infoColor;
-      case 'considering':
-        return AppConstants.accentColor;
-      default:
-        return AppConstants.textMutedColor;
-    }
-  }
-}
+  }}

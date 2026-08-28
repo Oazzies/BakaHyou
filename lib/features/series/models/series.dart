@@ -1,4 +1,4 @@
-﻿import 'package:mangabaka_app/core/utils/json_utils.dart';
+import 'package:mangabaka_app/core/utils/json_utils.dart';
 import 'package:mangabaka_app/core/settings/settings_enums.dart';
 
 
@@ -84,50 +84,6 @@ class Series {
     // instead of the flat title/native_title/romanized_title fields.
     final patched = Map<String, dynamic>.from(json);
 
-    // Titles
-    if (patched['title'] == null || (patched['title'] as String).isEmpty) {
-      final titlesList = patched['titles'] as List?;
-      if (titlesList != null && titlesList.isNotEmpty) {
-        String langOf(dynamic t) =>
-            (t is Map ? t['language']?.toString() : null)?.toLowerCase() ?? '';
-
-        bool isRomanized(dynamic t) {
-          final l = langOf(t);
-          return l.endsWith('-latn') ||
-              l.endsWith('-ro') ||
-              l.contains('hepburn') ||
-              l.contains('romaji');
-        }
-
-        Map<String, dynamic>? pick(bool Function(dynamic) test) {
-          for (final t in titlesList) {
-            if (t is Map && test(t)) return t.cast<String, dynamic>();
-          }
-          return null;
-        }
-
-        // The v2 "lean" shape flags *every* language entry `is_primary`, so a
-        // Latin title has to be chosen deliberately or the rails render native
-        // script. Prefer English, then a romanised form, then whatever leads.
-        final chosen = pick((t) => langOf(t) == 'en') ??
-            pick(isRomanized) ??
-            pick((t) => t is Map && t['is_primary'] == true) ??
-            (titlesList.first is Map
-                ? (titlesList.first as Map).cast<String, dynamic>()
-                : null);
-
-        patched['title'] = chosen?['title']?.toString() ?? '';
-        patched['native_title'] = (pick((t) {
-              final l = langOf(t);
-              return l == 'ja' || l == 'ko' || l == 'zh' || l.startsWith('zh-');
-            })?['title'])
-                ?.toString() ??
-            '';
-        patched['romanized_title'] =
-            pick(isRomanized)?['title']?.toString() ?? '';
-      }
-    }
-
     // Genres
     if (patched['genres_v2'] != null) {
       patched['genres'] = (patched['genres_v2'] as List)
@@ -169,18 +125,93 @@ class Series {
       }
     }
 
+    String title = json['title'] ?? '';
+    String nativeTitle = json['native_title'] ?? '';
+    String romanizedTitle = json['romanized_title'] ?? '';
+    List<String> secondaryTitlesList = [];
+
+    final secTitlesRaw = json['secondary_titles'];
+    if (secTitlesRaw is Map) {
+      secondaryTitlesList = secTitlesRaw.values.map((e) => e.toString()).toList();
+    } else if (secTitlesRaw is List) {
+      secondaryTitlesList = secTitlesRaw.map((e) => e.toString()).toList();
+    }
+
+    final titlesList = json['titles'] as List?;
+    if (titlesList != null && titlesList.isNotEmpty) {
+      String langOf(dynamic t) =>
+          (t is Map ? t['language']?.toString() : null)?.toLowerCase() ?? '';
+
+      bool isRomanized(dynamic t) {
+        if (t is! Map) return false;
+        final l = langOf(t);
+        final traits = (t['traits'] as List?)?.cast<String>() ?? [];
+        return l.endsWith('-latn') ||
+            l.endsWith('-ro') ||
+            l.contains('hepburn') ||
+            l.contains('romaji') ||
+            traits.contains('romanized');
+      }
+
+      Map<String, dynamic>? pick(bool Function(dynamic) test) {
+        for (final t in titlesList) {
+          if (t is Map && test(t)) return t.cast<String, dynamic>();
+        }
+        return null;
+      }
+
+      // 1. Determine main display title: prefer English, then any romanized, then any primary, then first available.
+      final chosen = pick((t) => langOf(t) == 'en') ??
+          pick(isRomanized) ??
+          pick((t) => t is Map && t['is_primary'] == true) ??
+          (titlesList.first is Map
+              ? (titlesList.first as Map).cast<String, dynamic>()
+              : null);
+
+      if (chosen != null) {
+        title = chosen['title']?.toString() ?? '';
+      }
+
+      // 2. Determine native title: prefer ja, ko, zh/zh-* without romanized trait
+      final nativeChosen = pick((t) {
+        final l = langOf(t);
+        final traits = (t['traits'] as List?)?.cast<String>() ?? [];
+        return (l == 'ja' || l == 'ko' || l == 'zh' || l.startsWith('zh-')) &&
+            !traits.contains('romanized');
+      });
+      if (nativeChosen != null) {
+        nativeTitle = nativeChosen['title']?.toString() ?? '';
+      }
+
+      // 3. Determine romanized title
+      final romanizedChosen = pick(isRomanized);
+      if (romanizedChosen != null) {
+        romanizedTitle = romanizedChosen['title']?.toString() ?? '';
+      }
+
+      // 4. Secondary titles: all other titles in the list that aren't the main chosen title
+      final List<String> extractedSecondary = [];
+      for (final t in titlesList) {
+        if (t is Map && t['title'] != null) {
+          final tStr = t['title'].toString();
+          if (tStr.isNotEmpty && tStr != title) {
+            extractedSecondary.add(tStr);
+          }
+        }
+      }
+      if (extractedSecondary.isNotEmpty) {
+        secondaryTitlesList = extractedSecondary.toSet().toList();
+      }
+    }
+
     return Series(
       id: json['id']?.toString() ?? '',
       state: json['state'] ?? '',
       mergedWith: json['merged_with']?.toString(),
-      title: json['title'] ?? '',
-      nativeTitle: json['native_title'] ?? '',
-      romanizedTitle: json['romanized_title'] ?? '',
-      secondaryTitles:
-          (json['secondary_titles'] as Map?)?.values
-              .map((e) => e.toString())
-              .toList() ??
-          [],
+      title: title,
+      nativeTitle: nativeTitle,
+      romanizedTitle: romanizedTitle,
+      secondaryTitles: secondaryTitlesList,
       coverUrl: JsonUtils.getCover(json),
       rawCoverUrl: JsonUtils.getRawCover(json),
       authors: (json['authors'] as List?)?.cast<String>() ?? [],

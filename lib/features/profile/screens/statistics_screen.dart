@@ -77,22 +77,22 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         ),
                         const SizedBox(height: 16),
                         _buildStatRow([
-                          _StatData(Icons.book, l10n.translate('total_series'), '$totalSeries'),
-                          _StatData(Icons.article, l10n.translate('chapters_read'), '$chaptersRead'),
+                          _StatData(Icons.book, l10n.translate('total_series'), '$totalSeries', iconColor: AppConstants.accentColor),
+                          _StatData(Icons.article, l10n.translate('chapters_read'), '$chaptersRead', iconColor: AppConstants.infoColor),
                         ]),
                         const SizedBox(height: 16),
                         _buildStatRow([
-                          _StatData(Icons.library_books, l10n.translate('volumes_read'), '$volumesRead'),
-                          _StatData(Icons.check_circle, l10n.translate('completion'), '${completionRate.toStringAsFixed(1)}%'),
+                          _StatData(Icons.library_books, l10n.translate('volumes_read'), '$volumesRead', iconColor: const Color(0xFFAC4BFF)),
+                          _StatData(Icons.check_circle, l10n.translate('completion'), '${completionRate.toStringAsFixed(1)}%', iconColor: const Color(0xFF4FBEC4)),
                         ]),
                         const SizedBox(height: 16),
                         _buildStatRow([
-                          _StatData(Icons.replay, l10n.translate('total_rereads'), '$totalRereads'),
-                          _StatData(Icons.star, l10n.translate('mean_score'), meanScore.toStringAsFixed(1)),
+                          _StatData(Icons.replay, l10n.translate('total_rereads'), '$totalRereads', iconColor: const Color(0xFFF98F3A)),
+                          _StatData(Icons.star, l10n.translate('mean_score'), meanScore.toStringAsFixed(1), iconColor: AppConstants.starColor),
                         ]),
                         const SizedBox(height: 16),
                         _buildStatRow([
-                          _StatData(Icons.flag, l10n.translate('finish_rate'), '${finishRate.toStringAsFixed(1)}%'),
+                          _StatData(Icons.flag, l10n.translate('finish_rate'), '${finishRate.toStringAsFixed(1)}%', iconColor: const Color(0xFFD71F75)),
                         ]),
                         const SizedBox(height: 32),
                         Text(
@@ -143,6 +143,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 icon: stats[i].icon,
                 label: stats[i].label,
                 value: stats[i].value,
+                iconColor: stats[i].iconColor,
               ),
             ),
           ),
@@ -155,6 +156,7 @@ class _StatData {
   final IconData icon;
   final String label;
   final String value;
+  final Color? iconColor;
 
-  const _StatData(this.icon, this.label, this.value);
+  const _StatData(this.icon, this.label, this.value, {this.iconColor});
 }

@@ -53,7 +53,7 @@ class ExternalRatingsSection extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.stars_rounded, size: 18, color: AppConstants.accentColor),
+            Icon(Icons.stars_rounded, size: 18, color: AppConstants.starColor),
             const SizedBox(width: 8),
             Text(
               avg.toStringAsFixed(1),
@@ -202,7 +202,7 @@ class ExternalRatingsSection extends StatelessWidget {
   Widget _getFavicon(String key) {
     final domain = _getDomain(key);
 
-    if (domain.isEmpty) return Icon(Icons.star_rounded, size: 16, color: AppConstants.accentColor);
+    if (domain.isEmpty) return Icon(Icons.star_rounded, size: 16, color: AppConstants.starColor);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
@@ -210,7 +210,7 @@ class ExternalRatingsSection extends StatelessWidget {
         url: 'https://www.google.com/s2/favicons?sz=64&domain=$domain',
         width: 18,
         height: 18,
-        errorWidget: Icon(Icons.star_rounded, size: 16, color: AppConstants.accentColor),
+        errorWidget: Icon(Icons.star_rounded, size: 16, color: AppConstants.starColor),
       ),
     );
   }

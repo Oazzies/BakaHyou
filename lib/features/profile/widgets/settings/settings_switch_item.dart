@@ -10,6 +10,7 @@ class SettingsSwitchItem extends StatelessWidget {
   final ValueChanged<bool> onChanged;
   final bool isFirst;
   final bool isLast;
+  final Color? iconColor;
 
   const SettingsSwitchItem({
     super.key,
@@ -20,6 +21,7 @@ class SettingsSwitchItem extends StatelessWidget {
     required this.onChanged,
     this.isFirst = false,
     this.isLast = false,
+    this.iconColor,
   });
 
   @override
@@ -34,7 +36,7 @@ class SettingsSwitchItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
           children: [
-            Icon(icon, color: AppConstants.textMutedColor, size: 24),
+            Icon(icon, color: iconColor ?? AppConstants.textMutedColor, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

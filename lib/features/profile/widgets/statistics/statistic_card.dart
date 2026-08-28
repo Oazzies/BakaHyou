@@ -6,11 +6,13 @@ class StatisticCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Color? iconColor;
 
   const StatisticCard({
     required this.icon,
     required this.label,
     required this.value,
+    this.iconColor,
     super.key,
   });
 
@@ -25,7 +27,7 @@ class StatisticCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Amber icon in its own well, matching the settings/shortcut rows.
+          // Icon in its own well, matching the settings/shortcut rows.
           Container(
             width: 36,
             height: 36,
@@ -33,7 +35,7 @@ class StatisticCard extends StatelessWidget {
               color: AppConstants.tertiaryBackground,
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icon, color: AppConstants.accentColor, size: 18),
+            child: Icon(icon, color: iconColor ?? AppConstants.accentColor, size: 18),
           ),
           const SizedBox(height: 14),
           // The number leads, the label sits under it as a caps kicker — a

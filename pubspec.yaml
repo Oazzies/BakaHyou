@@ -41,7 +41,6 @@ dependencies:
   vector_math: ^2.2.0
   device_info_plus: ^13.1.0
   open_filex: ^4.7.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -79,6 +78,14 @@ flutter:
     - family: BakbakOne
       fonts:
         - asset: assets/fonts/BakbakOne-Regular.ttf
+    # Phosphor Icons (MIT, phosphoricons.com) — subset to only the glyphs the
+    # bottom nav uses, so two 490KB families become ~3KB.
+    - family: PhosphorRegular
+      fonts:
+        - asset: assets/fonts/Phosphor-Regular.ttf
+    - family: PhosphorFill
+      fonts:
+        - asset: assets/fonts/Phosphor-Fill.ttf
     - family: Outfit
       fonts:
         - asset: assets/fonts/Outfit-Regular.ttf

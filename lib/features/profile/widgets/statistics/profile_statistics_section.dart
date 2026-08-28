@@ -67,6 +67,7 @@ class ProfileStatisticsSection extends StatelessWidget {
                 icon: Icons.book,
                 label: l10n.translate('total_series'),
                 value: '$totalSeries',
+                iconColor: AppConstants.accentColor, // Green
               ),
             ),
             const SizedBox(width: 16),
@@ -75,6 +76,7 @@ class ProfileStatisticsSection extends StatelessWidget {
                 icon: Icons.article,
                 label: l10n.translate('chapters_read'),
                 value: '$chaptersRead',
+                iconColor: AppConstants.infoColor, // Blue
               ),
             ),
           ],
@@ -87,6 +89,7 @@ class ProfileStatisticsSection extends StatelessWidget {
                 icon: Icons.library_books,
                 label: l10n.translate('volumes_read'),
                 value: '$volumesRead',
+                iconColor: const Color(0xFFAC4BFF), // Purple
               ),
             ),
             const SizedBox(width: 16),
@@ -95,6 +98,7 @@ class ProfileStatisticsSection extends StatelessWidget {
                 icon: Icons.star,
                 label: l10n.translate('mean_score'),
                 value: meanScore.toStringAsFixed(1),
+                iconColor: AppConstants.starColor, // Yellow
               ),
             ),
           ],

@@ -17,6 +17,7 @@ import 'package:mangabaka_app/features/library/widgets/library_search_bar.dart';
 import 'package:mangabaka_app/features/browse/widgets/search/mb_search_bar.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/widgets/design/mb_nav.dart';
+import 'package:mangabaka_app/core/widgets/design/mb_icons.dart';
 
 // ---------------------------------------------------------------------------
 // Nav destination data
@@ -35,12 +36,36 @@ class _NavItem {
   });
 }
 
+// Phosphor rather than Material: the reference's nav is a thin, rounded,
+// geometric family with a matched solid weight for the active state, which
+// Material's icons do not provide. Compass and user match the reference
+// directly; the bookmark stands in for the library. See [MbIcons].
 const _navItems = [
-  _NavItem(icon: Icons.home_outlined,         selectedIcon: Icons.home,          labelKey: 'home'),
-  _NavItem(icon: Icons.library_books_outlined, selectedIcon: Icons.library_books, labelKey: 'library'),
-  _NavItem(icon: Icons.explore_outlined,       selectedIcon: Icons.explore,       labelKey: 'browse'),
-  _NavItem(icon: Icons.article_outlined,       selectedIcon: Icons.article,       labelKey: 'news'),
-  _NavItem(icon: Icons.person_outline,         selectedIcon: Icons.person,        labelKey: 'profile'),
+  _NavItem(
+    icon: MbIcons.house,
+    selectedIcon: MbIcons.houseFill,
+    labelKey: 'home',
+  ),
+  _NavItem(
+    icon: MbIcons.bookmark,
+    selectedIcon: MbIcons.bookmarkFill,
+    labelKey: 'library',
+  ),
+  _NavItem(
+    icon: MbIcons.compass,
+    selectedIcon: MbIcons.compassFill,
+    labelKey: 'browse',
+  ),
+  _NavItem(
+    icon: MbIcons.newspaper,
+    selectedIcon: MbIcons.newspaperFill,
+    labelKey: 'news',
+  ),
+  _NavItem(
+    icon: MbIcons.user,
+    selectedIcon: MbIcons.userFill,
+    labelKey: 'profile',
+  ),
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/browse/widgets/shortcuts/shortcut_section.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
+import 'package:mangabaka_app/core/constants/app_constants.dart';
 
 class BrowseShortcuts extends StatelessWidget {
   final Function(String, String, {String? type}) onNavigate;
@@ -58,6 +59,7 @@ class BrowseShortcuts extends StatelessWidget {
                     icon: Icons.shuffle_rounded,
                     label: l10n.translate('mix'),
                     onPressed: onMix,
+                    iconColor: AppConstants.accentColor,
                   ),
                 ],
               ),

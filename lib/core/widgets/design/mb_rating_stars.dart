@@ -27,7 +27,7 @@ class MbRatingStars extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.star_rounded,
-            size: fontSize + 4, color: AppConstants.accentColor),
+            size: fontSize + 4, color: AppConstants.starColor),
         const SizedBox(width: 3),
         Text(
           r.toStringAsFixed(outOf > 10 ? 0 : 1),

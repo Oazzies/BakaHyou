@@ -49,13 +49,15 @@ class SeriesMyListCard extends StatelessWidget {
         ? ((entry.progressChapter ?? 0) / chapterTotal).clamp(0.0, 1.0)
         : null;
 
+    final statusColor = AppConstants.getColorForState(entry.state);
+
     return MbCard(
       label: l10n.translate('library'),
       trailing: pct != null
           ? Text(
               '${(pct * 100).round()}%',
               style: AppTypography.sans(
-                color: AppConstants.accentColor,
+                color: statusColor,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -75,6 +77,7 @@ class SeriesMyListCard extends StatelessWidget {
               value: entry.progressChapter ?? 0,
               total: chapterTotal,
               onTap: onUpdateChapter,
+              statusColor: statusColor,
             ),
           ],
           if (hasVolumes) ...[
@@ -84,6 +87,7 @@ class SeriesMyListCard extends StatelessWidget {
               value: entry.progressVolume ?? 0,
               total: volumeTotal,
               onTap: onUpdateVolume,
+              statusColor: statusColor,
             ),
           ],
           const SizedBox(height: 16),
@@ -91,6 +95,7 @@ class SeriesMyListCard extends StatelessWidget {
             label: l10n.translate('rating'),
             rating: entry.rating ?? 0,
             onTap: onUpdateRating,
+            statusColor: statusColor,
           ),
         ],
       ),
@@ -103,12 +108,14 @@ class _ProgressRow extends StatelessWidget {
   final int value;
   final int? total;
   final VoidCallback onTap;
+  final Color statusColor;
 
   const _ProgressRow({
     required this.label,
     required this.value,
     required this.total,
     required this.onTap,
+    required this.statusColor,
   });
 
   @override
@@ -142,7 +149,7 @@ class _ProgressRow extends StatelessWidget {
                     TextSpan(
                       text: '$value',
                       style: AppTypography.sans(
-                        color: AppConstants.accentColor,
+                        color: statusColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -179,9 +186,9 @@ class _ProgressRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     gradient: LinearGradient(
                       colors: [
-                        AppConstants.accentColor,
+                        statusColor,
                         Color.lerp(
-                          AppConstants.accentColor,
+                          statusColor,
                           Colors.white,
                           0.28,
                         )!,
@@ -202,11 +209,13 @@ class _ScoreRow extends StatelessWidget {
   final String label;
   final int rating; // 0–100
   final VoidCallback onTap;
+  final Color statusColor;
 
   const _ScoreRow({
     required this.label,
     required this.rating,
     required this.onTap,
+    required this.statusColor,
   });
 
   @override
@@ -244,7 +253,7 @@ class _ScoreRow extends StatelessWidget {
                       TextSpan(
                         text: rating > 0 ? '$rating' : '–',
                         style: AppTypography.sans(
-                          color: AppConstants.accentColor,
+                          color: statusColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -281,9 +290,9 @@ class _ScoreRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                       gradient: LinearGradient(
                         colors: [
-                          AppConstants.accentColor,
+                          statusColor,
                           Color.lerp(
-                            AppConstants.accentColor,
+                            statusColor,
                             Colors.white,
                             0.28,
                           )!,

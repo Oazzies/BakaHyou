@@ -436,16 +436,17 @@ class LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  /// Count shown after a tab label. On the selected (amber) pill it has to
-  /// invert to ink so it stays legible.
-  Widget _buildTabCountBadge(int count, bool selected) {
+  /// Count shown after a tab label. On the selected pill it has to
+  /// invert to status ink so it stays legible.
+  Widget _buildTabCountBadge(int count, double activeWeight, String tabKey) {
+    final selectedColor = AppConstants.getOnColorForState(tabKey).withValues(alpha: 0.6);
+    final unselectedColor = AppConstants.textMutedColor;
+    final color = Color.lerp(unselectedColor, selectedColor, activeWeight) ?? unselectedColor;
     return Text(
       NumberUtils.formatCount(count),
       style: AppTypography.display(
         fontSize: 12,
-        color: selected
-            ? AppConstants.onAccent.withValues(alpha: 0.6)
-            : AppConstants.textMutedColor,
+        color: color,
       ),
     );
   }
@@ -474,8 +475,18 @@ class LibraryScreenState extends State<LibraryScreen>
           }
 
           return AnimatedBuilder(
-            animation: _tabController,
+            animation: _tabController.animation ?? _tabController,
             builder: (context, _) {
+              final animationValue = _tabController.animation?.value ?? _tabController.index.toDouble();
+              final maxIndex = LibraryScreenConstants.tabs.length - 1;
+              final index1 = animationValue.floor().clamp(0, maxIndex);
+              final index2 = animationValue.ceil().clamp(0, maxIndex);
+              final t = (animationValue - index1).clamp(0.0, 1.0);
+
+              final color1 = AppConstants.getColorForState(LibraryScreenConstants.tabs[index1].key);
+              final color2 = AppConstants.getColorForState(LibraryScreenConstants.tabs[index2].key);
+              final tabColor = Color.lerp(color1, color2, t) ?? color1;
+
               return TabBar(
                 controller: _tabController,
                 isScrollable: true,
@@ -484,23 +495,25 @@ class LibraryScreenState extends State<LibraryScreen>
                 dividerColor: Colors.transparent,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: AppConstants.accentColor,
+                  color: tabColor,
                   borderRadius:
                       BorderRadius.circular(AppConstants.pillRadius),
                 ),
                 indicatorPadding:
                     const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
                 labelPadding: EdgeInsets.zero,
-                labelColor: AppConstants.onAccent,
-                unselectedLabelColor: AppConstants.textColor,
-                labelStyle: AppTypography.display(fontSize: 13),
-                unselectedLabelStyle: AppTypography.display(fontSize: 13),
                 overlayColor: WidgetStateProperty.all(Colors.transparent),
                 splashFactory: NoSplash.splashFactory,
                 tabs: List.generate(LibraryScreenConstants.tabs.length, (i) {
                   final tab = LibraryScreenConstants.tabs[i];
                   final count = counts[tab.key] ?? 0;
-                  final selected = _tabController.index == i;
+                  
+                  // Compute selection weight (1.0 = fully selected, 0.0 = completely unselected)
+                  final weight = (1.0 - (animationValue - i).abs()).clamp(0.0, 1.0);
+                  
+                  // Interpolate label text color
+                  final textColor = Color.lerp(AppConstants.textColor, AppConstants.getOnColorForState(tab.key), weight) ?? AppConstants.textColor;
+
                   return Tab(
                     height: 48,
                     child: Padding(
@@ -508,10 +521,16 @@ class LibraryScreenState extends State<LibraryScreen>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(l10n.translate(tab.key).toUpperCase()),
+                          Text(
+                            l10n.translate(tab.key).toUpperCase(),
+                            style: AppTypography.display(
+                              fontSize: 13,
+                              color: textColor,
+                            ),
+                          ),
                           if (settings.showLibraryTabCounts) ...[
                             const SizedBox(width: 8),
-                            _buildTabCountBadge(count, selected),
+                            _buildTabCountBadge(count, weight, tab.key),
                           ],
                         ],
                       ),

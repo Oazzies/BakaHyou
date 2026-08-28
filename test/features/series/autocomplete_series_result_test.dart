@@ -82,6 +82,19 @@ void main() {
       expect(r.allTitles.where((t) => t == 'X').length, 1);
     });
 
+    test('fromJson parses and prioritizes titles array', () {
+      final r = AutocompleteSeriesResult.fromJson({
+        'id': 1,
+        'title': 'Legacy Title',
+        'titles': [
+          {'title': 'Primary English Title', 'language': 'en', 'is_primary': true},
+          {'title': 'Alternative Title', 'language': 'ja', 'is_primary': false},
+        ],
+      });
+      expect(r.title, 'Primary English Title');
+      expect(r.allTitles, containsAll(['Primary English Title', 'Alternative Title']));
+    });
+
     test('equality is based on id only', () {
       const a = AutocompleteSeriesResult(id: 1, title: 'A', thumbnailUrl: '');
       const b = AutocompleteSeriesResult(id: 1, title: 'Different', thumbnailUrl: '');

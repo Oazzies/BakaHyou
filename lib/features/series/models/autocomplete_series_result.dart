@@ -21,15 +21,10 @@ class AutocompleteSeriesResult {
   });
 
   factory AutocompleteSeriesResult.fromJson(Map<String, dynamic> json) {
-    // Extract display title: prefer `title` field first as it's the API's primary display title
-    String displayTitle = json['title']?.toString() ?? '';
+    String displayTitle = '';
     final List<String> allTitlesList = [];
-    
-    if (displayTitle.isNotEmpty) allTitlesList.add(displayTitle);
-    if (json['native_title'] != null) allTitlesList.add(json['native_title'].toString());
-    if (json['romanized_title'] != null) allTitlesList.add(json['romanized_title'].toString());
 
-    // Handle 'titles' array if present (legacy or specific API structure)
+    // Handle 'titles' array if present
     final titles = json['titles'];
     if (titles is List && titles.isNotEmpty) {
       for (var t in titles) {
@@ -38,15 +33,55 @@ class AutocompleteSeriesResult {
         }
       }
       
-      // If we don't have a display title yet, try to find an English one in the array
-      if (displayTitle.isEmpty) {
-        final enTitle = titles.firstWhere(
-          (t) => t is Map && t['language'] == 'en',
-          orElse: () => titles.first,
-        );
-        if (enTitle is Map) {
-          displayTitle = enTitle['title']?.toString() ?? '';
+      // Try to find an English one in the array, then any primary, then first
+      String langOf(dynamic t) =>
+          (t is Map ? t['language']?.toString() : null)?.toLowerCase() ?? '';
+      bool isRomanized(dynamic t) {
+        if (t is! Map) return false;
+        final l = langOf(t);
+        final traits = (t['traits'] as List?)?.cast<String>() ?? [];
+        return l.endsWith('-latn') ||
+            l.endsWith('-ro') ||
+            l.contains('hepburn') ||
+            l.contains('romaji') ||
+            traits.contains('romanized');
+      }
+      Map<String, dynamic>? pick(bool Function(dynamic) test) {
+        for (final t in titles) {
+          if (t is Map && test(t)) return t.cast<String, dynamic>();
         }
+        return null;
+      }
+      
+      final chosen = pick((t) => langOf(t) == 'en') ??
+          pick(isRomanized) ??
+          pick((t) => t is Map && t['is_primary'] == true) ??
+          (titles.first is Map
+              ? (titles.first as Map).cast<String, dynamic>()
+              : null);
+              
+      if (chosen != null) {
+        displayTitle = chosen['title']?.toString() ?? '';
+      }
+    }
+
+    if (displayTitle.isEmpty) {
+      displayTitle = json['title']?.toString() ?? '';
+    }
+
+    if (displayTitle.isNotEmpty && !allTitlesList.contains(displayTitle)) {
+      allTitlesList.insert(0, displayTitle);
+    }
+    if (json['native_title'] != null) {
+      final nativeTitle = json['native_title'].toString();
+      if (nativeTitle.isNotEmpty && !allTitlesList.contains(nativeTitle)) {
+        allTitlesList.add(nativeTitle);
+      }
+    }
+    if (json['romanized_title'] != null) {
+      final romanizedTitle = json['romanized_title'].toString();
+      if (romanizedTitle.isNotEmpty && !allTitlesList.contains(romanizedTitle)) {
+        allTitlesList.add(romanizedTitle);
       }
     }
     

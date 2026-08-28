@@ -27,7 +27,7 @@ class RatingIconButton extends StatelessWidget {
       child: IconButton(
         icon: Icon(
           hasRating ? Icons.star : Icons.star_border,
-          color: hasRating ? AppConstants.warningColor : AppConstants.textColor,
+          color: hasRating ? AppConstants.starColor : AppConstants.textColor,
           size: 24,
         ),
         onPressed: () {

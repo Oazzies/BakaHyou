@@ -11,11 +11,13 @@ class ShortcutButtonEntry {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  final Color? iconColor;
 
   const ShortcutButtonEntry({
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.iconColor,
   });
 }
 
@@ -56,6 +58,7 @@ class ShortcutSection extends StatelessWidget {
                     icon: e.icon,
                     label: e.label,
                     onPressed: e.onPressed,
+                    iconColor: e.iconColor,
                   ))
               .toList();
         } else {
@@ -64,18 +67,21 @@ class ShortcutSection extends StatelessWidget {
               icon: Icons.trending_up_rounded,
               label: l10n.translate('most_popular'),
               onPressed: onMostPopular!,
+              iconColor: AppConstants.infoColor, // Blue
             ),
             if (onTopRated != null)
               ShortcutButton(
                 icon: Icons.star_outline,
                 label: l10n.translate('top_rated'),
                 onPressed: onTopRated!,
+                iconColor: AppConstants.starColor, // Yellow
               ),
             if (onRandom != null)
               ShortcutButton(
                 icon: Icons.casino_outlined,
                 label: l10n.translate('random'),
                 onPressed: onRandom!,
+                iconColor: AppConstants.accentColor, // Green accent
               ),
           ];
         }

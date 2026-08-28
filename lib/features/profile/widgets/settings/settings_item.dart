@@ -16,6 +16,7 @@ class SettingsItem extends StatelessWidget {
   final Widget? trailing;
   final bool isFirst;
   final bool isLast;
+  final Color? iconColor;
 
   const SettingsItem({
     super.key,
@@ -26,6 +27,7 @@ class SettingsItem extends StatelessWidget {
     this.trailing,
     this.isFirst = false,
     this.isLast = false,
+    this.iconColor,
   });
 
   @override
@@ -46,7 +48,7 @@ class SettingsItem extends StatelessWidget {
               color: AppConstants.tertiaryBackground,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppConstants.accentColor, size: 20),
+            child: Icon(icon, color: iconColor ?? AppConstants.accentColor, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
