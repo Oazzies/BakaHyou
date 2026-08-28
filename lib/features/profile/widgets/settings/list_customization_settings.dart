@@ -1,143 +1,27 @@
-import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/constants/mock_series_data.dart';
-import 'package:mangabaka_app/core/settings/settings_manager.dart';
-import 'package:mangabaka_app/core/settings/settings_enums.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/features/profile/widgets/settings/settings_group.dart';
-import 'package:mangabaka_app/features/profile/widgets/settings/settings_switch_item.dart';
-import 'package:mangabaka_app/features/profile/widgets/settings/settings_divider.dart';
-import 'package:mangabaka_app/features/profile/widgets/settings/list_style_preview_item.dart';
+import 'package:mangabaka_app/core/settings/settings_enums.dart';
+import 'package:mangabaka_app/core/settings/settings_manager.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/features/profile/widgets/dialogs/list_style_dialogs.dart';
-import 'package:mangabaka_app/features/library/models/library_entry.dart';
-import 'package:mangabaka_app/features/series/widgets/entry_list_item.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/list_customization_scope.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/list_customization_toggles.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/list_scope_tab_selector.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/list_style_live_preview.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/list_style_preview_item.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/settings_group.dart';
 import 'package:mangabaka_app/features/profile/widgets/settings/settings_section_header.dart';
-import 'package:mangabaka_app/features/profile/widgets/settings/settings_item.dart';
-import 'package:mangabaka_app/features/profile/widgets/dialogs/general_settings_dialogs.dart';
-import 'package:mangabaka_app/core/widgets/dynamic_row_height_grid.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/settings_stepper_row.dart';
+import 'package:mangabaka_app/features/profile/widgets/settings/settings_switch_item.dart';
 
-class ListStyleLivePreview extends StatelessWidget {
-  final AppListStyle style;
-  final bool showLibraryProgress;
-  final bool showRemainingProgress;
-  final LibraryProgressType progressType;
-  final int gridColumnCount;
+export 'package:mangabaka_app/features/profile/widgets/settings/list_style_live_preview.dart';
 
-  const ListStyleLivePreview({
-    super.key,
-    required this.style,
-    required this.showLibraryProgress,
-    required this.showRemainingProgress,
-    required this.progressType,
-    required this.gridColumnCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _buildPreviewContent(context);
-  }
-
-  Widget _buildPreviewContent(BuildContext context) {
-    final mockLibraryEntry222 = LibraryEntry(
-      id: '222',
-      state: 'reading',
-      progressChapter: 5,
-      progressVolume: 1,
-      series: mockSeries222,
-    );
-
-    if (style.isGrid) {
-      final columns = gridColumnCount;
-      final isCompactGrid = style == AppListStyle.compactGrid;
-
-      Widget buildGridContent(BuildContext context, int calculatedColumns) {
-        final itemCount = calculatedColumns > 0 ? calculatedColumns : 3;
-
-        if (isCompactGrid) {
-          return DynamicRowHeightGrid(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            crossAxisCount: calculatedColumns > 0 ? calculatedColumns : 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            itemCount: itemCount,
-            itemBuilder: (context, index) {
-              return EntryListItem(
-                series: mockSeries222,
-                isLibrary: true,
-                listStyle: style,
-                heroTagPrefix: 'preview_${style.name}_$index',
-                previewEntry: mockLibraryEntry222,
-              );
-            },
-          );
-        }
-
-        final gridDelegate = columns > 0
-            ? SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                childAspectRatio: style.childAspectRatio,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              )
-            : SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 160,
-                childAspectRatio: style.childAspectRatio,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              );
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          gridDelegate: gridDelegate,
-          itemCount: itemCount,
-          itemBuilder: (context, index) {
-            return EntryListItem(
-              series: mockSeries222,
-              isLibrary: true,
-              listStyle: style,
-              heroTagPrefix: 'preview_${style.name}_$index',
-              previewEntry: mockLibraryEntry222,
-            );
-          },
-        );
-      }
-
-      if (columns == 0) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final calculatedColumns = ((width + 10) / 170).ceil().clamp(1, 12);
-            return buildGridContent(context, calculatedColumns);
-          },
-        );
-      } else {
-        Widget grid = buildGridContent(context, columns);
-        final expectedWidth = columns * 160.0 + (columns - 1) * 10.0 + 24.0;
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: expectedWidth),
-            child: grid,
-          ),
-        );
-      }
-    }
-
-    return EntryListItem(
-      series: mockSeries222,
-      isLibrary: true,
-      listStyle: style,
-      heroTagPrefix: 'preview_${style.name}',
-      previewEntry: mockLibraryEntry222,
-    );
-  }
-}
-
+/// The "List customization" settings category.
+///
+/// Library and Browse can be configured together or apart;
+/// [ListCustomizationScope] resolves which of the two the visible controls are
+/// editing, so nothing here has to re-derive it.
 class ListCustomizationSettings extends StatefulWidget {
   final LocalizationService l10n;
 
@@ -150,13 +34,20 @@ class ListCustomizationSettings extends StatefulWidget {
 
 class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     with SingleTickerProviderStateMixin {
-  int _activeTab = 0; // 0 = Library, 1 = Browse
+  /// Width of one style card plus its separator, used to centre the selected
+  /// card in the horizontal picker.
+  static const double _styleCardWidth = 108.0;
+  static const double _styleCardStride = 116.0;
+
+  static const Duration _panelSlide = Duration(milliseconds: 320);
+
+  ListScopeTab _tab = ListScopeTab.library;
 
   late final ScrollController _scrollController;
 
   /// Drives the horizontal slide of the whole panel below the tab selector.
   /// Sits at 1.0 when settled; [_switchTab] restarts it from 0.0 so the new
-  /// tab's content slides in from [_slideSign] * screen width.
+  /// tab's content slides in from [_slideSign] * panel width.
   late final AnimationController _slideController;
   double _slideSign = 1.0;
 
@@ -166,9 +57,10 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     _scrollController = ScrollController();
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 320),
+      duration: _panelSlide,
       value: 1.0,
     );
+    // The picker can only be scrolled once it has been laid out.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToSelected(animated: false);
     });
@@ -181,12 +73,16 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     super.dispose();
   }
 
-  /// Switches to [tab] and plays the slide-in animation. No-op if already there.
-  void _switchTab(int tab) {
-    if (tab == _activeTab) return;
+  ListCustomizationScope get _scope =>
+      ListCustomizationScope(settings: SettingsManager(), tab: _tab);
+
+  /// Switches to [tab] and plays the slide-in. No-op if already there.
+  void _switchTab(ListScopeTab tab) {
+    if (tab == _tab) return;
     setState(() {
-      _slideSign = tab > _activeTab ? 1.0 : -1.0;
-      _activeTab = tab;
+      // Slide in from the side the new tab sits on.
+      _slideSign = tab == ListScopeTab.browse ? 1.0 : -1.0;
+      _tab = tab;
     });
     _slideController.forward(from: 0.0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -194,268 +90,51 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
     });
   }
 
+  /// Brings the selected style card to the centre of the picker, so the
+  /// current choice is visible rather than scrolled off to one side.
   void _scrollToSelected({bool animated = true}) {
     if (!_scrollController.hasClients) return;
 
-    final settings = SettingsManager();
-    final selectedIndex = AppListStyle.values.indexOf(_activeStyle(settings));
-    if (selectedIndex == -1) return;
+    final index = AppListStyle.values.indexOf(_scope.style);
+    if (index == -1) return;
 
-    final itemWidth = 116.0; // 108 width + 8 spacing
-    final screenWidth = MediaQuery.of(context).size.width;
-    double targetOffset = (selectedIndex * itemWidth) - (screenWidth / 2) + (108.0 / 2);
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    targetOffset = targetOffset.clamp(0.0, maxScroll);
+    final target = ((index * _styleCardStride) -
+            (MediaQuery.sizeOf(context).width / 2) +
+            (_styleCardWidth / 2))
+        .clamp(0.0, _scrollController.position.maxScrollExtent);
 
     if (animated) {
       _scrollController.animateTo(
-        targetOffset,
+        target,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     } else {
-      _scrollController.jumpTo(targetOffset);
+      _scrollController.jumpTo(target);
     }
-  }
-
-  /// The style the active tab edits. When [SettingsManager.separateListStyles]
-  /// is off both tabs read and write the single shared style, exactly the way
-  /// the grid column counter falls back to the shared count.
-  AppListStyle _activeStyle(SettingsManager settings) {
-    if (!settings.separateListStyles) return settings.currentListStyle;
-    return _activeTab == 0 ? settings.libraryListStyle : settings.browseListStyle;
-  }
-
-  void _setActiveStyle(SettingsManager settings, AppListStyle style) {
-    if (!settings.separateListStyles) {
-      settings.setListStyle(style);
-    } else if (_activeTab == 0) {
-      settings.setLibraryListStyle(style);
-    } else {
-      settings.setBrowseListStyle(style);
-    }
-  }
-
-  Widget _buildTabSelector(SettingsManager settings) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final tabWidth = width / 2;
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppConstants.secondaryBackground,
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(
-              color: AppConstants.tertiaryBackground,
-              width: 1.5,
-            ),
-          ),
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                alignment: _activeTab == 0 ? Alignment.centerLeft : Alignment.centerRight,
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                child: Container(
-                  width: tabWidth,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppConstants.accentColor,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _switchTab(0),
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 150),
-                          curve: Curves.easeInOut,
-                          style: AppTypography.sans(
-                            color: _activeTab == 0
-                                ? AppConstants.primaryBackground
-                                : AppConstants.textColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                          child: Text(
-                            widget.l10n.translate('start_page_library'),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _switchTab(1),
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 150),
-                          curve: Curves.easeInOut,
-                          style: AppTypography.sans(
-                            color: _activeTab == 1
-                                ? AppConstants.primaryBackground
-                                : AppConstants.textColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                          child: Text(
-                            widget.l10n.translate('start_page_browse'),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildColumnCounter({
-    required String label,
-    required int currentValue,
-    required ValueChanged<int> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: AppTypography.sans(
-                color: AppConstants.textColor,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline),
-                onPressed: currentValue > 0
-                    ? () => onChanged(currentValue - 1)
-                    : null,
-                color: AppConstants.accentColor,
-                disabledColor: AppConstants.textMutedColor.withValues(alpha: 0.3),
-              ),
-              Container(
-                constraints: const BoxConstraints(minWidth: 50),
-                alignment: Alignment.center,
-                child: Text(
-                  currentValue == 0
-                      ? widget.l10n.translate('grid_columns_auto')
-                      : currentValue.toString(),
-                  style: AppTypography.sans(
-                    color: AppConstants.textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline),
-                onPressed: currentValue < 12
-                    ? () => onChanged(currentValue + 1)
-                    : null,
-                color: AppConstants.accentColor,
-                disabledColor: AppConstants.textMutedColor.withValues(alpha: 0.3),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitleRowsCounter({
-    required String label,
-    required int currentValue,
-    required ValueChanged<int> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: AppTypography.sans(
-                color: AppConstants.textColor,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline),
-                onPressed: currentValue > 1
-                    ? () => onChanged(currentValue - 1)
-                    : null,
-                color: AppConstants.accentColor,
-                disabledColor: AppConstants.textMutedColor.withValues(alpha: 0.3),
-              ),
-              Container(
-                constraints: const BoxConstraints(minWidth: 50),
-                alignment: Alignment.center,
-                child: Text(
-                  currentValue.toString(),
-                  style: AppTypography.sans(
-                    color: AppConstants.textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline),
-                onPressed: currentValue < 99
-                    ? () => onChanged(currentValue + 1)
-                    : null,
-                color: AppConstants.accentColor,
-                disabledColor: AppConstants.textMutedColor.withValues(alpha: 0.3),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final settings = SettingsManager();
+    final scope = _scope;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Library/Browse Tab Selector. Hidden while both lists share their
-        //    style and column count, since every control below would then be
-        //    identical on either tab.
-        if (settings.separateListStyles || settings.separateGridColumnCounts)
-          _buildTabSelector(settings),
+        // The tab selector is hidden while both lists share their style and
+        // column count, since every control below would then be identical on
+        // either tab.
+        if (scope.hasAnySeparation)
+          ListScopeTabSelector(
+            active: _tab,
+            libraryLabel: widget.l10n.translate('start_page_library'),
+            browseLabel: widget.l10n.translate('start_page_browse'),
+            onChanged: _switchTab,
+          ),
 
-        // 2. Everything below the tab selector slides in horizontally whenever
-        //    the active tab changes, so it reads as a different list even when
-        //    Library and Browse are configured to look identical.
+        // Everything below the tab selector slides in horizontally whenever
+        // the active tab changes, so it reads as a different list even when
+        // Library and Browse are configured to look identical.
         ClipRect(
           child: AnimatedBuilder(
             animation: _slideController,
@@ -469,68 +148,26 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
                 ),
               );
             },
-            child: _buildTabContent(context, settings),
+            child: _buildTabContent(context, scope),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTabContent(BuildContext context, SettingsManager settings) {
-    final activeStyle = _activeStyle(settings);
-
-    final showColumns = activeStyle == AppListStyle.coverOnlyGrid ||
-        activeStyle == AppListStyle.compactGrid;
-
-    final gridColumnsLabel = settings.separateGridColumnCounts
-        ? (_activeTab == 0
-            ? widget.l10n.translate('library_grid_columns')
-            : widget.l10n.translate('browse_grid_columns'))
-        : widget.l10n.translate('grid_columns');
-
-    final gridColumnsValue = settings.separateGridColumnCounts
-        ? (_activeTab == 0
-            ? settings.libraryGridColumnCount
-            : settings.browseGridColumnCount)
-        : settings.gridColumnCount;
+  Widget _buildTabContent(BuildContext context, ListCustomizationScope scope) {
+    final settings = scope.settings;
+    final l10n = widget.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // List Preview. Cross-fades when the style or a progress toggle changes
-        // within a tab; the panel-level slide handles tab switches, so this one
-        // deliberately does not move horizontally.
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOutCubic,
-          alignment: Alignment.topCenter,
-          child: ClipRect(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              child: ListStyleLivePreview(
-                key: ValueKey('${activeStyle.name}_${settings.showLibraryProgress}_${settings.showRemainingProgress}_${settings.libraryProgressType.name}_${gridColumnsValue}_${settings.compactGridTitleRows}'),
-                style: activeStyle,
-                showLibraryProgress: settings.showLibraryProgress,
-                showRemainingProgress: settings.showRemainingProgress,
-                progressType: settings.libraryProgressType,
-                gridColumnCount: gridColumnsValue,
-              ),
-            ),
-          ),
-        ),
+        _buildPreview(scope),
         const SizedBox(height: 16),
-        
-        // 3. List Style Select (including column counts settings)
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            settings.separateListStyles
-                ? (_activeTab == 0
-                    ? widget.l10n.translate('library_list_style')
-                    : widget.l10n.translate('browse_list_style'))
-                : widget.l10n.translate('list_style'),
+            scope.styleLabel(l10n),
             style: AppTypography.sans(
               color: AppConstants.textColor,
               fontSize: 14,
@@ -538,249 +175,120 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
             ),
           ),
         ),
-        SizedBox(
-          height: 200,
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: EdgeInsets.zero,
-            scrollDirection: Axis.horizontal,
-            itemCount: AppListStyle.values.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final style = AppListStyle.values[index];
-              final isSelected = activeStyle == style;
-
-              return ListStylePreviewItem(
-                style: style,
-                isSelected: isSelected,
-                label: ListStyleDialogs.getListStyleName(style),
-                onTap: () {
-                  _setActiveStyle(settings, style);
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _scrollToSelected(animated: true);
-                  });
-                },
-              );
-            },
-          ),
-        ),
-        if (showColumns) ...[
+        _buildStylePicker(scope),
+        if (scope.showsGridColumns) ...[
           const SizedBox(height: 16),
-          _buildColumnCounter(
-            label: gridColumnsLabel,
-            currentValue: gridColumnsValue,
-            onChanged: (val) {
-              if (settings.separateGridColumnCounts) {
-                if (_activeTab == 0) {
-                  settings.setLibraryGridColumnCount(val);
-                } else {
-                  settings.setBrowseGridColumnCount(val);
-                }
-              } else {
-                settings.setGridColumnCount(val);
-              }
-            },
+          SettingsStepperRow(
+            label: scope.gridColumnsLabel(l10n),
+            value: scope.gridColumns,
+            max: 12,
+            minLabel: l10n.translate('grid_columns_auto'),
+            onChanged: scope.setGridColumns,
           ),
-          if (activeStyle == AppListStyle.compactGrid) ...[
+          if (scope.style == AppListStyle.compactGrid) ...[
             const SizedBox(height: 16),
-            _buildTitleRowsCounter(
-              label: widget.l10n.translate('compact_grid_title_rows'),
-              currentValue: settings.compactGridTitleRows,
-              onChanged: (val) => settings.setCompactGridTitleRows(val),
+            SettingsStepperRow(
+              label: l10n.translate('compact_grid_title_rows'),
+              value: settings.compactGridTitleRows,
+              min: 1,
+              onChanged: settings.setCompactGridTitleRows,
             ),
           ],
         ],
         const SizedBox(height: 16),
-        SettingsGroup(
-          children: [
-            SettingsSwitchItem(
-              icon: Icons.splitscreen_outlined,
-              title: widget.l10n.translate('separate_list_styles'),
-              subtitle: widget.l10n.translate('separate_list_styles_subtitle'),
-              value: settings.separateListStyles,
-              onChanged: (val) {
-                // Turning separation on seeds both lists with the style that
-                // was in use, so nothing visibly changes until the user picks
-                // a different one for a tab.
-                if (val) {
-                  final shared = settings.currentListStyle;
-                  settings.setLibraryListStyle(shared);
-                  settings.setBrowseListStyle(shared);
-                } else {
-                  settings.setListStyle(
-                    _activeTab == 0
-                        ? settings.libraryListStyle
-                        : settings.browseListStyle,
-                  );
-                }
-                settings.setSeparateListStyles(val);
-                if (!val && !settings.separateGridColumnCounts) {
-                  _switchTab(0);
-                }
-              },
-              isFirst: true,
-              iconColor: const Color(0xFFAC4BFF), // Purple
-            ),
-            const SettingsDivider(),
-            SettingsSwitchItem(
-              icon: Icons.grid_on_outlined,
-              title: widget.l10n.translate('separate_grid_columns'),
-              subtitle: widget.l10n.translate('separate_grid_columns_subtitle'),
-              value: settings.separateGridColumnCounts,
-              onChanged: (val) {
-                // Same idea as above: carry the shared count into both lists
-                // (and back out again) so toggling never changes the layout.
-                if (val) {
-                  final shared = settings.gridColumnCount;
-                  settings.setLibraryGridColumnCount(shared);
-                  settings.setBrowseGridColumnCount(shared);
-                } else {
-                  settings.setGridColumnCount(
-                    _activeTab == 0
-                        ? settings.libraryGridColumnCount
-                        : settings.browseGridColumnCount,
-                  );
-                }
-                settings.setSeparateGridColumnCounts(val);
-                if (!val && !settings.separateListStyles) {
-                  _switchTab(0);
-                }
-              },
-              isLast: true,
-              iconColor: AppConstants.infoColor, // Blue
-            ),
-          ],
+        ListSeparationSwitches(
+          scope: scope,
+          l10n: l10n,
+          onSeparationEnded: () => _switchTab(ListScopeTab.library),
         ),
-        
-        // 4. Progress Tracking section
         const SizedBox(height: 16),
-        SettingsSectionHeader(title: widget.l10n.translate('progress_tracking')),
-        SettingsGroup(
-          children: [
-            SettingsSwitchItem(
-              icon: Icons.analytics_outlined,
-              title: widget.l10n.translate('show_library_progress'),
-              subtitle: widget.l10n.translate('show_library_progress_subtitle'),
-              value: settings.showLibraryProgress,
-              onChanged: (val) => settings.setShowLibraryProgress(val),
-              isFirst: true,
-              iconColor: AppConstants.accentColor, // Green
-            ),
-            ClipRect(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (settings.showLibraryProgress) ...[
-                      const SettingsDivider(),
-                      SettingsItem(
-                        icon: Icons.menu_book_outlined,
-                        title: widget.l10n.translate('library_progress_type'),
-                        subtitle: GeneralSettingsDialogs.getLibraryProgressTypeName(
-                          settings.libraryProgressType,
-                        ),
-                        onTap: () => GeneralSettingsDialogs
-                            .showLibraryProgressTypeSelectionDialog(context),
-                        iconColor: AppConstants.accentColor, // Green
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SettingsDivider(),
-            SettingsSwitchItem(
-              icon: Icons.hourglass_empty,
-              title: widget.l10n.translate('show_remaining_progress'),
-              subtitle: widget.l10n.translate('show_remaining_progress_subtitle'),
-              value: settings.showRemainingProgress,
-              onChanged: (val) => settings.setShowRemainingProgress(val),
-              iconColor: AppConstants.starColor, // Yellow
-            ),
-            const SettingsDivider(),
-            SettingsSwitchItem(
-              icon: Icons.add_circle_outline,
-              title: widget.l10n.translate('show_quick_progress'),
-              subtitle: widget.l10n.translate('show_quick_progress_subtitle'),
-              value: settings.showQuickProgress,
-              onChanged: (val) => settings.setShowQuickProgress(val),
-              isLast: true,
-              iconColor: const Color(0xFF4FBEC4), // Teal
-            ),
-          ],
-        ),
-
-        // 5. Copy settings helper button. Only meaningful while at least one
-        //    of the two lists is configured independently.
-        if (settings.separateListStyles || settings.separateGridColumnCounts) ...[
+        SettingsSectionHeader(title: l10n.translate('progress_tracking')),
+        ProgressTrackingSwitches(settings: settings, l10n: l10n),
+        if (scope.hasAnySeparation) ...[
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () {
-              final toBrowse = _activeTab == 0;
-              if (settings.separateListStyles) {
-                if (toBrowse) {
-                  settings.setBrowseListStyle(settings.libraryListStyle);
-                } else {
-                  settings.setLibraryListStyle(settings.browseListStyle);
-                }
-              }
-              if (settings.separateGridColumnCounts) {
-                if (toBrowse) {
-                  settings.setBrowseGridColumnCount(
-                    settings.libraryGridColumnCount,
-                  );
-                } else {
-                  settings.setLibraryGridColumnCount(
-                    settings.browseGridColumnCount,
-                  );
-                }
-              }
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    widget.l10n.translate(
-                      toBrowse ? 'copied_to_browse' : 'copied_to_library',
-                    ),
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.copy_all_outlined),
-            label: Text(
-              _activeTab == 0
-                  ? widget.l10n.translate('copy_to_browse')
-                  : widget.l10n.translate('copy_to_library'),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppConstants.accentColor,
-              side: BorderSide(color: AppConstants.accentColor.withValues(alpha: 0.5)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
+          CopyToOtherListButton(scope: scope, l10n: l10n),
         ],
-
-        // 6. Show Tab counts setting (isolated)
         const SizedBox(height: 16),
         SettingsGroup(
           children: [
             SettingsSwitchItem(
               icon: Icons.tag,
-              title: widget.l10n.translate('show_library_tab_counts'),
-              subtitle: widget.l10n.translate('show_library_tab_counts_subtitle'),
+              title: l10n.translate('show_library_tab_counts'),
+              subtitle: l10n.translate('show_library_tab_counts_subtitle'),
               value: settings.showLibraryTabCounts,
-              onChanged: (val) => settings.setShowLibraryTabCounts(val),
+              onChanged: settings.setShowLibraryTabCounts,
               isFirst: true,
               isLast: true,
-              iconColor: const Color(0xFFD71F75), // Pink
+              iconColor: const Color(0xFFD71F75),
             ),
           ],
         ),
       ],
     );
   }
+
+  /// Cross-fades when the style or a progress toggle changes within a tab; the
+  /// panel-level slide handles tab switches, so this one deliberately does not
+  /// move horizontally.
+  Widget _buildPreview(ListCustomizationScope scope) {
+    final settings = scope.settings;
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
+      alignment: Alignment.topCenter,
+      child: ClipRect(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: ListStyleLivePreview(
+            // Every input that changes what the preview looks like is in the
+            // key, so the switcher animates on any of them.
+            key: ValueKey(
+              '${scope.style.name}_${settings.showLibraryProgress}_'
+              '${settings.showRemainingProgress}_'
+              '${settings.libraryProgressType.name}_${scope.gridColumns}_'
+              '${settings.compactGridTitleRows}',
+            ),
+            style: scope.style,
+            showLibraryProgress: settings.showLibraryProgress,
+            showRemainingProgress: settings.showRemainingProgress,
+            progressType: settings.libraryProgressType,
+            gridColumnCount: scope.gridColumns,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStylePicker(ListCustomizationScope scope) {
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        controller: _scrollController,
+        padding: EdgeInsets.zero,
+        scrollDirection: Axis.horizontal,
+        itemCount: AppListStyle.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final style = AppListStyle.values[index];
+          return ListStylePreviewItem(
+            style: style,
+            isSelected: scope.style == style,
+            label: ListStyleDialogs.getListStyleName(style),
+            onTap: () {
+              scope.setStyle(style);
+              // Re-centre after the change has been applied and laid out.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scrollToSelected(animated: true);
+              });
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  /// Copies the active tab's independent settings onto the other list. Only
+  /// meaningful while at least one of the two is configured separately.
 }
