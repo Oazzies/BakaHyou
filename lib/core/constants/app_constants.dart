@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:mangabaka_app/core/theme/app_theme_colors.dart';
-export 'package:mangabaka_app/core/theme/app_theme_colors.dart' show AppTheme;
-
 class AppConstants {
   static const String appName = 'MangaBaka';
   static const String appVersion = '0.3.0';
-  static const String baseApiUrl = 'https://api.mangabaka.dev/v1';
+  static const String baseApiUrl = 'https://api.mangabaka.org/v1';
 
   // GitHub repository used by the in-app update system.
   static const String githubOwner = 'Oazzies';
@@ -25,28 +22,33 @@ class AppConstants {
   static const int libraryMaxPages = 10000; // API max pages
   static const double scrollThresholdPx = 100;
 
-  static Color primaryBackground = const Color(0xFF14120E);
-  static Color secondaryBackground = const Color(0xFF1B1813);
-  static Color tertiaryBackground = const Color(0xFF2A261E);
-  static Color accentColor = const Color(0xFF1b9f70);
-  static Color primaryAccent = const Color(0xFF15875E);
-  static Color borderColor = const Color(0xFF2C2820);
-  static Color successColor = const Color(0xFF81e6ca);
-  static Color warningColor = const Color(0xFFffc83e);
-  static Color errorColor = const Color(0xFFef4444);
-  static Color infoColor = const Color(0xFF3b82f6);
-  static Color textColor = const Color(0xFFF1ECE2);
-  static Color textMutedColor = const Color(0xFF8B8474);
+  // ---------------------------------------------------------------------------
+  // Palette — "Ink & Amber". Single dark theme: near-black canvas, acid-yellow
+  // accent. These are read in ~114 files; the names are kept from the old
+  // theme system so call sites did not have to churn.
+  // ---------------------------------------------------------------------------
+  static const Color primaryBackground = Color(0xFF0B0B0B);
+  static const Color secondaryBackground = Color(0xFF151515);
+  static const Color tertiaryBackground = Color(0xFF1F1F1F);
+  static const Color accentColor = Color(0xFFFBD24B);
+  static const Color primaryAccent = Color(0xFFE0B93C);
 
-  static void setAppTheme(AppTheme theme, bool isDark) {
-    AppThemeColors.applyTheme(theme, isDark);
-  }
+  /// Ink used on top of [accentColor] fills (buttons, active nav, badges).
+  static const Color onAccent = Color(0xFF0B0B0B);
+
+  static const Color borderColor = Color(0xFF262626);
+  static const Color successColor = Color(0xFF4ADE80);
+  static const Color warningColor = Color(0xFFFBD24B);
+  static const Color errorColor = Color(0xFFF87171);
+  static const Color infoColor = Color(0xFF60A5FA);
+  static const Color textColor = Color(0xFFFFFFFF);
+  static const Color textMutedColor = Color(0xFF8E8E8E);
 
   static const double horizontalPadding = 16.0;
   static const double verticalPadding = 16.0;
-  static const double cardRadius = 12.0;
-  static const double largeRadius = 12.0;
-  static const double denseRadius = 8.0;
+  static const double cardRadius = 20.0;
+  static const double largeRadius = 24.0;
+  static const double denseRadius = 14.0;
   static const double pillRadius = 999.0;
 
   static const List<BoxShadow> softShadow = [
