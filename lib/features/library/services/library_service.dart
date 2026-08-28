@@ -153,7 +153,7 @@ class LibraryService extends LibraryServiceBase with LibraryCrudMixin, LibrarySy
         }
         _logger.warning('Rate limited while fetching library page $page. Retrying in ${AppConstants.rateLimitRetryDelaySeconds}s...');
         await Future.delayed(Duration(seconds: AppConstants.rateLimitRetryDelaySeconds));
-        return _fetchPage(token, page, state: state, type: type, sortBy: sortBy, retryCount: retryCount + 1);
+        return await _fetchPage(token, page, state: state, type: type, sortBy: sortBy, retryCount: retryCount + 1);
       }
 
       if (response.statusCode == 401) {
