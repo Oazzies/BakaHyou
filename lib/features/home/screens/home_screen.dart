@@ -9,7 +9,6 @@ import 'package:mangabaka_app/core/widgets/design/mb_screen_header.dart';
 import 'package:mangabaka_app/features/browse/screens/browse_results_screen.dart';
 import 'package:mangabaka_app/features/home/services/home_service.dart';
 import 'package:mangabaka_app/features/home/widgets/home_rail.dart';
-import 'package:mangabaka_app/features/home/widgets/home_spotlight.dart';
 import 'package:mangabaka_app/features/home/widgets/home_trending_section.dart';
 import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
@@ -69,10 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadRails();
   }
 
-  /// The top trending titles double as the spotlight; Rising is the fallback so
-  /// the banner still has something to show if trending is empty.
-  List<Series> get _spotlightSeries =>
-      (_trending.isNotEmpty ? _trending : _rising).take(6).toList();
 
   Future<void> _loadRails() async {
     if (mounted) {
@@ -170,10 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ListView(
                 padding: const EdgeInsets.only(top: 8, bottom: 24),
                 children: [
-                  if (_loadingRails && _spotlightSeries.isEmpty)
-                    const HomeSpotlightSkeleton()
-                  else
-                    HomeSpotlight(series: _spotlightSeries),
                   if (_showForYou || _loadingRails)
                     HomeRail(
                       title: l10n.translate('for_you'),
