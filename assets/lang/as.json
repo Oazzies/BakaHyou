@@ -20,9 +20,6 @@
     "characters": "চৰিত্ৰসমূহ",
     "settings": "ছেটিংস্",
     "general": "সাধাৰণ",
-    "display": "প্ৰদৰ্শন",
-    "theme_mode": "থিম মোড",
-    "app_theme": "এপৰ থিম",
     "language": "ভাষা",
     "start_page": "ডিফল্ট আৰম্ভণি পৃষ্ঠা",
     "rating_step": "ৰেটিং স্লাইডাৰ স্তৰ",
@@ -132,6 +129,12 @@
     "go_back": "উভতি যাওক",
     "share_series": "ধাৰাবাহিক শ্বেয়াৰ কৰক",
     "copy_link": "সংযোগ প্ৰতিলিপি কৰক",
-    "landscape_only": "কেৱল লেণ্ডস্কেপ মোড"
+    "landscape_only": "কেৱল লেণ্ডস্কেপ মোড",
+    "now": "এতিয়া",
+    "for_you": "আপোনাৰ বাবে",
+    "rising": "জনপ্ৰিয় হৈ থকা",
+    "hidden_gems": "লুকাই থকা ৰত্ন",
+    "chapter": "অধ্যায়",
+    "continue_reading": "পঢ়ি থাকক"
   }
 }
