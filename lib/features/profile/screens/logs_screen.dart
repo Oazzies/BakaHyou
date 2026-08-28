@@ -125,69 +125,71 @@ class _LogsScreenState extends State<LogsScreen> {
         ],
       ),
       body: WidgetUtils.responsiveConstraint(
-        Column(
-          children: [
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppConstants.secondaryBackground,
-                  borderRadius: BorderRadius.circular(AppConstants.largeRadius),
-                ),
-                child: _logs.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No logs recorded yet',
-                          style: AppTypography.sans(color: AppConstants.textMutedColor),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        itemCount: _logs.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 4.0),
-                            child: Text(
-                              _logs[index],
-                              style: TextStyle(
-                                color: AppConstants.textColor.withValues(alpha: 0.8),
-                                fontFamily: 'monospace',
-                                fontSize: 11,
+        SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppConstants.secondaryBackground,
+                    borderRadius: BorderRadius.circular(AppConstants.largeRadius),
+                  ),
+                  child: _logs.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No logs recorded yet',
+                            style: AppTypography.sans(color: AppConstants.textMutedColor),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          itemCount: _logs.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Text(
+                                _logs[index],
+                                style: TextStyle(
+                                  color: AppConstants.textColor.withValues(alpha: 0.8),
+                                  fontFamily: 'monospace',
+                                  fontSize: 11,
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: l10n.translate('copy_logs'),
+                        icon: Icons.copy,
+                        onPressed: _logs.isEmpty ? null : _copyLogs,
+                        backgroundColor: AppConstants.tertiaryBackground,
+                        foregroundColor: AppConstants.textColor,
                       ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      label: l10n.translate('copy_logs'),
-                      icon: Icons.copy,
-                      onPressed: _logs.isEmpty ? null : _copyLogs,
-                      backgroundColor: AppConstants.tertiaryBackground,
-                      foregroundColor: AppConstants.textColor,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: l10n.translate('save_logs'),
-                      icon: Icons.share,
-                      onPressed: _logs.isEmpty ? null : _saveLogs,
-                      backgroundColor: AppConstants.accentColor,
-                      foregroundColor: AppConstants.primaryBackground,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: l10n.translate('save_logs'),
+                        icon: Icons.share,
+                        onPressed: _logs.isEmpty ? null : _saveLogs,
+                        backgroundColor: AppConstants.accentColor,
+                        foregroundColor: AppConstants.primaryBackground,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
