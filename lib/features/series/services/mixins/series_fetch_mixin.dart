@@ -2,6 +2,7 @@
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'dart:convert';
@@ -47,6 +48,14 @@ mixin SeriesFetchMixin {
           );
 
       logger.fine('Series fetch status for $id: ${response.statusCode}');
+
+      // Any response that reached the origin (even a 404) means the backend is
+      // up; only a 5xx counts against its health.
+      reportApiOutcome(
+        ok: !isServerErrorStatus(response.statusCode),
+        context: 'series',
+        statusCode: response.statusCode,
+      );
 
       if (response.statusCode == 200) {
         try {
@@ -104,6 +113,7 @@ mixin SeriesFetchMixin {
         );
       }
     } on http.ClientException catch (e, st) {
+      reportApiOutcome(ok: false, context: 'series', error: e);
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
@@ -111,6 +121,7 @@ mixin SeriesFetchMixin {
         stackTrace: st,
       );
     } on SocketException catch (e, st) {
+      reportApiOutcome(ok: false, context: 'series', error: e);
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
@@ -118,6 +129,7 @@ mixin SeriesFetchMixin {
         stackTrace: st,
       );
     } on TimeoutException catch (e, st) {
+      reportApiOutcome(ok: false, context: 'series', error: 'timeout');
       throw NetworkException(
         message: 'Request timed out. Please try again.',
         code: 'TIMEOUT',

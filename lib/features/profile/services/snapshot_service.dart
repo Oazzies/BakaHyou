@@ -7,6 +7,7 @@ import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:http/http.dart' as http;
 
@@ -70,6 +71,12 @@ class SnapshotService {
 
       _logger.fine('Snapshot fetch completed (sortBy: $sortBy, page: $page)');
 
+      reportApiOutcome(
+        ok: !isServerErrorStatus(response.statusCode),
+        context: 'library-snapshot',
+        statusCode: response.statusCode,
+      );
+
       if (response.statusCode != 200) {
         _logger.severe(
           'Failed to fetch library snapshot: ${response.statusCode} ${response.body}',
@@ -91,6 +98,7 @@ class SnapshotService {
       rethrow;
     } catch (e, st) {
       _logger.severe('Failed to fetch library snapshot: $e\n$st');
+      reportApiOutcome(ok: false, context: 'library-snapshot', error: e);
       throw NetworkException(
         message: 'Failed to fetch library snapshot',
         originalError: e,

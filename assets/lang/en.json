@@ -155,6 +155,7 @@
     "welcome_back": "Welcome back",
     "failed_to_load": "Failed to load data",
     "retry": "Retry",
+    "backend_unreachable": "Can't reach MangaBaka right now. Your library still works offline — retrying automatically.",
     "empty_library": "Your library is empty",
     "no_results": "No results found",
     "suggestions": "Suggestions",

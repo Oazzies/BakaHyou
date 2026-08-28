@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 import 'package:mangabaka_app/core/utils/uri_utils.dart';
 import 'package:mangabaka_app/features/series/services/metadata_service.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
@@ -110,6 +111,12 @@ class SeriesSearchService {
 
       _logger.fine('Series search response status: ${response.statusCode}');
 
+      reportApiOutcome(
+        ok: !isServerErrorStatus(response.statusCode),
+        context: 'series-search',
+        statusCode: response.statusCode,
+      );
+
       if (response.statusCode == 200) {
         try {
           final json = jsonDecode(response.body);
@@ -169,6 +176,7 @@ class SeriesSearchService {
       }
     } on http.ClientException catch (e, st) {
       _logger.severe('HTTP client error during series search', e, st);
+      reportApiOutcome(ok: false, context: 'series-search', error: e);
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
@@ -177,6 +185,7 @@ class SeriesSearchService {
       );
     } on SocketException catch (e, st) {
       _logger.severe('Network error during series search', e, st);
+      reportApiOutcome(ok: false, context: 'series-search', error: e);
       throw NetworkException(
         message: 'Network error. Please check your connection.',
         code: 'NETWORK_ERROR',
@@ -185,6 +194,7 @@ class SeriesSearchService {
       );
     } on TimeoutException catch (e, st) {
       _logger.severe('Request timeout during series search', e, st);
+      reportApiOutcome(ok: false, context: 'series-search', error: 'timeout');
       throw NetworkException(
         message: 'Request timed out. Please try again.',
         code: 'TIMEOUT',

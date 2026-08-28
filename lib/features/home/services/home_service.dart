@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
@@ -149,6 +150,11 @@ class HomeService {
     try {
       final response =
           await _client.get(uri, headers: _headers).timeout(_timeout);
+      reportApiOutcome(
+        ok: !isServerErrorStatus(response.statusCode),
+        context: 'home:$label',
+        statusCode: response.statusCode,
+      );
       if (response.statusCode != 200) {
         _logger.warning(
           'HomeService $label returned ${response.statusCode}',
@@ -161,6 +167,7 @@ class HomeService {
     } catch (e) {
       // A dead rail should never take the whole Home screen down with it.
       _logger.warning('HomeService failed to fetch $label: $e');
+      reportApiOutcome(ok: false, context: 'home:$label', error: e);
       return const [];
     }
   }

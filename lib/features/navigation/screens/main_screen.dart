@@ -18,6 +18,7 @@ import 'package:mangabaka_app/features/browse/widgets/search/mb_search_bar.dart'
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/widgets/design/mb_nav.dart';
 import 'package:mangabaka_app/core/widgets/design/mb_icons.dart';
+import 'package:mangabaka_app/core/network/backend_health_banner.dart';
 
 // ---------------------------------------------------------------------------
 // Nav destination data
@@ -186,6 +187,18 @@ class MainScreenState extends State<MainScreen> {
           ),
       ];
 
+  // The backend-health bar sits above whatever page is showing (and above the
+  // nested navigator, so it stays put while series detail is open) without
+  // pushing the bottom nav.
+  Widget _withHealthBanner(Widget child) {
+    return Column(
+      children: [
+        const BackendHealthBanner(),
+        Expanded(child: child),
+      ],
+    );
+  }
+
   Widget _settingsRailButton(BuildContext context, LocalizationService l10n) {
     return WidgetUtils.tooltip(
       message: l10n.translate('settings'),
@@ -255,14 +268,14 @@ class MainScreenState extends State<MainScreen> {
           preferredSize: const Size.fromHeight(72),
           child: _buildTopNavBar(context, l10n),
         ),
-        body: nestedContent,
+        body: _withHealthBanner(nestedContent),
       );
     }
 
     if (position == LandscapeAppBarPosition.bottom) {
       return Scaffold(
         backgroundColor: AppConstants.primaryBackground,
-        body: content,
+        body: _withHealthBanner(content),
         bottomNavigationBar: MbBottomNav(
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
@@ -276,7 +289,7 @@ class MainScreenState extends State<MainScreen> {
         backgroundColor: AppConstants.primaryBackground,
         body: Row(
           children: [
-            Expanded(child: nestedContent),
+            Expanded(child: _withHealthBanner(nestedContent)),
             Container(
               width: 1,
               color: AppConstants.borderColor,
@@ -477,7 +490,7 @@ class MainScreenState extends State<MainScreen> {
   Widget _buildPhoneLayout(Widget content, LocalizationService l10n) {
     return Scaffold(
       backgroundColor: AppConstants.primaryBackground,
-      body: content,
+      body: _withHealthBanner(content),
       bottomNavigationBar: MbBottomNav(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,

@@ -7,6 +7,7 @@ import 'package:mangabaka_app/features/library/services/library_service.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/features/profile/services/snapshot_service.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 
 import 'package:mangabaka_app/features/news/services/news_service.dart';
 import 'package:mangabaka_app/features/publisher/services/publisher_search_service.dart';
@@ -18,6 +19,11 @@ final getIt = GetIt.instance;
 
 void setupServiceLocator() {
   getIt.registerSingleton<LoggingService>(LoggingService());
+
+  getIt.registerSingleton<BackendHealthService>(
+    BackendHealthService(),
+    dispose: (service) => service.dispose(),
+  );
 
   getIt.registerSingleton<AppDatabase>(AppDatabase());
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/network/backend_health_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:mangabaka_app/features/news/models/news.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,6 +45,12 @@ class NewsService {
         headers: {'User-Agent': AppConstants.userAgent},
       ).timeout(Duration(seconds: AppConstants.networkTimeoutSeconds));
 
+      reportApiOutcome(
+        ok: !isServerErrorStatus(response.statusCode),
+        context: 'news',
+        statusCode: response.statusCode,
+      );
+
       if (response.statusCode == 200) {
         if (page == 1) {
           _logger.fine('Caching first page of news');
@@ -62,6 +69,10 @@ class NewsService {
       }
     } catch (e, st) {
       _logger.severe('Exception occurred while fetching news at page $page: $e\n$st');
+      if (e is! AppException) {
+        // A transport error or timeout — the origin didn't answer.
+        reportApiOutcome(ok: false, context: 'news', error: e);
+      }
       if (e is AppException) rethrow;
       throw NetworkException(message: 'Failed to load news', originalError: e, stackTrace: st);
     } finally {
