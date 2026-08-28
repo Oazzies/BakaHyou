@@ -337,9 +337,6 @@ class _NewsScreenState extends State<NewsScreen> {
           );
         },
         backgroundColor: AppConstants.accentColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-        ),
         child: Icon(Icons.arrow_upward, color: AppConstants.primaryBackground),
       ),
     );

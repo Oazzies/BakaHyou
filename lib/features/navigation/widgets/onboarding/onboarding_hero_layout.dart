@@ -11,7 +11,7 @@ import 'package:mangabaka_app/core/theme/app_typography.dart';
 class OnboardingHeroLayout extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final bool isShort;
 
   /// Normal-height title font size. Short screens always use 24pt.
@@ -26,7 +26,7 @@ class OnboardingHeroLayout extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     required this.isShort,
     this.titleFontSize = 28,
     this.titleFontWeight = FontWeight.bold,
@@ -69,19 +69,21 @@ class OnboardingHeroLayout extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            MbEntrance(
-              index: 2,
-              child: Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: AppTypography.sans(
-                  fontSize: isShort ? 14 : 16,
-                  color: AppConstants.textMutedColor,
-                  height: 1.5,
+            if (subtitle != null && subtitle!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              MbEntrance(
+                index: 2,
+                child: Text(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.sans(
+                    fontSize: isShort ? 14 : 16,
+                    color: AppConstants.textMutedColor,
+                    height: 1.5,
+                  ),
                 ),
               ),
-            ),
+            ],
             if (action != null) ...[
               SizedBox(height: isShort ? 24 : 40),
               MbEntrance(index: 3, child: action!),

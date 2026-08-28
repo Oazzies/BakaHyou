@@ -368,11 +368,6 @@ class BrowseScreenState extends State<BrowseScreen> {
                       child: FloatingActionButton(
                         onPressed: _controller.scrollToTop,
                         backgroundColor: AppConstants.accentColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.pillRadius,
-                          ),
-                        ),
                         child: Icon(
                           Icons.arrow_upward,
                           color: AppConstants.primaryBackground,

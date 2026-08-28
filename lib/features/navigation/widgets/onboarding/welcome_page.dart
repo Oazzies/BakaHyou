@@ -16,7 +16,6 @@ class WelcomePage extends StatelessWidget {
             return OnboardingHeroLayout(
               icon: Icons.auto_stories_rounded,
               title: localization.translate('app_name'),
-              subtitle: localization.translate('onboarding_welcome_subtitle'),
               isShort: constraints.maxHeight < 500,
               titleFontSize: 32,
               titleFontWeight: FontWeight.w900,
