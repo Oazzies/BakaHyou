@@ -48,7 +48,7 @@ class BrowseContent extends StatelessWidget {
   Widget _buildLoadingState() {
     if (browseType == BrowseType.series) {
       final settings = SettingsManager();
-      final activeStyle = settings.separateListStyles ? settings.browseListStyle : settings.currentListStyle;
+      final activeStyle = settings.resolvedBrowseListStyle;
       final isGrid = activeStyle.isGrid;
       
       return SeriesListSkeleton(isGrid: isGrid);
@@ -105,9 +105,7 @@ class BrowseContent extends StatelessWidget {
       listenable: Listenable.merge([SettingsManager(), l10n]),
       builder: (context, _) {
         final settings = SettingsManager();
-        final activeStyle = settings.separateListStyles
-            ? settings.browseListStyle
-            : settings.currentListStyle;
+        final activeStyle = settings.resolvedBrowseListStyle;
         final isGrid = activeStyle.isGrid;
         final itemCount = searchResults.length + (isLoadingMore ? 1 : 0);
 

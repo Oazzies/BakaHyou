@@ -52,9 +52,7 @@ class MixResultsSliver extends StatelessWidget {
   }
 
   Widget _buildResults(SettingsManager settings) {
-    final style = settings.separateListStyles
-        ? settings.browseListStyle
-        : settings.currentListStyle;
+    final style = settings.resolvedBrowseListStyle;
 
     final delegate = SliverChildBuilderDelegate(
       (context, index) {
@@ -75,9 +73,7 @@ class MixResultsSliver extends StatelessWidget {
     // delegate squeezes them into cover-shaped boxes.
     if (!style.isGrid) return SliverList(delegate: delegate);
 
-    final columns = settings.separateGridColumnCounts
-        ? settings.browseGridColumnCount
-        : settings.gridColumnCount;
+    final columns = settings.resolvedBrowseGridColumnCount;
 
     return SliverGrid(
       delegate: delegate,

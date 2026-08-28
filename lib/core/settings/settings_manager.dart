@@ -1,467 +1,324 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mangabaka_app/core/settings/setting_value.dart';
 import 'package:mangabaka_app/core/settings/settings_enums.dart';
 import 'package:mangabaka_app/core/settings/settings_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+/// Every user preference, and the only place they are persisted.
+///
+/// A process-wide singleton and a [ChangeNotifier]: widgets listen to it
+/// directly rather than threading settings through constructors.
+///
+/// Each setting is declared once as a [SettingValue] — key, default and
+/// storage type together — from which loading, saving and the test reset are
+/// all derived. The public surface is unchanged: a getter and a
+/// `set…` per preference.
 class SettingsManager extends ChangeNotifier {
   static final SettingsManager _instance = SettingsManager._internal();
   factory SettingsManager() => _instance;
   SettingsManager._internal();
 
   SharedPreferences? _prefs;
-  Future<SharedPreferences> _getPrefs() async => _prefs ??= await SharedPreferences.getInstance();
-  
-  @visibleForTesting
-  static void resetForTesting() {
-    _instance._prefs = null;
-    _instance._currentListStyle = AppListStyle.compactGrid;
-    _instance._hideLibrarySeriesInBrowse = false;
-    _instance._contentPreferences = ['safe', 'suggestive'];
-    _instance._hasCompletedOnboarding = false;
-    _instance._defaultStartPage = AppStartPage.browse;
-    _instance._ratingSliderStep = RatingSliderStep.step1;
-    _instance._addLibraryDefaultTab = 'plan_to_read';
-    _instance._defaultTitleLanguage = TitleLanguage.defaultLang;
-    _instance._separateListStyles = false;
-    _instance._libraryListStyle = AppListStyle.compactGrid;
-    _instance._browseListStyle = AppListStyle.compactGrid;
-    _instance._pushNotifications = false;
-    _instance._autoSuggestBrowse = false;
-    _instance._newsListColumns = 1;
-    _instance._showTooltips = true;
-    _instance._blurredContentRatings = [];
-    _instance._separateGridColumnCounts = false;
-    _instance._gridColumnCount = 0;
-    _instance._libraryGridColumnCount = 0;
-    _instance._browseGridColumnCount = 0;
-    _instance._collectionsListColumns = 0;
-    _instance._worksListStyle = AppListStyle.comfortable;
-    _instance._similarListStyle = AppListStyle.compactGrid;
-    _instance._showQuickProgress = true;
-    _instance._showLibraryProgress = true;
-    _instance._libraryProgressType = LibraryProgressType.chapters;
-    _instance._showRemainingProgress = false;
-    _instance._showLibraryTabCounts = true;
-    _instance._landscapeAppBarPosition = LandscapeAppBarPosition.left;
-    _instance._compactGridTitleRows = 1;
-  }
+  Future<SharedPreferences> _getPrefs() async =>
+      _prefs ??= await SharedPreferences.getInstance();
 
-  bool _showQuickProgress = true;
-  bool get showQuickProgress => _showQuickProgress;
+  // ─── Declarations ────────────────────────────────────────────────────────
 
-  bool _showLibraryProgress = true;
-  bool get showLibraryProgress => _showLibraryProgress;
+  final _currentListStyle = EnumSetting(
+    SettingsKeys.listStylePref,
+    AppListStyle.compactGrid,
+    AppListStyle.values,
+  );
+  final _libraryListStyle = EnumSetting(
+    SettingsKeys.libraryListStyle,
+    AppListStyle.compactGrid,
+    AppListStyle.values,
+  );
+  final _browseListStyle = EnumSetting(
+    SettingsKeys.browseListStyle,
+    AppListStyle.compactGrid,
+    AppListStyle.values,
+  );
+  final _worksListStyle = EnumSetting(
+    SettingsKeys.worksListStyle,
+    AppListStyle.comfortable,
+    AppListStyle.values,
+  );
+  final _similarListStyle = EnumSetting(
+    SettingsKeys.similarListStyle,
+    AppListStyle.compactGrid,
+    AppListStyle.values,
+  );
+  final _defaultStartPage = EnumSetting(
+    SettingsKeys.defaultStartPage,
+    AppStartPage.browse,
+    AppStartPage.values,
+  );
+  final _ratingSliderStep = EnumSetting(
+    SettingsKeys.ratingSliderStep,
+    RatingSliderStep.step1,
+    RatingSliderStep.values,
+  );
+  final _defaultTitleLanguage = EnumSetting(
+    SettingsKeys.defaultTitleLanguage,
+    TitleLanguage.defaultLang,
+    TitleLanguage.values,
+  );
+  final _libraryProgressType = EnumSetting(
+    SettingsKeys.libraryProgressType,
+    LibraryProgressType.chapters,
+    LibraryProgressType.values,
+  );
+  final _landscapeAppBarPosition = EnumSetting(
+    SettingsKeys.landscapeAppBarPosition,
+    LandscapeAppBarPosition.left,
+    LandscapeAppBarPosition.values,
+  );
 
-  LibraryProgressType _libraryProgressType = LibraryProgressType.chapters;
-  LibraryProgressType get libraryProgressType => _libraryProgressType;
+  final _separateListStyles = BoolSetting(SettingsKeys.separateListStyles, false);
+  final _separateGridColumnCounts =
+      BoolSetting(SettingsKeys.separateGridColumnCounts, false);
+  final _hideLibrarySeriesInBrowse =
+      BoolSetting(SettingsKeys.hideLibrarySeriesInBrowse, false);
+  final _hasCompletedOnboarding =
+      BoolSetting(SettingsKeys.onboardingCompleted, false);
+  final _pushNotifications = BoolSetting(SettingsKeys.pushNotifications, false);
+  final _autoSuggestBrowse = BoolSetting(SettingsKeys.autoSuggestBrowse, false);
+  final _showTooltips = BoolSetting(SettingsKeys.showTooltips, true);
+  final _showQuickProgress = BoolSetting(SettingsKeys.showQuickProgress, true);
+  final _showLibraryProgress =
+      BoolSetting(SettingsKeys.showLibraryProgress, true);
+  final _showRemainingProgress =
+      BoolSetting(SettingsKeys.showRemainingProgress, false);
+  final _showLibraryTabCounts =
+      BoolSetting(SettingsKeys.showLibraryTabCounts, true);
 
-  bool _showRemainingProgress = false;
-  bool get showRemainingProgress => _showRemainingProgress;
+  /// 0 means "auto": fit as many columns as the available width allows.
+  final _gridColumnCount = IntSetting(SettingsKeys.gridColumnCount, 0);
+  final _libraryGridColumnCount =
+      IntSetting(SettingsKeys.libraryGridColumnCount, 0);
+  final _browseGridColumnCount =
+      IntSetting(SettingsKeys.browseGridColumnCount, 0);
+  final _collectionsListColumns =
+      IntSetting(SettingsKeys.collectionsGridColumns, 0);
+  final _newsListColumns = IntSetting(SettingsKeys.newsListColumns, 1);
+  final _compactGridTitleRows =
+      IntSetting(SettingsKeys.compactGridTitleRows, 1, min: 1, max: 99);
 
-  bool _showLibraryTabCounts = true;
-  bool get showLibraryTabCounts => _showLibraryTabCounts;
+  final _addLibraryDefaultTab =
+      StringSetting(SettingsKeys.addLibraryDefaultTab, 'plan_to_read');
 
-  LandscapeAppBarPosition _landscapeAppBarPosition = LandscapeAppBarPosition.left;
-  LandscapeAppBarPosition get landscapeAppBarPosition => _landscapeAppBarPosition;
+  final _contentPreferences = StringListSetting(
+    SettingsKeys.contentPreferences,
+    const ['safe', 'suggestive'],
+  );
+  final _blurredContentRatings =
+      StringListSetting(SettingsKeys.blurredContentRatings, const []);
 
-  AppListStyle _currentListStyle = AppListStyle.compactGrid;
-  AppListStyle get currentListStyle => _currentListStyle;
+  /// Every declared setting, in no particular order — the list `init` and
+  /// `resetForTesting` walk. Adding a setting above and here is all it takes.
+  late final List<SettingValue<Object?>> _all = [
+    _currentListStyle,
+    _libraryListStyle,
+    _browseListStyle,
+    _worksListStyle,
+    _similarListStyle,
+    _defaultStartPage,
+    _ratingSliderStep,
+    _defaultTitleLanguage,
+    _libraryProgressType,
+    _landscapeAppBarPosition,
+    _separateListStyles,
+    _separateGridColumnCounts,
+    _hideLibrarySeriesInBrowse,
+    _hasCompletedOnboarding,
+    _pushNotifications,
+    _autoSuggestBrowse,
+    _showTooltips,
+    _showQuickProgress,
+    _showLibraryProgress,
+    _showRemainingProgress,
+    _showLibraryTabCounts,
+    _gridColumnCount,
+    _libraryGridColumnCount,
+    _browseGridColumnCount,
+    _collectionsListColumns,
+    _newsListColumns,
+    _compactGridTitleRows,
+    _addLibraryDefaultTab,
+    _contentPreferences,
+    _blurredContentRatings,
+  ];
 
-  bool _hideLibrarySeriesInBrowse = false;
-  bool get hideLibrarySeriesInBrowse => _hideLibrarySeriesInBrowse;
-
-  List<String> _contentPreferences = ['safe', 'suggestive'];
-  List<String> get contentPreferences => _contentPreferences;
-
-  bool _hasCompletedOnboarding = false;
-  bool get hasCompletedOnboarding => _hasCompletedOnboarding;
-
-  AppStartPage _defaultStartPage = AppStartPage.browse;
-  AppStartPage get defaultStartPage => _defaultStartPage;
-
-  RatingSliderStep _ratingSliderStep = RatingSliderStep.step1;
-  RatingSliderStep get ratingSliderStep => _ratingSliderStep;
-
-  String _addLibraryDefaultTab = 'plan_to_read';
-  String get addLibraryDefaultTab => _addLibraryDefaultTab;
-
-  TitleLanguage _defaultTitleLanguage = TitleLanguage.defaultLang;
-  TitleLanguage get defaultTitleLanguage => _defaultTitleLanguage;
-
-  bool _separateListStyles = false;
-  bool get separateListStyles => _separateListStyles;
-
-  AppListStyle _libraryListStyle = AppListStyle.compactGrid;
-  AppListStyle get libraryListStyle => _libraryListStyle;
-
-  AppListStyle _browseListStyle = AppListStyle.compactGrid;
-  AppListStyle get browseListStyle => _browseListStyle;
-
-  bool _pushNotifications = false;
-  bool get pushNotifications => _pushNotifications;
-
-  bool _autoSuggestBrowse = false;
-  bool get autoSuggestBrowse => _autoSuggestBrowse;
-
-  int _newsListColumns = 1;
-  int get newsListColumns => _newsListColumns;
-
-
-
-  bool _showTooltips = true;
-  bool get showTooltips => _showTooltips;
-
-  List<String> _blurredContentRatings = [];
-  List<String> get blurredContentRatings => _blurredContentRatings;
-
-  bool _separateGridColumnCounts = false;
-  bool get separateGridColumnCounts => _separateGridColumnCounts;
-
-  int _gridColumnCount = 0;
-  int get gridColumnCount => _gridColumnCount;
-
-  int _libraryGridColumnCount = 0;
-  int get libraryGridColumnCount => _libraryGridColumnCount;
-
-  int _browseGridColumnCount = 0;
-  int get browseGridColumnCount => _browseGridColumnCount;
-
-  int _collectionsListColumns = 0; // 0 means default/automatic
-  int get collectionsListColumns => _collectionsListColumns;
-
-  AppListStyle _worksListStyle = AppListStyle.comfortable;
-  AppListStyle get worksListStyle => _worksListStyle;
-
-  AppListStyle _similarListStyle = AppListStyle.compactGrid;
-  AppListStyle get similarListStyle => _similarListStyle;
-
-  int _compactGridTitleRows = 1;
-  int get compactGridTitleRows => _compactGridTitleRows;
+  // ─── Lifecycle ───────────────────────────────────────────────────────────
 
   Future<void> init() async {
     final prefs = await _getPrefs();
-    
-    // Load preferences
-
-    final listStyleIndex = prefs.getInt(SettingsKeys.listStylePref);
-    if (listStyleIndex != null && listStyleIndex >= 0 && listStyleIndex < AppListStyle.values.length) {
-      _currentListStyle = AppListStyle.values[listStyleIndex];
+    for (final setting in _all) {
+      setting.load(prefs);
     }
-    
-    _hideLibrarySeriesInBrowse = prefs.getBool(SettingsKeys.hideLibrarySeriesInBrowse) ?? false;
-    
-    final savedContentPrefs = prefs.getStringList(SettingsKeys.contentPreferences);
-    if (savedContentPrefs != null && savedContentPrefs.isNotEmpty) {
-      _contentPreferences = savedContentPrefs;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  static void resetForTesting() {
+    _instance._prefs = null;
+    for (final setting in _instance._all) {
+      setting.reset();
     }
+  }
 
-    _hasCompletedOnboarding = prefs.getBool(SettingsKeys.onboardingCompleted) ?? false;
-    
-    final startPageIndex = prefs.getInt(SettingsKeys.defaultStartPage);
-    if (startPageIndex != null && startPageIndex >= 0 && startPageIndex < AppStartPage.values.length) {
-      _defaultStartPage = AppStartPage.values[startPageIndex];
-    }
-
-    final ratingStepIndex = prefs.getInt(SettingsKeys.ratingSliderStep);
-    if (ratingStepIndex != null && ratingStepIndex >= 0 && ratingStepIndex < RatingSliderStep.values.length) {
-      _ratingSliderStep = RatingSliderStep.values[ratingStepIndex];
-    }
-
-    _addLibraryDefaultTab = prefs.getString(SettingsKeys.addLibraryDefaultTab) ?? 'plan_to_read';
-
-    final titleLangIndex = prefs.getInt(SettingsKeys.defaultTitleLanguage);
-    if (titleLangIndex != null && titleLangIndex >= 0 && titleLangIndex < TitleLanguage.values.length) {
-      _defaultTitleLanguage = TitleLanguage.values[titleLangIndex];
-    }
-
-    _separateListStyles = prefs.getBool(SettingsKeys.separateListStyles) ?? false;
-
-    final libStyleIndex = prefs.getInt(SettingsKeys.libraryListStyle);
-    if (libStyleIndex != null && libStyleIndex >= 0 && libStyleIndex < AppListStyle.values.length) {
-      _libraryListStyle = AppListStyle.values[libStyleIndex];
-    }
-
-    final browseStyleIndex = prefs.getInt(SettingsKeys.browseListStyle);
-    if (browseStyleIndex != null && browseStyleIndex >= 0 && browseStyleIndex < AppListStyle.values.length) {
-      _browseListStyle = AppListStyle.values[browseStyleIndex];
-    }
-
-    _pushNotifications = prefs.getBool(SettingsKeys.pushNotifications) ?? false;
-    _autoSuggestBrowse = prefs.getBool(SettingsKeys.autoSuggestBrowse) ?? false;
-    _newsListColumns = prefs.getInt(SettingsKeys.newsListColumns) ?? 1;
-
-    _showTooltips = prefs.getBool(SettingsKeys.showTooltips) ?? true;
-    _blurredContentRatings = prefs.getStringList(SettingsKeys.blurredContentRatings) ?? [];
-
-    _separateGridColumnCounts = prefs.getBool(SettingsKeys.separateGridColumnCounts) ?? false;
-    _gridColumnCount = prefs.getInt(SettingsKeys.gridColumnCount) ?? 0;
-    _libraryGridColumnCount = prefs.getInt(SettingsKeys.libraryGridColumnCount) ?? 0;
-    _browseGridColumnCount = prefs.getInt(SettingsKeys.browseGridColumnCount) ?? 0;
-    _collectionsListColumns = prefs.getInt(SettingsKeys.collectionsGridColumns) ?? 0;
-    final worksStyleIndex = prefs.getInt(SettingsKeys.worksListStyle);
-    if (worksStyleIndex != null && worksStyleIndex >= 0 && worksStyleIndex < AppListStyle.values.length) {
-      _worksListStyle = AppListStyle.values[worksStyleIndex];
-    }
-    final similarStyleIndex = prefs.getInt(SettingsKeys.similarListStyle);
-    if (similarStyleIndex != null && similarStyleIndex >= 0 && similarStyleIndex < AppListStyle.values.length) {
-      _similarListStyle = AppListStyle.values[similarStyleIndex];
-    }
-    _showQuickProgress = prefs.getBool(SettingsKeys.showQuickProgress) ?? true;
-    _showLibraryProgress = prefs.getBool(SettingsKeys.showLibraryProgress) ?? true;
-    final progressTypeIndex = prefs.getInt(SettingsKeys.libraryProgressType);
-    if (progressTypeIndex != null && progressTypeIndex >= 0 && progressTypeIndex < LibraryProgressType.values.length) {
-      _libraryProgressType = LibraryProgressType.values[progressTypeIndex];
-    }
-    _showRemainingProgress = prefs.getBool(SettingsKeys.showRemainingProgress) ?? false;
-    _showLibraryTabCounts = prefs.getBool(SettingsKeys.showLibraryTabCounts) ?? true;
-    _compactGridTitleRows = prefs.getInt(SettingsKeys.compactGridTitleRows) ?? 1;
-    final landscapePositionIndex = prefs.getInt(SettingsKeys.landscapeAppBarPosition);
-    if (landscapePositionIndex != null &&
-        landscapePositionIndex >= 0 &&
-        landscapePositionIndex < LandscapeAppBarPosition.values.length) {
-      _landscapeAppBarPosition = LandscapeAppBarPosition.values[landscapePositionIndex];
-    }
-
+  /// Applies [value], persists it and notifies — skipping all three when it
+  /// matches what is already held.
+  Future<void> _apply<T>(SettingValue<T> setting, T value) async {
+    if (!setting.set(value)) return;
+    await setting.persist(await _getPrefs());
     notifyListeners();
   }
 
-  Future<void> setListStyle(AppListStyle style) async {
-    if (_currentListStyle == style) return;
-    _currentListStyle = style;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.listStylePref, style.index);
-    notifyListeners();
-  }
+  // ─── List styles ─────────────────────────────────────────────────────────
 
-  Future<void> setHideLibrarySeriesInBrowse(bool value) async {
-    if (_hideLibrarySeriesInBrowse == value) return;
-    _hideLibrarySeriesInBrowse = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.hideLibrarySeriesInBrowse, value);
-    notifyListeners();
-  }
+  AppListStyle get currentListStyle => _currentListStyle.value;
+  Future<void> setListStyle(AppListStyle style) =>
+      _apply(_currentListStyle, style);
 
-  Future<void> setContentPreferences(List<String> prefsList) async {
-    _contentPreferences = prefsList;
-    final prefs = await _getPrefs();
-    await prefs.setStringList(SettingsKeys.contentPreferences, prefsList);
-    notifyListeners();
-  }
+  AppListStyle get libraryListStyle => _libraryListStyle.value;
+  Future<void> setLibraryListStyle(AppListStyle style) =>
+      _apply(_libraryListStyle, style);
 
-  Future<void> setHasCompletedOnboarding(bool value) async {
-    if (_hasCompletedOnboarding == value) return;
-    _hasCompletedOnboarding = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.onboardingCompleted, value);
-    notifyListeners();
-  }
+  AppListStyle get browseListStyle => _browseListStyle.value;
+  Future<void> setBrowseListStyle(AppListStyle style) =>
+      _apply(_browseListStyle, style);
 
-  Future<void> setDefaultStartPage(AppStartPage page) async {
-    if (_defaultStartPage == page) return;
-    _defaultStartPage = page;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.defaultStartPage, page.index);
-    notifyListeners();
-  }
+  AppListStyle get worksListStyle => _worksListStyle.value;
+  Future<void> setWorksListStyle(AppListStyle style) =>
+      _apply(_worksListStyle, style);
 
-  Future<void> setRatingSliderStep(RatingSliderStep step) async {
-    if (_ratingSliderStep == step) return;
-    _ratingSliderStep = step;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.ratingSliderStep, step.index);
-    notifyListeners();
-  }
+  AppListStyle get similarListStyle => _similarListStyle.value;
+  Future<void> setSimilarListStyle(AppListStyle style) =>
+      _apply(_similarListStyle, style);
 
-  Future<void> setAddLibraryDefaultTab(String tabKey) async {
-    if (_addLibraryDefaultTab == tabKey) return;
-    _addLibraryDefaultTab = tabKey;
-    final prefs = await _getPrefs();
-    await prefs.setString(SettingsKeys.addLibraryDefaultTab, tabKey);
-    notifyListeners();
-  }
+  bool get separateListStyles => _separateListStyles.value;
+  Future<void> setSeparateListStyles(bool value) =>
+      _apply(_separateListStyles, value);
 
-  Future<void> setDefaultTitleLanguage(TitleLanguage lang) async {
-    if (_defaultTitleLanguage == lang) return;
-    _defaultTitleLanguage = lang;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.defaultTitleLanguage, lang.index);
-    notifyListeners();
-  }
+  /// The style the Library list actually uses, resolving the shared-versus-
+  /// separate switch so callers do not each re-derive it.
+  AppListStyle get resolvedLibraryListStyle =>
+      separateListStyles ? libraryListStyle : currentListStyle;
 
-  Future<void> setSeparateListStyles(bool value) async {
-    if (_separateListStyles == value) return;
-    _separateListStyles = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.separateListStyles, value);
-    notifyListeners();
-  }
+  /// The style the Browse list actually uses.
+  AppListStyle get resolvedBrowseListStyle =>
+      separateListStyles ? browseListStyle : currentListStyle;
 
-  Future<void> setLibraryListStyle(AppListStyle style) async {
-    if (_libraryListStyle == style) return;
-    _libraryListStyle = style;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.libraryListStyle, style.index);
-    notifyListeners();
-  }
+  // ─── Grid columns ────────────────────────────────────────────────────────
 
-  Future<void> setBrowseListStyle(AppListStyle style) async {
-    if (_browseListStyle == style) return;
-    _browseListStyle = style;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.browseListStyle, style.index);
-    notifyListeners();
-  }
+  bool get separateGridColumnCounts => _separateGridColumnCounts.value;
+  Future<void> setSeparateGridColumnCounts(bool value) =>
+      _apply(_separateGridColumnCounts, value);
 
-  Future<void> setPushNotifications(bool value) async {
-    if (_pushNotifications == value) return;
-    _pushNotifications = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.pushNotifications, value);
-    notifyListeners();
-  }
+  int get gridColumnCount => _gridColumnCount.value;
+  Future<void> setGridColumnCount(int value) => _apply(_gridColumnCount, value);
 
-  Future<void> setAutoSuggestBrowse(bool value) async {
-    if (_autoSuggestBrowse == value) return;
-    _autoSuggestBrowse = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.autoSuggestBrowse, value);
-    notifyListeners();
-  }
+  int get libraryGridColumnCount => _libraryGridColumnCount.value;
+  Future<void> setLibraryGridColumnCount(int value) =>
+      _apply(_libraryGridColumnCount, value);
 
-  Future<void> setNewsListColumns(int columns) async {
-    if (_newsListColumns == columns) return;
-    _newsListColumns = columns;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.newsListColumns, columns);
-    notifyListeners();
-  }
+  int get browseGridColumnCount => _browseGridColumnCount.value;
+  Future<void> setBrowseGridColumnCount(int value) =>
+      _apply(_browseGridColumnCount, value);
 
+  /// The column count the Library grid actually uses.
+  int get resolvedLibraryGridColumnCount =>
+      separateGridColumnCounts ? libraryGridColumnCount : gridColumnCount;
 
+  /// The column count the Browse grid actually uses.
+  int get resolvedBrowseGridColumnCount =>
+      separateGridColumnCounts ? browseGridColumnCount : gridColumnCount;
 
-  Future<void> setShowTooltips(bool value) async {
-    if (_showTooltips == value) return;
-    _showTooltips = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.showTooltips, value);
-    notifyListeners();
-  }
+  int get collectionsListColumns => _collectionsListColumns.value;
+  Future<void> setCollectionsListColumns(int value) =>
+      _apply(_collectionsListColumns, value);
 
-  Future<void> setBlurredContentRatings(List<String> ratings) async {
-    _blurredContentRatings = ratings;
-    final prefs = await _getPrefs();
-    await prefs.setStringList(SettingsKeys.blurredContentRatings, ratings);
-    notifyListeners();
-  }
+  int get newsListColumns => _newsListColumns.value;
+  Future<void> setNewsListColumns(int columns) =>
+      _apply(_newsListColumns, columns);
 
-  Future<void> setSeparateGridColumnCounts(bool value) async {
-    if (_separateGridColumnCounts == value) return;
-    _separateGridColumnCounts = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.separateGridColumnCounts, value);
-    notifyListeners();
-  }
+  int get compactGridTitleRows => _compactGridTitleRows.value;
+  Future<void> setCompactGridTitleRows(int value) =>
+      _apply(_compactGridTitleRows, value);
 
-  Future<void> setGridColumnCount(int value) async {
-    if (_gridColumnCount == value) return;
-    _gridColumnCount = value;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.gridColumnCount, value);
-    notifyListeners();
-  }
+  // ─── Content ─────────────────────────────────────────────────────────────
 
-  Future<void> setLibraryGridColumnCount(int value) async {
-    if (_libraryGridColumnCount == value) return;
-    _libraryGridColumnCount = value;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.libraryGridColumnCount, value);
-    notifyListeners();
-  }
+  List<String> get contentPreferences => _contentPreferences.value;
+  Future<void> setContentPreferences(List<String> prefsList) =>
+      _apply(_contentPreferences, prefsList);
 
-  Future<void> setBrowseGridColumnCount(int value) async {
-    if (_browseGridColumnCount == value) return;
-    _browseGridColumnCount = value;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.browseGridColumnCount, value);
-    notifyListeners();
-  }
+  List<String> get blurredContentRatings => _blurredContentRatings.value;
+  Future<void> setBlurredContentRatings(List<String> ratings) =>
+      _apply(_blurredContentRatings, ratings);
 
-  Future<void> setCompactGridTitleRows(int value) async {
-    if (_compactGridTitleRows == value) return;
-    _compactGridTitleRows = value.clamp(1, 99);
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.compactGridTitleRows, _compactGridTitleRows);
-    notifyListeners();
-  }
+  bool get hideLibrarySeriesInBrowse => _hideLibrarySeriesInBrowse.value;
+  Future<void> setHideLibrarySeriesInBrowse(bool value) =>
+      _apply(_hideLibrarySeriesInBrowse, value);
 
-  Future<void> setCollectionsListColumns(int value) async {
-    if (_collectionsListColumns == value) return;
-    _collectionsListColumns = value;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.collectionsGridColumns, value);
-    notifyListeners();
-  }
+  // ─── Progress ────────────────────────────────────────────────────────────
 
-  Future<void> setWorksListStyle(AppListStyle style) async {
-    if (_worksListStyle == style) return;
-    _worksListStyle = style;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.worksListStyle, style.index);
-    notifyListeners();
-  }
+  bool get showQuickProgress => _showQuickProgress.value;
+  Future<void> setShowQuickProgress(bool value) =>
+      _apply(_showQuickProgress, value);
 
-  Future<void> setSimilarListStyle(AppListStyle style) async {
-    if (_similarListStyle == style) return;
-    _similarListStyle = style;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.similarListStyle, style.index);
-    notifyListeners();
-  }
+  bool get showLibraryProgress => _showLibraryProgress.value;
+  Future<void> setShowLibraryProgress(bool value) =>
+      _apply(_showLibraryProgress, value);
 
-  Future<void> setShowQuickProgress(bool value) async {
-    if (_showQuickProgress == value) return;
-    _showQuickProgress = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.showQuickProgress, value);
-    notifyListeners();
-  }
+  LibraryProgressType get libraryProgressType => _libraryProgressType.value;
+  Future<void> setLibraryProgressType(LibraryProgressType type) =>
+      _apply(_libraryProgressType, type);
 
-  Future<void> setShowLibraryProgress(bool value) async {
-    if (_showLibraryProgress == value) return;
-    _showLibraryProgress = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.showLibraryProgress, value);
-    notifyListeners();
-  }
+  bool get showRemainingProgress => _showRemainingProgress.value;
+  Future<void> setShowRemainingProgress(bool value) =>
+      _apply(_showRemainingProgress, value);
 
-  Future<void> setLibraryProgressType(LibraryProgressType type) async {
-    if (_libraryProgressType == type) return;
-    _libraryProgressType = type;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.libraryProgressType, type.index);
-    notifyListeners();
-  }
+  bool get showLibraryTabCounts => _showLibraryTabCounts.value;
+  Future<void> setShowLibraryTabCounts(bool value) =>
+      _apply(_showLibraryTabCounts, value);
 
-  Future<void> setShowRemainingProgress(bool value) async {
-    if (_showRemainingProgress == value) return;
-    _showRemainingProgress = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.showRemainingProgress, value);
-    notifyListeners();
-  }
+  RatingSliderStep get ratingSliderStep => _ratingSliderStep.value;
+  Future<void> setRatingSliderStep(RatingSliderStep step) =>
+      _apply(_ratingSliderStep, step);
 
-  Future<void> setShowLibraryTabCounts(bool value) async {
-    if (_showLibraryTabCounts == value) return;
-    _showLibraryTabCounts = value;
-    final prefs = await _getPrefs();
-    await prefs.setBool(SettingsKeys.showLibraryTabCounts, value);
-    notifyListeners();
-  }
+  String get addLibraryDefaultTab => _addLibraryDefaultTab.value;
+  Future<void> setAddLibraryDefaultTab(String tabKey) =>
+      _apply(_addLibraryDefaultTab, tabKey);
 
-  Future<void> setLandscapeAppBarPosition(LandscapeAppBarPosition position) async {
-    if (_landscapeAppBarPosition == position) return;
-    _landscapeAppBarPosition = position;
-    final prefs = await _getPrefs();
-    await prefs.setInt(SettingsKeys.landscapeAppBarPosition, position.index);
-    notifyListeners();
-  }
+  // ─── App ─────────────────────────────────────────────────────────────────
+
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding.value;
+  Future<void> setHasCompletedOnboarding(bool value) =>
+      _apply(_hasCompletedOnboarding, value);
+
+  AppStartPage get defaultStartPage => _defaultStartPage.value;
+  Future<void> setDefaultStartPage(AppStartPage page) =>
+      _apply(_defaultStartPage, page);
+
+  TitleLanguage get defaultTitleLanguage => _defaultTitleLanguage.value;
+  Future<void> setDefaultTitleLanguage(TitleLanguage lang) =>
+      _apply(_defaultTitleLanguage, lang);
+
+  LandscapeAppBarPosition get landscapeAppBarPosition =>
+      _landscapeAppBarPosition.value;
+  Future<void> setLandscapeAppBarPosition(LandscapeAppBarPosition position) =>
+      _apply(_landscapeAppBarPosition, position);
+
+  bool get pushNotifications => _pushNotifications.value;
+  Future<void> setPushNotifications(bool value) =>
+      _apply(_pushNotifications, value);
+
+  bool get autoSuggestBrowse => _autoSuggestBrowse.value;
+  Future<void> setAutoSuggestBrowse(bool value) =>
+      _apply(_autoSuggestBrowse, value);
+
+  bool get showTooltips => _showTooltips.value;
+  Future<void> setShowTooltips(bool value) => _apply(_showTooltips, value);
 }

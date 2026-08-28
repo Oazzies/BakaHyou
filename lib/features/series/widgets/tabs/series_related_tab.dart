@@ -51,9 +51,7 @@ class SeriesRelatedTab extends StatelessWidget {
         listenable: SettingsManager(),
         builder: (context, _) {
           final settings = SettingsManager();
-          final style = settings.separateListStyles
-              ? settings.browseListStyle
-              : settings.currentListStyle;
+          final style = settings.resolvedBrowseListStyle;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,9 +101,7 @@ class SeriesRelatedTab extends StatelessWidget {
 
   Widget _buildGrid(BuildContext context, SettingsManager settings, AppListStyle style, List<Series> series, double maxWidth) {
     final seriesService = getIt<SeriesService>();
-    final columnCount = settings.separateGridColumnCounts
-        ? settings.browseGridColumnCount
-        : settings.gridColumnCount;
+    final columnCount = settings.resolvedBrowseGridColumnCount;
     const spacing = 10.0;
     final cols = columnCount > 0 ? columnCount : (maxWidth / 160).floor().clamp(2, 6);
     final itemWidth = (maxWidth - spacing * (cols - 1)) / cols;

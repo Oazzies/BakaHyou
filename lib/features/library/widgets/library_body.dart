@@ -103,9 +103,7 @@ class LibraryBody extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
           final settings = SettingsManager();
-          final isGrid = settings.separateListStyles
-              ? settings.libraryListStyle.isGrid
-              : settings.currentListStyle.isGrid;
+          final isGrid = settings.resolvedLibraryListStyle.isGrid;
           return SeriesListSkeleton(isGrid: isGrid);
         }
 

@@ -273,9 +273,7 @@ class LibraryScreenState extends State<LibraryScreen>
       ]),
       builder: (context, _) {
         final settings = SettingsManager();
-        final isGrid = settings.separateListStyles
-            ? settings.libraryListStyle.isGrid
-            : settings.currentListStyle.isGrid;
+        final isGrid = settings.resolvedLibraryListStyle.isGrid;
 
         return PopScope(
           canPop: !_isSearching,
@@ -407,9 +405,7 @@ class LibraryScreenState extends State<LibraryScreen>
     final settings = SettingsManager();
     final l10n = LocalizationService();
 
-    final currentStyle = settings.separateListStyles
-        ? settings.libraryListStyle
-        : settings.currentListStyle;
+    final currentStyle = settings.resolvedLibraryListStyle;
 
     final useTopNavBarSearch = MainScreen.showSearchBarInTopNavBar(context);
     if (useTopNavBarSearch) return null;

@@ -12,9 +12,7 @@ class BrowseResultsLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = SettingsManager();
-    final activeStyle = settings.separateListStyles
-        ? settings.browseListStyle
-        : settings.currentListStyle;
+    final activeStyle = settings.resolvedBrowseListStyle;
     final isGrid = activeStyle.isGrid;
 
     return SeriesListSkeleton(isGrid: isGrid);

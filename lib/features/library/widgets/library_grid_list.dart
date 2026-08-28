@@ -94,15 +94,11 @@ class LibraryGridList extends StatelessWidget {
       builder: (context, _) {
         final settings = SettingsManager();
         final seriesService = getIt<SeriesService>();
-        final activeStyle = settings.separateListStyles
-            ? settings.libraryListStyle
-            : settings.currentListStyle;
+        final activeStyle = settings.resolvedLibraryListStyle;
         final isGrid = activeStyle.isGrid;
 
         if (isGrid) {
-          final columns = settings.separateGridColumnCounts
-              ? settings.libraryGridColumnCount
-              : settings.gridColumnCount;
+          final columns = settings.resolvedLibraryGridColumnCount;
 
           final isCompactGrid = activeStyle == AppListStyle.compactGrid;
 

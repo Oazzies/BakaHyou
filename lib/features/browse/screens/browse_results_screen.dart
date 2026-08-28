@@ -259,9 +259,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
             listenable: SettingsManager(),
             builder: (context, _) {
               final settings = SettingsManager();
-              final activeStyle = settings.separateListStyles
-                  ? settings.browseListStyle
-                  : settings.currentListStyle;
+              final activeStyle = settings.resolvedBrowseListStyle;
               final isGrid = activeStyle.isGrid;
 
               return NotificationListener<ScrollMetricsNotification>(

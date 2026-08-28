@@ -87,11 +87,10 @@ class _EntryListItemState extends State<EntryListItem> {
     final displayTitle = widget.series.getDisplayTitle(
       settings.defaultTitleLanguage,
     );
-    final style = widget.listStyle ?? (settings.separateListStyles
-        ? (widget.isLibrary
-              ? settings.libraryListStyle
-              : settings.browseListStyle)
-        : settings.currentListStyle);
+    final style = widget.listStyle ??
+        (widget.isLibrary
+            ? settings.resolvedLibraryListStyle
+            : settings.resolvedBrowseListStyle);
 
     if (widget.previewEntry != null) {
       return _buildStack(

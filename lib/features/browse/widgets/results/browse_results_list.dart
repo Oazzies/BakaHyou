@@ -30,15 +30,11 @@ class BrowseResultsList extends StatelessWidget {
       listenable: SettingsManager(),
       builder: (context, _) {
         final settings = SettingsManager();
-        final activeStyle = settings.separateListStyles
-            ? settings.browseListStyle
-            : settings.currentListStyle;
+        final activeStyle = settings.resolvedBrowseListStyle;
         final isGrid = activeStyle.isGrid;
 
         if (isGrid) {
-          final columns = settings.separateGridColumnCounts
-              ? settings.browseGridColumnCount
-              : settings.gridColumnCount;
+          final columns = settings.resolvedBrowseGridColumnCount;
 
           final isCompactGrid = activeStyle == AppListStyle.compactGrid;
 
