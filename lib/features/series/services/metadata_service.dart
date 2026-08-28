@@ -8,6 +8,11 @@ class MetadataService {
   final _logger = LoggingService.logger;
   Map<String, String> _genreMap = {};
   Map<String, Map<String, dynamic>> _tagMap = {};
+  // Case-insensitive index over _tagMap. Tag lookups used to fall back to a
+  // linear scan of every known tag (thousands of entries, lowercasing each
+  // key), which a series detail page pays once per tag chip — enough to stall
+  // the first frame by ~a second. Built once alongside _tagMap instead.
+  Map<String, Map<String, dynamic>> _tagLowerMap = {};
   
   List<Map<String, dynamic>> _genresList = [];
   List<Map<String, dynamic>> _tagsList = [];
@@ -59,6 +64,7 @@ class MetadataService {
           for (var item in _tagsList)
             item['name'].toString(): item
         };
+        _rebuildTagIndex();
         _logger.fine('Loaded ${_tagsList.length} tags from cache');
       }
     } catch (e) {
@@ -113,6 +119,7 @@ class MetadataService {
             for (var item in _tagsList)
               item['name'].toString(): item
           };
+          _rebuildTagIndex();
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('cached_tags', jsonEncode(_tagsList));
           _logger.info('Successfully updated and cached ${_tagsList.length} tags');
@@ -122,6 +129,15 @@ class MetadataService {
       _logger.warning('Exception occurred while fetching tags: $e');
     }
   }
+
+  void _rebuildTagIndex() {
+    _tagLowerMap = {
+      for (final entry in _tagMap.entries) entry.key.toLowerCase(): entry.value
+    };
+  }
+
+  Map<String, dynamic>? _lookupTag(String tagName) =>
+      _tagMap[tagName] ?? _tagLowerMap[tagName.toLowerCase()];
 
   String getGenreLabel(String value) {
     if (_genreMap.containsKey(value)) {
@@ -137,21 +153,10 @@ class MetadataService {
         .join(' ');
   }
 
-  String? getTagId(String tagName) {
-    final tag = _tagMap[tagName] ?? _tagMap.entries.firstWhere(
-      (entry) => entry.key.toLowerCase() == tagName.toLowerCase(),
-      orElse: () => const MapEntry('', {}),
-    ).value;
-    return tag['id']?.toString();
-  }
+  String? getTagId(String tagName) => _lookupTag(tagName)?['id']?.toString();
 
-  String? getTagPath(String tagName) {
-    final tag = _tagMap[tagName] ?? _tagMap.entries.firstWhere(
-      (entry) => entry.key.toLowerCase() == tagName.toLowerCase(),
-      orElse: () => const MapEntry('', {}),
-    ).value;
-    return tag['name_path']?.toString();
-  }
+  String? getTagPath(String tagName) =>
+      _lookupTag(tagName)?['name_path']?.toString();
 
   String getTagName(int id) {
     try {

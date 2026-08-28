@@ -82,28 +82,27 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
   late final AnimationController _marchingAntsController;
   late final Animation<Offset> _drawerSlideAnimation;
 
-  // Completes once the route push transition has settled. Everything heavier
-  // than the app bar (the full info body, network results, filter metadata) is
-  // held until then: the detail page's real content is a big widget tree, and
-  // building it mid-slide drops enough frames to swallow the transition whole.
-  // During the slide we show the lightweight skeleton; the instant it settles
-  // we render real content from the Series we were handed — no network wait.
+  // Completes once the route push transition has settled. The body renders
+  // straight away from the Series we were handed, but work that the user cannot
+  // see yet is held until this fires so it never competes with the slide:
+  // network results, filter metadata, and the below-the-fold tags card.
   final Completer<void> _canApplyData = Completer<void>();
   bool _routeAnimListenerAttached = false;
-  bool _transitionSettled = false;
 
   void _completeCanApplyData() {
     if (_canApplyData.isCompleted) return;
     _canApplyData.complete();
-    if (!mounted) {
-      _transitionSettled = true;
-      return;
-    }
-    setState(() => _transitionSettled = true);
   }
 
   @override
   Future<void> whenReadyToApplyData() => _canApplyData.future;
+
+  /// Completes once the push transition has settled.
+  ///
+  /// The body itself renders immediately, but content below the fold has no
+  /// reason to compete with the slide for frames — it can't be seen yet. The
+  /// tags card uses this to hold its build until the page has landed.
+  Future<void> get transitionSettled => _canApplyData.future;
 
   @override
   void didChangeDependencies() {
@@ -116,9 +115,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
         animation.status == AnimationStatus.completed ||
         animation.status == AnimationStatus.dismissed) {
       // No transition to wait on (already settled, or pushed without one).
-      // Set the flag directly — first build hasn't run, so no setState needed.
       if (!_canApplyData.isCompleted) _canApplyData.complete();
-      _transitionSettled = true;
       return;
     }
     void listener(AnimationStatus status) {
@@ -484,18 +481,26 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
     final isWide = screenWidth > 900;
     final isTablet = screenWidth > 600 && screenWidth <= 900;
 
-    // Once the push transition has settled, render the real body immediately
-    // from the Series we were handed — the common navigation paths (search,
-    // browse, library, home) all pass a fully-populated, precached Series, so
-    // there's no network wait. The richer `fullSeries` from the network then
-    // swaps into the same widgets without a layout jump. During the transition,
-    // and for sparse entrances (e.g. a bare reference) until the fetch resolves,
-    // the lightweight skeleton shows instead.
+    // Render the real body on the very first frame from the Series we were
+    // handed — the common navigation paths (search, browse, library, home) all
+    // pass a fully-populated, precached Series, so there is no network wait and
+    // nothing to show a skeleton *for*. The richer `fullSeries` from the network
+    // then swaps into the same widgets without a layout jump (held until the
+    // transition settles, see `whenReadyToApplyData`).
+    //
+    // This used to additionally wait on `_transitionSettled`, so the skeleton
+    // sat there for the full 360ms push before crossfading to content over
+    // another 350ms — a ~700ms floor on every open, spent withholding data the
+    // app already had. The build it was protecting is now cheap enough to land
+    // in the push's first frame (the tags card, which dominated it, both defers
+    // itself a frame and caps what it builds while collapsed).
+    //
+    // The skeleton still covers sparse entrances — a bare reference with no
+    // description or genres — until the fetch resolves.
     final displaySeries = fullSeries ?? widget.series;
     final hasInitialContent = displaySeries.description.isNotEmpty ||
         displaySeries.genres.isNotEmpty;
-    final displayLoaded =
-        isDataLoaded || (_transitionSettled && hasInitialContent);
+    final displayLoaded = isDataLoaded || hasInitialContent;
 
     return ListenableBuilder(
       listenable: Listenable.merge([LocalizationService(), getIt<ProfileAuthService>()]),

@@ -1,20 +1,24 @@
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/features/series/models/tag_chip_data.dart';
 import 'package:mangabaka_app/features/series/widgets/chip.dart';
-import 'package:mangabaka_app/core/di/service_locator.dart';
-import 'package:mangabaka_app/features/series/services/metadata_service.dart';
-import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
 
 class SeriesTagGroup extends StatefulWidget {
   final String header;
-  final Map<String, List<String>> subGroups;
+  final Map<String, List<TagChipData>> subGroups;
+  final Set<String> selectedTagIds;
+  final ValueChanged<String> onTagTap;
+  final ValueChanged<String> onTagLongPress;
   final VoidCallback? onToggle;
 
   const SeriesTagGroup({
     super.key,
     required this.header,
     required this.subGroups,
+    required this.selectedTagIds,
+    required this.onTagTap,
+    required this.onTagLongPress,
     this.onToggle,
   });
 
@@ -105,7 +109,7 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
-                                    children: tags.map((tag) => _buildTagChip(tag)).toList(),
+                                    children: tags.map(_buildTagChip).toList(),
                                   ),
                                   if (subEntry.key != widget.subGroups.keys.last)
                                     const SizedBox(height: 16),
@@ -123,27 +127,9 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
     );
   }
 
-  Widget _buildTagChip(String tag) {
-    final metadataService = getIt<MetadataService>();
-    final path = metadataService.getTagPath(tag) ?? tag;
-    final parts = path.split(' > ');
-    
-    String displayName = tag;
-    if (parts.length >= 2) {
-      if (parts.length == 2) {
-        displayName = parts[1];
-      } else if (parts.length == 3) {
-        displayName = parts[2];
-      } else {
-        displayName = parts.sublist(2).join(' > ');
-      }
-    }
-
-    final tagParts = displayName.split(' > ');
-
-    final detailState = SeriesDetailScreen.of(context);
-    final tagId = metadataService.getTagId(tag) ?? tag;
-    final isSelected = detailState?.drawerFilters?.tag.contains(tagId) ?? false;
+  Widget _buildTagChip(TagChipData data) {
+    final tagParts = data.labelParts;
+    final isSelected = widget.selectedTagIds.contains(data.tagId);
 
     return ChipBase(
       borderRadius: AppConstants.pillRadius,
@@ -154,15 +140,8 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
           ? AppConstants.accentColor
           : AppConstants.borderColor,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      onTap: () {
-        final isSelecting = detailState?.drawerFilters != null;
-        if (isSelecting) {
-          detailState?.handleTagLongPress(tag);
-        } else {
-          detailState?.handleTagTap(tag);
-        }
-      },
-      onLongPress: () => detailState?.handleTagLongPress(tag),
+      onTap: () => widget.onTagTap(data.tag),
+      onLongPress: () => widget.onTagLongPress(data.tag),
       label: Text.rich(
         TextSpan(
           children: [
