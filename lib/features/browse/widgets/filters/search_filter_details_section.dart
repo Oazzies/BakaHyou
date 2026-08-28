@@ -38,6 +38,7 @@ class SearchFilterDetailsSection extends StatelessWidget {
                       ? l10n.translate('yes')
                       : l10n.translate('no')),
               isFirst: true,
+              iconColor: AppConstants.accentColor,
               onTap: () => SearchFilterDialogs.showLicensedStatusDialog(
                 context: context,
                 l10n: l10n,

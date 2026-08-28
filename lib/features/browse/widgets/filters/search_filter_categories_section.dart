@@ -70,6 +70,7 @@ class SearchFilterCategoriesSection extends StatelessWidget {
                   ? l10n.translate('any')
                   : '${filters.genre.length} ${l10n.translate('included')}, ${filters.genreNot.length} ${l10n.translate('excluded')}',
               isFirst: true,
+              iconColor: const Color(0xFFAC4BFF),
               onTap: () => _showFilterDialog(
                 context,
                 title: l10n.translate('genres'),
@@ -91,6 +92,7 @@ class SearchFilterCategoriesSection extends StatelessWidget {
                   ? l10n.translate('any')
                   : '${filters.tag.length} ${l10n.translate('included')}, ${filters.tagNot.length} ${l10n.translate('excluded')}',
               isLast: true,
+              iconColor: const Color(0xFFD71F75),
               onTap: () => _showFilterDialog(
                 context,
                 title: l10n.translate('tags'),

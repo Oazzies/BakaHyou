@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/features/profile/widgets/settings/settings_components.dart';
@@ -34,6 +35,7 @@ class SearchFilterSortSection extends StatelessWidget {
                   : sortOptions[filters.sortBy!],
               isFirst: true,
               isLast: true,
+              iconColor: AppConstants.infoColor,
               onTap: () => SearchFilterDialogs.showSortSelectionDialog(
                 context: context,
                 l10n: l10n,

@@ -148,14 +148,27 @@ class ListCustomizationSettings extends StatefulWidget {
       _ListCustomizationSettingsState();
 }
 
-class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
+class _ListCustomizationSettingsState extends State<ListCustomizationSettings>
+    with SingleTickerProviderStateMixin {
   int _activeTab = 0; // 0 = Library, 1 = Browse
+
   late final ScrollController _scrollController;
+
+  /// Drives the horizontal slide of the whole panel below the tab selector.
+  /// Sits at 1.0 when settled; [_switchTab] restarts it from 0.0 so the new
+  /// tab's content slides in from [_slideSign] * screen width.
+  late final AnimationController _slideController;
+  double _slideSign = 1.0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+      value: 1.0,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToSelected(animated: false);
     });
@@ -163,8 +176,22 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
 
   @override
   void dispose() {
+    _slideController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Switches to [tab] and plays the slide-in animation. No-op if already there.
+  void _switchTab(int tab) {
+    if (tab == _activeTab) return;
+    setState(() {
+      _slideSign = tab > _activeTab ? 1.0 : -1.0;
+      _activeTab = tab;
+    });
+    _slideController.forward(from: 0.0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToSelected(animated: false);
+    });
   }
 
   void _scrollToSelected({bool animated = true}) {
@@ -232,12 +259,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                   Expanded(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        setState(() => _activeTab = 0);
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToSelected(animated: true);
-                        });
-                      },
+                      onTap: () => _switchTab(0),
                       child: Center(
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 150),
@@ -259,12 +281,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                   Expanded(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        setState(() => _activeTab = 1);
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToSelected(animated: true);
-                        });
-                      },
+                      onTap: () => _switchTab(1),
                       child: Center(
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 150),
@@ -412,6 +429,36 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
   Widget build(BuildContext context) {
     final settings = SettingsManager();
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. Library/Browse Tab Selector
+        _buildTabSelector(settings),
+
+        // 2. Everything below the tab selector slides in horizontally whenever
+        //    the active tab changes, so it reads as a different list even when
+        //    Library and Browse are configured to look identical.
+        ClipRect(
+          child: AnimatedBuilder(
+            animation: _slideController,
+            builder: (context, child) {
+              final t = Curves.easeOutCubic.transform(_slideController.value);
+              return Opacity(
+                opacity: t,
+                child: FractionalTranslation(
+                  translation: Offset(_slideSign * (1.0 - t), 0.0),
+                  child: child,
+                ),
+              );
+            },
+            child: _buildTabContent(context, settings),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabContent(BuildContext context, SettingsManager settings) {
     final activeStyle = _activeTab == 0
         ? settings.libraryListStyle
         : settings.browseListStyle;
@@ -436,42 +483,26 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1. Library/Browse Tab Selector
-        _buildTabSelector(settings),
-        
-        // 2. List Preview
+        // List Preview. Cross-fades when the style or a progress toggle changes
+        // within a tab; the panel-level slide handles tab switches, so this one
+        // deliberately does not move horizontally.
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOutCubic,
           alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              final slideAnimation = Tween<Offset>(
-                begin: const Offset(0.0, 0.04),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              ));
-
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: slideAnimation,
-                  child: child,
-                ),
-              );
-            },
-            child: ListStyleLivePreview(
-              key: ValueKey('${activeStyle.name}_${settings.showLibraryProgress}_${settings.showRemainingProgress}_${settings.libraryProgressType.name}_${gridColumnsValue}_${settings.compactGridTitleRows}'),
-              style: activeStyle,
-              showLibraryProgress: settings.showLibraryProgress,
-              showRemainingProgress: settings.showRemainingProgress,
-              progressType: settings.libraryProgressType,
-              gridColumnCount: gridColumnsValue,
+          child: ClipRect(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: ListStyleLivePreview(
+                key: ValueKey('${activeStyle.name}_${settings.showLibraryProgress}_${settings.showRemainingProgress}_${settings.libraryProgressType.name}_${gridColumnsValue}_${settings.compactGridTitleRows}'),
+                style: activeStyle,
+                showLibraryProgress: settings.showLibraryProgress,
+                showRemainingProgress: settings.showRemainingProgress,
+                progressType: settings.libraryProgressType,
+                gridColumnCount: gridColumnsValue,
+              ),
             ),
           ),
         ),
@@ -557,7 +588,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                 onChanged: (val) {
                   settings.setSeparateGridColumnCounts(val);
                   if (!val) {
-                    setState(() => _activeTab = 0);
+                    _switchTab(0);
                   }
                 },
                 isFirst: true,

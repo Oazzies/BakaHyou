@@ -33,11 +33,23 @@ class SettingsSwitchItem extends StatelessWidget {
         bottom: isLast ? Radius.circular(AppConstants.cardRadius) : Radius.zero,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 14.0),
         child: Row(
           children: [
-            Icon(icon, color: iconColor ?? AppConstants.textMutedColor, size: 24),
-            const SizedBox(width: 16),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppConstants.tertiaryBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor ?? AppConstants.accentColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

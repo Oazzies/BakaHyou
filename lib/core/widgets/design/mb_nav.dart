@@ -25,40 +25,56 @@ class _MbNavItem extends StatelessWidget {
   final MbNavDestination destination;
   final bool selected;
   final VoidCallback onTap;
+  final bool expand;
 
   const _MbNavItem({
     required this.destination,
     required this.selected,
     required this.onTap,
+    this.expand = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget child = AnimatedContainer(
+      duration: AppMotion.base,
+      curve: AppMotion.overshoot,
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: selected ? AppConstants.accentColor : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        selected ? destination.selectedIcon : destination.icon,
+        size: 23,
+        color: selected
+            ? AppConstants.onAccent
+            : AppConstants.textMutedColor,
+      ),
+    );
+
+    if (expand) {
+      child = Center(child: child);
+    }
+
     return Semantics(
       button: true,
       selected: selected,
       label: destination.label,
-      child: Tooltip(
-        message: destination.label,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 28,
-          child: AnimatedContainer(
-            duration: AppMotion.base,
-            curve: AppMotion.overshoot,
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: selected ? AppConstants.accentColor : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              selected ? destination.selectedIcon : destination.icon,
-              size: 23,
-              color: selected
-                  ? AppConstants.onAccent
-                  : AppConstants.textMutedColor,
-            ),
+      child: Padding(
+        padding: expand ? const EdgeInsets.symmetric(horizontal: 1.0) : EdgeInsets.zero,
+        child: Tooltip(
+          message: destination.label,
+          child: InkResponse(
+            onTap: onTap,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            splashFactory: NoSplash.splashFactory,
+            containedInkWell: expand,
+            radius: expand ? null : 28,
+            child: child,
           ),
         ),
       ),
@@ -92,10 +108,13 @@ class MbBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               for (var i = 0; i < destinations.length; i++)
-                _MbNavItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onDestinationSelected(i),
+                Expanded(
+                  child: _MbNavItem(
+                    destination: destinations[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onDestinationSelected(i),
+                    expand: true,
+                  ),
                 ),
             ],
           ),
