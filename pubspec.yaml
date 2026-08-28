@@ -38,7 +38,6 @@ dependencies:
   cached_network_image: ^3.4.1
   window_manager: ^0.4.3
   shimmer: ^3.0.0
-  google_fonts: ^6.2.1
   vector_math: ^2.2.0
   device_info_plus: ^13.1.0
   open_filex: ^4.7.0
@@ -75,6 +74,21 @@ flutter:
     - assets/mangabaka512.png
     - assets/series_222_cover.jpg
   uses-material-design: true
+
+  fonts:
+    - family: BakbakOne
+      fonts:
+        - asset: assets/fonts/BakbakOne-Regular.ttf
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 700
 
 msix_config:
   display_name: MangaBaka

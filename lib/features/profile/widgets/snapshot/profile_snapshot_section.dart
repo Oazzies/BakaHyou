@@ -30,17 +30,16 @@ class ProfileSnapshotSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.translate('library_snapshot'),
-          style: AppTypography.serif(
+          l10n.translate('library_snapshot').toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
-            fontSize: 23,
-            fontWeight: FontWeight.w500,
+            fontSize: 20,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           l10n.translate('snapshot_desc'),
-          style: TextStyle(color: AppConstants.textMutedColor),
+          style: AppTypography.sans(color: AppConstants.textMutedColor),
         ),
         const SizedBox(height: 16),
         SnapshotList(

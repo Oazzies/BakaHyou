@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/series_cover.dart';
 import 'package:mangabaka_app/features/series/screens/full_screen_image_screen.dart';
@@ -94,7 +95,7 @@ class SeriesCoversTab extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ).animate(onPlay: (controller) => controller.repeat())
-             .shimmer(duration: 1500.ms, color: AppConstants.borderColor.withValues(alpha: 0.3));
+             .shimmer(duration: 1500.ms, color: AppConstants.tertiaryBackground);
           },
         ),
       ],
@@ -257,7 +258,7 @@ class _HoverableCoverItemState extends State<_HoverableCoverItem> {
                 widget.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textColor,
                   fontSize: 12,
                 ),

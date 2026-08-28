@@ -1,8 +1,10 @@
+import 'package:mangabaka_app/core/widgets/design/mb_button.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
@@ -12,7 +14,6 @@ import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/welcome_page.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/language_page.dart';
-import 'package:mangabaka_app/features/navigation/widgets/onboarding/theme_page.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/camera_permission_page.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/content_preferences_page.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/login_page.dart';
@@ -35,7 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _isLoggingIn = false;
   bool _isLoggedIn = false;
 
-  static const int _totalPages = 6;
+  static const int _totalPages = 5;
 
   @override
   void initState() {
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         final localization = LocalizationService();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(localization.translate('onboarding_login_failed'), style: TextStyle(color: AppConstants.errorColor)),
+            content: Text(localization.translate('onboarding_login_failed'), style: AppTypography.sans(color: AppConstants.errorColor)),
             backgroundColor: AppConstants.secondaryBackground,
             behavior: SnackBarBehavior.floating,
           ),
@@ -131,7 +132,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService()]),
+      listenable: LocalizationService(),
       builder: (context, _) {
         return Scaffold(
           backgroundColor: AppConstants.primaryBackground,
@@ -151,7 +152,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         const WelcomePage(),
                         const LanguagePage(),
-                        const ThemePage(),
                         const ContentPreferencesPage(),
                         CameraPermissionPage(
                           onRequestPermission: _requestCameraPermission,
@@ -196,15 +196,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               (index) {
                 final isSelected = _currentPage == index;
                 return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
+                  duration: AppMotion.base,
+                  curve: AppMotion.emphasized,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isSelected ? 16 : 6,
+                  width: isSelected ? 22 : 6,
                   height: 6,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(3),
                     color: isSelected
                         ? AppConstants.accentColor
-                        : AppConstants.textMutedColor.withValues(alpha: 0.2),
+                        : AppConstants.tertiaryBackground,
                   ),
                 );
               },
@@ -238,22 +239,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const SizedBox(width: 16),
               Expanded(
                 flex: 2,
-                child: FilledButton(
+                child: MbPrimaryButton(
+                  label: isLastPage
+                      ? localization.translate('onboarding_finish')
+                      : localization.translate('onboarding_next'),
                   onPressed: _nextPage,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppConstants.accentColor,
-                    foregroundColor: AppConstants.primaryBackground,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: isShort ? 12 : 16),
-                  ),
-                  child: Text(
-                    isLastPage 
-                        ? localization.translate('onboarding_finish') 
-                        : localization.translate('onboarding_next'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
               ),
             ],

@@ -7,7 +7,6 @@ import 'package:mangabaka_app/features/news/screens/news_screen.dart';
 import 'package:mangabaka_app/features/profile/screens/profile_screen.dart';
 import 'package:mangabaka_app/features/library/widgets/sync_progress_overlay.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/core/settings/settings_enums.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
@@ -16,6 +15,8 @@ import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 import 'package:mangabaka_app/features/library/widgets/library_search_bar.dart';
 import 'package:mangabaka_app/features/browse/widgets/search/mb_search_bar.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:mangabaka_app/core/widgets/design/mb_nav.dart';
 
 // ---------------------------------------------------------------------------
 // Nav destination data
@@ -128,7 +129,7 @@ class MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService(), SettingsManager()]),
+      listenable: Listenable.merge([LocalizationService(), SettingsManager()]),
       builder: (context, _) {
         final isTablet = MediaQuery.of(context).size.width >= 600;
         final l10n = LocalizationService();
@@ -151,6 +152,43 @@ class MainScreenState extends State<MainScreen> {
 
   // Wraps pages in a nested Navigator so routes pushed from within (e.g.
   // series detail) stay inside the content area and the navbar remains visible.
+  List<MbNavDestination> _destinations(LocalizationService l10n) => [
+        for (final item in _navItems)
+          MbNavDestination(
+            icon: item.icon,
+            selectedIcon: item.selectedIcon,
+            label: l10n.translate(item.labelKey),
+          ),
+      ];
+
+  Widget _settingsRailButton(BuildContext context, LocalizationService l10n) {
+    return WidgetUtils.tooltip(
+      message: l10n.translate('settings'),
+      child: IconButton(
+        icon: const Icon(Icons.settings_outlined),
+        onPressed: () => SettingsScreen.show(context),
+        color: AppConstants.textMutedColor,
+      ),
+    );
+  }
+
+  Widget _railLogo() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppConstants.accentColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppConstants.denseRadius),
+          ),
+          child: Image.asset('assets/mangabaka512.png', width: 36, height: 36),
+        ),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+
   Widget _buildContentWithNestedNav() {
     return Stack(
       children: [
@@ -187,7 +225,7 @@ class MainScreenState extends State<MainScreen> {
 
     if (position == LandscapeAppBarPosition.top) {
       return Scaffold(
-        backgroundColor: AppConstants.secondaryBackground,
+        backgroundColor: AppConstants.primaryBackground,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(72),
           child: _buildTopNavBar(context, l10n),
@@ -198,83 +236,37 @@ class MainScreenState extends State<MainScreen> {
 
     if (position == LandscapeAppBarPosition.bottom) {
       return Scaffold(
-        backgroundColor: AppConstants.secondaryBackground,
+        backgroundColor: AppConstants.primaryBackground,
         body: content,
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: MbBottomNav(
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          height: 64,
-          destinations: _navItems
-              .map((item) => NavigationDestination(
-                    icon: Icon(item.icon),
-                    selectedIcon: Icon(item.selectedIcon),
-                    label: l10n.translate(item.labelKey),
-                  ))
-              .toList(),
+          destinations: _destinations(l10n),
         ),
       );
     }
 
     if (position == LandscapeAppBarPosition.right) {
       return Scaffold(
-        backgroundColor: AppConstants.secondaryBackground,
+        backgroundColor: AppConstants.primaryBackground,
         body: Row(
           children: [
             Expanded(child: nestedContent),
             Container(
               width: 1,
-              color: AppConstants.borderColor.withValues(alpha: 0.3),
+              color: AppConstants.borderColor,
             ),
             Container(
               width: 88,
-              color: AppConstants.secondaryBackground,
+              color: AppConstants.primaryBackground,
               child: SafeArea(
                 left: false,
-                child: NavigationRail(
+                child: MbNavRail(
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: _onItemTapped,
-                  leading: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppConstants.accentColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(AppConstants.denseRadius),
-                        ),
-                        child: Image.asset(
-                          'assets/mangabaka512.png',
-                          width: 36,
-                          height: 36,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                  destinations: _navItems
-                      .map((item) => NavigationRailDestination(
-                            icon: Icon(item.icon),
-                            selectedIcon: Icon(item.selectedIcon),
-                            label: Text(l10n.translate(item.labelKey)),
-                          ))
-                      .toList(),
-                  trailing: Expanded(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: WidgetUtils.tooltip(
-                          message: l10n.translate('settings'),
-                          child: IconButton(
-                            icon: const Icon(Icons.settings_outlined),
-                            onPressed: () => SettingsScreen.show(context),
-                            color: AppConstants.textMutedColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  destinations: _destinations(l10n),
+                  leading: _railLogo(),
+                  trailing: _settingsRailButton(context, l10n),
                 ),
               ),
             ),
@@ -285,64 +277,26 @@ class MainScreenState extends State<MainScreen> {
 
     // Default: left rail
     return Scaffold(
-      backgroundColor: AppConstants.secondaryBackground,
+      backgroundColor: AppConstants.primaryBackground,
       body: Row(
         children: [
           Container(
             width: 88,
-            color: AppConstants.secondaryBackground,
+            color: AppConstants.primaryBackground,
             child: SafeArea(
               right: false,
-              child: NavigationRail(
+              child: MbNavRail(
                 selectedIndex: _selectedIndex,
                 onDestinationSelected: _onItemTapped,
-                leading: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppConstants.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppConstants.denseRadius),
-                      ),
-                      child: Image.asset(
-                        'assets/mangabaka512.png',
-                        width: 36,
-                        height: 36,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-                destinations: _navItems
-                    .map((item) => NavigationRailDestination(
-                          icon: Icon(item.icon),
-                          selectedIcon: Icon(item.selectedIcon),
-                          label: Text(l10n.translate(item.labelKey)),
-                        ))
-                    .toList(),
-                trailing: Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 24.0),
-                      child: WidgetUtils.tooltip(
-                        message: l10n.translate('settings'),
-                        child: IconButton(
-                          icon: const Icon(Icons.settings_outlined),
-                          onPressed: () => SettingsScreen.show(context),
-                          color: AppConstants.textMutedColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                destinations: _destinations(l10n),
+                leading: _railLogo(),
+                trailing: _settingsRailButton(context, l10n),
               ),
             ),
           ),
           Container(
             width: 1,
-            color: AppConstants.borderColor.withValues(alpha: 0.3),
+            color: AppConstants.borderColor,
           ),
           Expanded(child: nestedContent),
         ],
@@ -385,12 +339,9 @@ class MainScreenState extends State<MainScreen> {
     return Container(
       height: 72,
       decoration: BoxDecoration(
-        color: AppConstants.secondaryBackground,
+        color: AppConstants.primaryBackground,
         border: Border(
-          bottom: BorderSide(
-            color: AppConstants.borderColor.withValues(alpha: 0.5),
-            width: 1,
-          ),
+          bottom: BorderSide(color: AppConstants.borderColor, width: 1),
         ),
       ),
       child: SafeArea(
@@ -414,12 +365,10 @@ class MainScreenState extends State<MainScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                'MangaBaka',
-                style: TextStyle(
+                'MANGABAKA',
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                  fontSize: 17,
                 ),
               ),
               const SizedBox(width: 32),
@@ -460,10 +409,9 @@ class MainScreenState extends State<MainScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              l10n.translate(item.labelKey),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                              l10n.translate(item.labelKey).toUpperCase(),
+                              style: AppTypography.display(
+                                fontSize: 13,
                                 color: isSelected
                                     ? AppConstants.textColor
                                     : AppConstants.textMutedColor,
@@ -505,18 +453,10 @@ class MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: AppConstants.primaryBackground,
       body: content,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: MbBottomNav(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        height: 64,
-        destinations: _navItems
-            .map((item) => NavigationDestination(
-                  icon: Icon(item.icon),
-                  selectedIcon: Icon(item.selectedIcon),
-                  label: l10n.translate(item.labelKey),
-                ))
-            .toList(),
+        destinations: _destinations(l10n),
       ),
     );
   }

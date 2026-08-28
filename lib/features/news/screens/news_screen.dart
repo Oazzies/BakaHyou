@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 import 'package:mangabaka_app/features/news/models/news.dart';
 import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
 import 'package:mangabaka_app/features/news/services/news_service.dart';
@@ -6,7 +7,6 @@ import 'package:mangabaka_app/features/news/widgets/news_list_item.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
@@ -162,8 +162,7 @@ class _NewsScreenState extends State<NewsScreen> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         LocalizationService(),
-        ThemeManager(),
-        SettingsManager(),
+                SettingsManager(),
       ]),
       builder: (context, _) {
         final l10n = LocalizationService();
@@ -204,11 +203,10 @@ class _NewsScreenState extends State<NewsScreen> {
     return AppBar(
       centerTitle: true,
       title: Text(
-        l10n.translate('news'),
-        style: AppTypography.serif(
+        l10n.translate('news').toUpperCase(),
+        style: AppTypography.display(
           color: AppConstants.textColor,
-          fontWeight: FontWeight.w500,
-          fontSize: 22,
+          fontSize: 20,
         ),
       ),
       actions: [
@@ -248,7 +246,7 @@ class _NewsScreenState extends State<NewsScreen> {
           _error != null
               ? '${l10n.translate('failed_to_load')}: $_error'
               : l10n.translate('no_results'),
-          style: TextStyle(color: AppConstants.textMutedColor),
+          style: AppTypography.sans(color: AppConstants.textMutedColor),
         ),
       );
     }
@@ -320,9 +318,12 @@ class _NewsScreenState extends State<NewsScreen> {
             ),
           );
         }
-        return NewsListItem(
-          key: ValueKey('list_${_newsList[index].id}'),
-          news: _newsList[index],
+        return MbEntrance(
+          index: index,
+          child: NewsListItem(
+            key: ValueKey('list_${_newsList[index].id}'),
+            news: _newsList[index],
+          ),
         );
       },
     );

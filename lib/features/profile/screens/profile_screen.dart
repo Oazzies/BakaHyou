@@ -4,12 +4,12 @@ import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
 import 'package:mangabaka_app/features/profile/services/statistics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/features/library/services/library_service.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/profile/widgets/login/mb_login_prompt.dart';
 import 'package:mangabaka_app/features/profile/widgets/statistics/profile_statistics_section.dart';
 import 'package:mangabaka_app/features/profile/widgets/snapshot/profile_snapshot_section.dart';
@@ -197,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> with ProfileDataMixin {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([LocalizationService(), ThemeManager()]),
+      listenable: LocalizationService(),
       builder: (context, _) {
         final l10n = LocalizationService();
         final screenWidth = MediaQuery.of(context).size.width;
@@ -210,13 +210,11 @@ class _ProfileScreenState extends State<ProfileScreen> with ProfileDataMixin {
           appBar: AppBar(
             centerTitle: true,
             title: Text(
-              _buildProfileTitle(username, l10n),
-              style: TextStyle(
-                color: AppConstants.textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                letterSpacing: -0.5,
-              ),
+              _buildProfileTitle(username, l10n).toUpperCase(),
+              style: AppTypography.display(
+            color: AppConstants.textColor,
+            fontSize: 20,
+          ),
             ),
             actions: [
               if (screenWidth < 600)

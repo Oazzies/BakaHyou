@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -33,24 +34,23 @@ class StandoutPickCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(color: AppConstants.textMutedColor, fontSize: 14),
+            style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 14),
           ),
           const SizedBox(height: 8),
           GestureDetector(
             onTap: onTap,
             child: Text(
               title,
-              style: TextStyle(
+              style: AppTypography.display(
                 color: AppConstants.accentColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
+            style: AppTypography.sans(
               color: AppConstants.textColor,
               fontSize: 16,
               fontWeight: FontWeight.w500,

@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/staff/models/staff.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -45,7 +46,7 @@ class StaffListItem extends StatelessWidget {
         ),
         title: Text(
           staff.name,
-          style: const TextStyle(
+          style: AppTypography.sans(
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -56,7 +57,7 @@ class StaffListItem extends StatelessWidget {
             if (staff.nativeName != null)
               Text(
                 staff.nativeName!,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textMutedColor,
                   fontSize: 14,
                 ),
@@ -66,7 +67,7 @@ class StaffListItem extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Text(
                   staff.role!,
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.accentColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -81,14 +82,14 @@ class StaffListItem extends StatelessWidget {
                 children: [
                   Text(
                     staff.seriesCount.toString(),
-                    style: const TextStyle(
+                    style: AppTypography.sans(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
                     'Series',
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textMutedColor,
                       fontSize: 10,
                     ),

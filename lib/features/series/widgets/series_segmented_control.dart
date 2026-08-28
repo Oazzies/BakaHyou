@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -71,32 +72,44 @@ class _SeriesSegmentedControlState extends State<SeriesSegmentedControl>
 
   @override
   Widget build(BuildContext context) {
+    // Same pill strip as the library tabs, so a "one of many" choice looks
+    // identical wherever it appears.
     return SelectionContainer.disabled(
       child: TabBar(
         controller: _controller,
         isScrollable: true,
         tabAlignment: TabAlignment.start,
-        padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
+        // The strip's own indicatorPadding already insets each pill by 5, so
+        // the outer padding is reduced to match — clamped, because callers
+        // (the wide layout) legitimately pass 0.
+        padding: EdgeInsets.symmetric(
+          horizontal: (widget.horizontalPadding - 5).clamp(0.0, 64.0),
+        ),
         dividerColor: Colors.transparent,
-        indicatorColor: AppConstants.accentColor,
-        indicatorSize: TabBarIndicatorSize.label,
-        indicatorWeight: 2,
-        labelColor: AppConstants.textColor,
-        unselectedLabelColor: AppConstants.textMutedColor,
-        labelStyle: const TextStyle(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.1,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: AppConstants.accentColor,
+          borderRadius: BorderRadius.circular(AppConstants.pillRadius),
         ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.1,
+        indicatorPadding: const EdgeInsets.symmetric(
+          horizontal: 5,
+          vertical: 6,
         ),
+        labelPadding: EdgeInsets.zero,
+        labelColor: AppConstants.onAccent,
+        unselectedLabelColor: AppConstants.textColor,
+        labelStyle: AppTypography.display(fontSize: 13),
+        unselectedLabelStyle: AppTypography.display(fontSize: 13),
         overlayColor: WidgetStateProperty.all(Colors.transparent),
         splashFactory: NoSplash.splashFactory,
         tabs: SeriesSegmentedControl.tabs
-            .map((t) => Tab(text: t, height: 44))
+            .map((t) => Tab(
+                  height: 48,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Text(t.toUpperCase()),
+                  ),
+                ))
             .toList(),
       ),
     );

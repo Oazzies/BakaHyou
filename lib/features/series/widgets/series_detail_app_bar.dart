@@ -197,7 +197,7 @@ class _SeriesDetailAppBarState extends State<SeriesDetailAppBar> {
                 opacity: titleOpacity,
                 child: Text(
                   widget.title,
-                  style: AppTypography.serif(
+                  style: AppTypography.display(
                     color: AppConstants.textColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 19,

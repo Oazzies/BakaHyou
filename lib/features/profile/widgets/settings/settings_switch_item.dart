@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -41,7 +42,7 @@ class SettingsSwitchItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textColor,
                       fontSize: 16,
                     ),
@@ -50,7 +51,7 @@ class SettingsSwitchItem extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle!,
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textMutedColor,
                         fontSize: 14,
                       ),

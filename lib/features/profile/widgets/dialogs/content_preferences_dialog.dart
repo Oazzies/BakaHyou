@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
@@ -60,24 +61,23 @@ class ContentPreferencesDialogs {
                       width: 32,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppConstants.borderColor.withValues(alpha: 0.15),
+                        color: AppConstants.tertiaryBackground,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    l10n.translate('content_preferences'),
-                    style: TextStyle(
+                    l10n.translate('content_preferences').toUpperCase(),
+                    style: AppTypography.display(
                       color: AppConstants.textColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     l10n.translate('content_preferences_subtitle'),
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textMutedColor,
                       fontSize: 13,
                     ),
@@ -94,7 +94,7 @@ class ContentPreferencesDialogs {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: AppConstants.borderColor.withValues(alpha: 0.05),
+                            color: AppConstants.tertiaryBackground,
                             width: 1,
                           ),
                         ),
@@ -113,7 +113,7 @@ class ContentPreferencesDialogs {
                                 children: [
                                   Text(
                                     label,
-                                    style: TextStyle(
+                                    style: AppTypography.sans(
                                       color: isSelected
                                           ? AppConstants.textColor
                                           : AppConstants.textMutedColor,
@@ -150,7 +150,7 @@ class ContentPreferencesDialogs {
                             Container(
                               width: 1,
                               height: 24,
-                              color: AppConstants.borderColor.withValues(alpha: 0.1),
+                              color: AppConstants.borderColor,
                             ),
                             const SizedBox(width: 16),
                             WidgetUtils.tooltip(

@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/series_collection.dart';
 import 'package:mangabaka_app/features/series/widgets/series_section_header.dart';
@@ -119,12 +120,12 @@ class SeriesCollectionsTab extends StatelessWidget {
                   children: [
                     Text(
                       col.title,
-                      style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: AppTypography.sans(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${col.publisherName} | ${col.editionName}',
-                      style: TextStyle(color: AppConstants.textMutedColor, fontSize: 13),
+                      style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 13),
                     ),
                   ],
                 ),
@@ -137,7 +138,7 @@ class SeriesCollectionsTab extends StatelessWidget {
                 ),
                 child: Text(
                   '${col.countMain} Vols',
-                  style: TextStyle(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: AppTypography.sans(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
                 ),
               ),
             ],
@@ -167,7 +168,7 @@ class SeriesCollectionsTab extends StatelessWidget {
       ),
       child: Text(
         text.toUpperCase(),
-        style: TextStyle(color: AppConstants.textMutedColor, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -161,7 +162,7 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
       ),
       title: Text(
         title,
-        style: TextStyle(
+        style: AppTypography.sans(
           color: AppConstants.textColor,
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -183,7 +184,7 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.largeRadius),
           side: BorderSide(
-            color: AppConstants.borderColor.withValues(alpha: 0.2),
+            color: AppConstants.tertiaryBackground,
             width: 1.5,
           ),
         ),
@@ -207,11 +208,10 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                l10n.translate('delete_from_library'),
-                style: TextStyle(
+                l10n.translate('delete_from_library').toUpperCase(),
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 18,
                 ),
               ),
             ),
@@ -219,7 +219,7 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
         ),
         content: Text(
           l10n.translate('delete_confirmation'),
-          style: TextStyle(color: AppConstants.textMutedColor, fontSize: 15, height: 1.4),
+          style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 15, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -229,7 +229,7 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
             ),
             child: Text(
               l10n.translate('cancel'),
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textMutedColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -260,7 +260,7 @@ mixin SeriesDetailActionsMixin<T extends StatefulWidget> on State<T> {
             ),
             child: Text(
               l10n.translate('confirm'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTypography.sans(fontWeight: FontWeight.bold),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -31,11 +32,10 @@ class LogoutDialog {
             ),
             const SizedBox(width: 12),
             Text(
-              l10n.translate('logout'),
-              style: TextStyle(
+              l10n.translate('logout').toUpperCase(),
+              style: AppTypography.display(
                 color: AppConstants.textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
+                fontSize: 20,
               ),
             ),
           ],
@@ -46,7 +46,7 @@ class LogoutDialog {
           children: [
             Text(
               'Are you sure you want to log out?',
-              style: TextStyle(color: AppConstants.textColor, fontSize: 16),
+              style: AppTypography.sans(color: AppConstants.textColor, fontSize: 16),
             ),
             const SizedBox(height: 16),
             Container(
@@ -70,7 +70,7 @@ class LogoutDialog {
                   Expanded(
                     child: Text(
                       'Your local library data will be cleared and must be reimported when you log back in.',
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.errorColor.withValues(alpha: 0.8),
                         fontSize: 13,
                         height: 1.4,
@@ -90,7 +90,7 @@ class LogoutDialog {
             ),
             child: Text(
               l10n.translate('cancel'),
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textMutedColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -109,7 +109,7 @@ class LogoutDialog {
             ),
             child: Text(
               l10n.translate('logout'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTypography.sans(fontWeight: FontWeight.bold),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/features/library/models/library_entry.dart';
 import 'package:mangabaka_app/features/profile/widgets/snapshot/snapshot_list_item.dart';
 import 'package:flutter/material.dart';
@@ -50,11 +51,10 @@ class _SnapshotListState extends State<SnapshotList> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.title,
-          style: TextStyle(
+          widget.title.toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: 15,
           ),
         ),
         const SizedBox(height: 8),

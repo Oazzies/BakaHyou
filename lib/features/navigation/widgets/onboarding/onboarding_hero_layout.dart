@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 
@@ -41,41 +42,49 @@ class OnboardingHeroLayout extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(isShort ? 16 : 24),
-              decoration: BoxDecoration(
-                color: AppConstants.accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                icon,
-                size: isShort ? 48 : 64,
-                color: AppConstants.accentColor,
+            MbEntrance(
+              child: Container(
+                padding: EdgeInsets.all(isShort ? 16 : 24),
+                decoration: BoxDecoration(
+                  color: AppConstants.accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppConstants.largeRadius),
+                ),
+                child: Icon(
+                  icon,
+                  size: isShort ? 48 : 64,
+                  color: AppConstants.accentColor,
+                ),
               ),
             ),
             SizedBox(height: isShort ? 24 : 40),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: AppTypography.serif(
-                fontSize: isShort ? 24 : titleFontSize,
-                fontWeight: FontWeight.w500,
-                color: AppConstants.textColor,
+            MbEntrance(
+              index: 1,
+              child: Text(
+                title.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: AppTypography.display(
+                  fontSize: isShort ? 24 : titleFontSize,
+                  color: AppConstants.textColor,
+                  height: 1.1,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isShort ? 14 : 16,
-                color: AppConstants.textMutedColor,
-                height: 1.5,
+            MbEntrance(
+              index: 2,
+              child: Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: AppTypography.sans(
+                  fontSize: isShort ? 14 : 16,
+                  color: AppConstants.textMutedColor,
+                  height: 1.5,
+                ),
               ),
             ),
             if (action != null) ...[
               SizedBox(height: isShort ? 24 : 40),
-              action!,
+              MbEntrance(index: 3, child: action!),
             ],
           ],
         ),

@@ -1,3 +1,5 @@
+import 'package:mangabaka_app/core/motion/app_motion.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/library/models/library_entry.dart';
 import 'package:mangabaka_app/features/series/widgets/entry_list_item.dart';
@@ -50,7 +52,7 @@ class LibraryGridList extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           l10n.translate('no_results'),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.textMutedColor,
                             fontSize: 16,
                           ),
@@ -114,8 +116,10 @@ class LibraryGridList extends StatelessWidget {
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 itemCount: items.length,
-                itemBuilder: (context, index) =>
-                    _buildEntryItem(items[index], seriesService),
+                itemBuilder: (context, index) => MbEntrance(
+                  index: index,
+                  child: _buildEntryItem(items[index], seriesService),
+                ),
               );
             }
 
@@ -137,8 +141,10 @@ class LibraryGridList extends StatelessWidget {
                       mainAxisSpacing: 10,
                     ),
               itemCount: items.length,
-              itemBuilder: (context, index) =>
-                  _buildEntryItem(items[index], seriesService),
+              itemBuilder: (context, index) => MbEntrance(
+                index: index,
+                child: _buildEntryItem(items[index], seriesService),
+              ),
             );
           }
 
@@ -168,8 +174,10 @@ class LibraryGridList extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           itemCount: items.length,
-          itemBuilder: (context, index) =>
-              _buildEntryItem(items[index], seriesService),
+          itemBuilder: (context, index) => MbEntrance(
+            index: index,
+            child: _buildEntryItem(items[index], seriesService),
+          ),
         );
       },
     );

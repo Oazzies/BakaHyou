@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/library/models/library_entry.dart';
 import 'package:mangabaka_app/features/library/services/library_service.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
@@ -50,7 +51,7 @@ class _SeriesQuickActionButtonState extends State<SeriesQuickActionButton> {
       children: [
         Text(
           '$currentProgress${totalChapters > 0 ? ' / $totalChapters' : ''}',
-          style: TextStyle(
+          style: AppTypography.sans(
             color: AppConstants.accentColor,
             fontWeight: FontWeight.bold,
             fontSize: 13,
@@ -75,7 +76,7 @@ class _SeriesQuickActionButtonState extends State<SeriesQuickActionButton> {
                 child: Center(
                   child: Text(
                     '+1',
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.primaryBackground,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,

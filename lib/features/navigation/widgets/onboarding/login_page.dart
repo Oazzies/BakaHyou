@@ -1,7 +1,7 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/onboarding_hero_layout.dart';
 
 class LoginPage extends StatelessWidget {
@@ -33,7 +33,7 @@ class LoginPage extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             localization.translate('onboarding_connected'),
-            style: TextStyle(
+            style: AppTypography.sans(
               color: AppConstants.successColor,
               fontWeight: FontWeight.bold,
             ),
@@ -73,7 +73,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService()]),
+      listenable: LocalizationService(),
       builder: (context, _) {
         final localization = LocalizationService();
         return LayoutBuilder(

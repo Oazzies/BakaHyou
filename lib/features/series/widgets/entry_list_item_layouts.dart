@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -17,7 +18,7 @@ class EntryListLayoutHelper {
     required String? heroTagPrefix,
     required double width,
     double? height,
-    BorderRadiusGeometry borderRadius = const BorderRadius.horizontal(left: Radius.circular(8)),
+    BorderRadiusGeometry borderRadius = const BorderRadius.all(Radius.circular(12)),
   }) {
     final heroTag = heroTagPrefix != null 
         ? '${heroTagPrefix}_${series.id}' 
@@ -49,7 +50,7 @@ class EntryListLayoutHelper {
     return Container(
       width: width,
       height: height ?? double.infinity,
-      color: AppConstants.secondaryBackground,
+      color: AppConstants.tertiaryBackground,
       child: Icon(
         Icons.broken_image,
         color: AppConstants.textMutedColor,
@@ -102,7 +103,7 @@ class EntryListLayoutHelper {
       final prefix = isChapter ? 'Ch. ' : 'Vol. ';
       return Text(
         '$prefix$progress${total > 0 ? '/$total' : ''}',
-        style: const TextStyle(
+        style: AppTypography.sans(
           color: Colors.white,
           fontWeight: FontWeight.bold,
           fontSize: 11,
@@ -113,7 +114,7 @@ class EntryListLayoutHelper {
     Widget buildRemainingContent() {
       return Text(
         remaining.toString(),
-        style: TextStyle(
+        style: AppTypography.sans(
           color: AppConstants.warningColor,
           fontWeight: FontWeight.bold,
           fontSize: 11,

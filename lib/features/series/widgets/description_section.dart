@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -87,7 +88,7 @@ class _DescriptionSectionState extends State<DescriptionSection> {
                             children: [
                               Text(
                                 expanded ? LocalizationService().translate('show_less') : LocalizationService().translate('show_more'),
-                                style: TextStyle(
+                                style: AppTypography.sans(
                                   color: AppConstants.accentColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,

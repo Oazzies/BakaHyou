@@ -7,7 +7,7 @@ import 'package:mangabaka_app/features/profile/models/mb_profile.dart';
 
 class AuthNetworkClient {
   final _logger = LoggingService.logger;
-  static const _meEndpoint = '${AppConstants.baseApiUrl}/me';
+  static const _meEndpoint = '${AppConstants.baseApiUrl}/my/profile';
   static const _userInfoEndpoint = '${AppConstants.authBaseUrl}/userinfo';
 
   Future<MbProfile> fetchProfile(String accessToken) async {

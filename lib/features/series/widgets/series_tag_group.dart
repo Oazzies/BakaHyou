@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/widgets/chip.dart';
@@ -54,7 +55,7 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
                   Expanded(
                     child: Text(
                       widget.header.toUpperCase(),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                         color: AppConstants.textMutedColor,
@@ -93,7 +94,7 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: Text(
                                         subheader,
-                                        style: TextStyle(
+                                        style: AppTypography.sans(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                           color: AppConstants.textMutedColor,
@@ -168,7 +169,7 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
             if (tagParts.length > 1) ...[
               TextSpan(
                 text: '${tagParts.sublist(0, tagParts.length - 1).join(' > ')} > ',
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: isSelected ? Colors.white70 : AppConstants.textMutedColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
@@ -178,7 +179,7 @@ class _SeriesTagGroupState extends State<SeriesTagGroup> {
             ],
             TextSpan(
               text: tagParts.last,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: isSelected ? Colors.white : AppConstants.textColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

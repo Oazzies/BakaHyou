@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 
-/// Surface card from the MangaBaka design system: warm surface fill, hairline
-/// border, soft radius, with an optional uppercase monospace label header and
-/// an optional trailing accent widget (e.g. a progress percentage).
+/// Surface card from the MangaBaka design system: flat dark fill, soft radius,
+/// with an optional uppercase display label header and an optional trailing
+/// accent widget (e.g. a progress percentage).
 class MbCard extends StatelessWidget {
   final String? label;
   final Widget? trailing;
@@ -26,7 +26,6 @@ class MbCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: AppConstants.secondaryBackground,
-        border: Border.all(color: AppConstants.borderColor, width: 1),
         borderRadius: BorderRadius.circular(AppConstants.cardRadius),
       ),
       child: Column(
@@ -40,7 +39,7 @@ class MbCard extends StatelessWidget {
                     label!.toUpperCase(),
                     style: AppTypography.monoLabel(
                       color: AppConstants.textMutedColor,
-                      fontSize: 10.5,
+                      fontSize: 11,
                     ),
                   ),
                 ),

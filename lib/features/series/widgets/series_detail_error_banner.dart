@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -29,12 +30,12 @@ class SeriesDetailErrorBanner extends StatelessWidget {
                   Expanded(
                     child: Text(
                       LocalizationService().translate('failed_to_load'),
-                      style: TextStyle(color: AppConstants.errorColor, fontSize: 13),
+                      style: AppTypography.sans(color: AppConstants.errorColor, fontSize: 13),
                     ),
                   ),
                   TextButton(
                     onPressed: onRetry,
-                    child: Text(LocalizationService().translate('retry'), style: TextStyle(color: AppConstants.errorColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(LocalizationService().translate('retry'), style: AppTypography.sans(color: AppConstants.errorColor, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
                 ],
               ),

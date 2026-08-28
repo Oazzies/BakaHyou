@@ -11,6 +11,7 @@ import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/core/settings/settings_enums.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 
 class EntryListItem extends StatefulWidget {
   final Series series;
@@ -161,10 +162,10 @@ class _EntryListItemState extends State<EntryListItem> {
             left: 0,
             child: Container(
               decoration: BoxDecoration(
-                color: AppConstants.warningColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
+                color: AppConstants.accentColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
                 ),
               ),
               padding: const EdgeInsets.symmetric(
@@ -173,9 +174,8 @@ class _EntryListItemState extends State<EntryListItem> {
               ),
               child: Text(
                 '${widget.ranking}',
-                style: TextStyle(
-                  color: AppConstants.primaryBackground,
-                  fontWeight: FontWeight.bold,
+                style: AppTypography.display(
+                  color: AppConstants.onAccent,
                   fontSize: 15,
                 ),
               ),
@@ -200,10 +200,8 @@ class _EntryListItemState extends State<EntryListItem> {
       borderRadius: BorderRadius.circular(10),
       child: LinearProgressIndicator(
         value: percentage,
-        backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
-        valueColor: AlwaysStoppedAnimation<Color>(
-          AppConstants.accentColor.withValues(alpha: 0.6),
-        ),
+        backgroundColor: AppConstants.tertiaryBackground,
+        valueColor: AlwaysStoppedAnimation<Color>(AppConstants.accentColor),
         minHeight: 3,
       ),
     );

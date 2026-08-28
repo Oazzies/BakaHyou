@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mangabaka_app/features/news/models/news.dart';
@@ -60,7 +61,7 @@ class NewsListItem extends StatelessWidget {
                     ),
                     child: Text(
                       news.source.toUpperCase(),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textColor,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -71,7 +72,7 @@ class NewsListItem extends StatelessWidget {
                   const Spacer(),
                   Text(
                     publishedDate,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textMutedColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -84,7 +85,7 @@ class NewsListItem extends StatelessWidget {
                 news.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textColor,
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -95,7 +96,7 @@ class NewsListItem extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '${l10n.translate('by_author')} ${news.author}',
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textMutedColor,
                     fontSize: 14,
                     height: 1.6,
@@ -106,7 +107,7 @@ class NewsListItem extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   '${l10n.translate('series_referenced')} (${news.series.length})',
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,

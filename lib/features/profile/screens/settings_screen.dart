@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
@@ -11,7 +12,6 @@ import 'package:mangabaka_app/core/utils/widget_utils.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/features/profile/screens/settings_category_screen.dart';
 import 'package:mangabaka_app/features/profile/widgets/dialogs/general_settings_dialogs.dart';
-import 'package:mangabaka_app/features/profile/widgets/dialogs/theme_dialogs.dart';
 import 'package:mangabaka_app/features/profile/widgets/dialogs/content_preferences_dialog.dart';
 import 'package:mangabaka_app/features/profile/screens/logs_screen.dart';
 import 'package:mangabaka_app/features/profile/screens/translation_credits_screen.dart';
@@ -76,6 +76,19 @@ void _showOrNavigate(
 // Shared settings groups (used by both full-screen and dialog)
 // ---------------------------------------------------------------------------
 
+/// Wraps a built settings list so its cards fade and rise in sequence.
+/// Spacers are passed through untouched so the rhythm of the list is kept.
+List<Widget> _staggered(List<Widget> children) {
+  var index = 0;
+  return [
+    for (final child in children)
+      if (child is SizedBox)
+        child
+      else
+        MbEntrance(index: index++, child: child),
+  ];
+}
+
 List<Widget> _buildSettingsGroups(
   BuildContext context,
   LocalizationService l10n,
@@ -94,19 +107,6 @@ List<Widget> _buildSettingsGroups(
                 : 'general_settings_subtitle',
           ),
           onTap: () => _navigateToGeneral(context, l10n),
-          isFirst: true,
-          isLast: true,
-        ),
-      ],
-    ),
-    const SizedBox(height: 16),
-    SettingsGroup(
-      children: [
-        SettingsItem(
-          icon: Icons.palette_outlined,
-          title: l10n.translate('display'),
-          subtitle: l10n.translate('display_settings_subtitle'),
-          onTap: () => _navigateToDisplay(context, l10n),
           isFirst: true,
           isLast: true,
         ),
@@ -251,6 +251,16 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
             ),
             const SettingsDivider(),
             SettingsItem(
+              icon: Icons.stay_primary_landscape_outlined,
+              title: l10n.translate('landscape_appbar_position'),
+              subtitle: GeneralSettingsDialogs.getLandscapeAppBarPositionName(
+                SettingsManager().landscapeAppBarPosition,
+              ),
+              onTap: () =>
+                  GeneralSettingsDialogs.showLandscapeAppBarPositionDialog(ctx),
+            ),
+            const SettingsDivider(),
+            SettingsItem(
               icon: Icons.translate,
               title: l10n.translate('title_language'),
               subtitle: GeneralSettingsDialogs.getTitleLanguageName(
@@ -282,55 +292,6 @@ void _navigateToGeneral(BuildContext context, LocalizationService l10n) {
         ),
       ];
     },
-  );
-}
-
-void _navigateToDisplay(BuildContext context, LocalizationService l10n) {
-  _showOrNavigate(
-    context,
-    title: l10n.translate('display'),
-    listenable: Listenable.merge([ThemeManager(), SettingsManager()]),
-    buildChildren: (ctx) => [
-      SettingsSectionHeader(title: l10n.translate('theme_colors')),
-      SettingsGroup(
-        children: [
-          SettingsItem(
-            icon: Icons.brightness_6_outlined,
-            title: l10n.translate('theme_mode'),
-            subtitle: ThemeDialogs.getThemeModeName(
-              ThemeManager().currentThemeMode,
-            ),
-            onTap: () => ThemeDialogs.showThemeModeSelectionDialog(ctx),
-            isFirst: true,
-          ),
-          const SettingsDivider(),
-          SettingsItem(
-            icon: Icons.palette_outlined,
-            title: l10n.translate('app_theme'),
-            subtitle: ThemeDialogs.getThemeName(ThemeManager().currentTheme),
-            onTap: () => ThemeDialogs.showThemeSelectionDialog(ctx),
-            isLast: true,
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      SettingsSectionHeader(title: l10n.translate('landscape_appbar_position')),
-      SettingsGroup(
-        children: [
-          SettingsItem(
-            icon: Icons.stay_primary_landscape_outlined,
-            title: l10n.translate('landscape_appbar_position'),
-            subtitle: GeneralSettingsDialogs.getLandscapeAppBarPositionName(
-              SettingsManager().landscapeAppBarPosition,
-            ),
-            onTap: () =>
-                GeneralSettingsDialogs.showLandscapeAppBarPositionDialog(ctx),
-            isFirst: true,
-            isLast: true,
-          ),
-        ],
-      ),
-    ],
   );
 }
 
@@ -525,8 +486,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([
-        ThemeManager(),
-        SettingsManager(),
+                SettingsManager(),
         LocalizationService(),
         getIt<ProfileAuthService>(),
       ]),
@@ -542,13 +502,11 @@ class SettingsScreen extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              l10n.translate('settings'),
-              style: TextStyle(
-                color: AppConstants.textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                letterSpacing: -0.5,
-              ),
+              l10n.translate('settings').toUpperCase(),
+              style: AppTypography.display(
+            color: AppConstants.textColor,
+            fontSize: 20,
+          ),
             ),
             centerTitle: true,
           ),
@@ -561,45 +519,56 @@ class SettingsScreen extends StatelessWidget {
                 bottom: 80,
               ),
               children: [
-                Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppConstants.accentColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.largeRadius,
+                // Brand block: a horizontal lockup rather than a centred
+                // stack, so the eye starts at the same left edge as every
+                // settings row beneath it.
+                MbEntrance(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, bottom: 28),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppConstants.accentColor
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.cardRadius,
+                            ),
+                          ),
+                          child: Image.asset(
+                            'assets/mangabaka512.png',
+                            width: 44,
+                            height: 44,
                           ),
                         ),
-                        child: Image.asset(
-                          'assets/mangabaka512.png',
-                          width: 80,
-                          height: 80,
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              AppConstants.appName.toUpperCase(),
+                              style: AppTypography.display(
+                                color: AppConstants.textColor,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'v${AppConstants.appVersion}',
+                              style: AppTypography.sans(
+                                color: AppConstants.textMutedColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        AppConstants.appName,
-                        style: TextStyle(
-                          color: AppConstants.textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'v${AppConstants.appVersion}',
-                        style: TextStyle(
-                          color: AppConstants.textMutedColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                ..._buildSettingsGroups(context, l10n, auth),
+                ..._staggered(_buildSettingsGroups(context, l10n, auth)),
               ],
             ),
           ),
@@ -650,8 +619,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([
-        ThemeManager(),
-        SettingsManager(),
+                SettingsManager(),
         LocalizationService(),
         getIt<ProfileAuthService>(),
       ]),
@@ -737,11 +705,10 @@ class _SettingsDialogState extends State<_SettingsDialog> {
           child: Row(
             children: [
               Text(
-                l10n.translate('settings'),
-                style: TextStyle(
+                l10n.translate('settings').toUpperCase(),
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 18,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -799,12 +766,11 @@ class _SettingsDialogState extends State<_SettingsDialog> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  page.title,
-                  style: TextStyle(
+                  page.title.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.display(
                     color: AppConstants.textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    letterSpacing: -0.5,
+                    fontSize: 19,
                   ),
                 ),
               ),

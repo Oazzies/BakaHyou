@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/library/constants/library_screen_constants.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 
 class StateSelectionSection extends StatefulWidget {
@@ -47,7 +48,6 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
         final l10n = LocalizationService();
         return LayoutBuilder(
           builder: (context, constraints) {
-            final stateColor = _getColorForState(activeState);
             return DropdownMenu<String>(
               key: ValueKey(activeState),
               width: constraints.maxWidth,
@@ -65,14 +65,14 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
               },
               leadingIcon: Icon(
                 _getIconForState(activeState),
-                color: AppConstants.primaryBackground,
+                color: AppConstants.onAccent,
                 size: 20,
               ),
               dropdownMenuEntries: LibraryScreenConstants.tabs.map((tab) {
                 final isSelected = activeState == tab.key;
                 return DropdownMenuEntry<String>(
                   value: tab.key,
-                  label: l10n.translate(tab.key),
+                  label: l10n.translate(tab.key).toUpperCase(),
                   leadingIcon: Icon(
                     _getIconForState(tab.key),
                     color: _getColorForState(tab.key),
@@ -83,34 +83,36 @@ class _StateSelectionSectionState extends State<StateSelectionSection> {
                       : null,
                   style: MenuItemButton.styleFrom(
                     foregroundColor: AppConstants.textColor,
-                    backgroundColor: isSelected ? AppConstants.accentColor.withValues(alpha: 0.1) : null,
+                    textStyle: AppTypography.display(fontSize: 13),
+                    backgroundColor: isSelected
+                        ? AppConstants.accentColor.withValues(alpha: 0.14)
+                        : null,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 );
               }).toList(),
               inputDecorationTheme: InputDecorationTheme(
                 filled: true,
-                fillColor: stateColor,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 11.0),
+                fillColor: AppConstants.accentColor,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(AppConstants.pillRadius),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(AppConstants.pillRadius),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(AppConstants.pillRadius),
                   borderSide: BorderSide.none,
                 ),
               ),
-              trailingIcon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.primaryBackground, size: 20),
-              selectedTrailingIcon: Icon(Icons.keyboard_arrow_up_rounded, color: AppConstants.primaryBackground, size: 20),
-              textStyle: TextStyle(
-                color: AppConstants.primaryBackground,
+              trailingIcon: Icon(Icons.keyboard_arrow_down_rounded, color: AppConstants.onAccent, size: 20),
+              selectedTrailingIcon: Icon(Icons.keyboard_arrow_up_rounded, color: AppConstants.onAccent, size: 20),
+              textStyle: AppTypography.display(
+                color: AppConstants.onAccent,
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
               ),
               menuStyle: MenuStyle(
                 backgroundColor: WidgetStateProperty.all(AppConstants.secondaryBackground),

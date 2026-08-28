@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/constants/mock_series_data.dart';
@@ -207,7 +208,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
             color: AppConstants.secondaryBackground,
             borderRadius: BorderRadius.circular(25),
             border: Border.all(
-              color: AppConstants.borderColor.withValues(alpha: 0.15),
+              color: AppConstants.tertiaryBackground,
               width: 1.5,
             ),
           ),
@@ -241,7 +242,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 150),
                           curve: Curves.easeInOut,
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: _activeTab == 0
                                 ? AppConstants.primaryBackground
                                 : AppConstants.textColor,
@@ -268,7 +269,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 150),
                           curve: Curves.easeInOut,
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: _activeTab == 1
                                 ? AppConstants.primaryBackground
                                 : AppConstants.textColor,
@@ -303,7 +304,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -328,7 +329,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                   currentValue == 0
                       ? widget.l10n.translate('grid_columns_auto')
                       : currentValue.toString(),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -362,7 +363,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -385,7 +386,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
                 alignment: Alignment.center,
                 child: Text(
                   currentValue.toString(),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -481,7 +482,7 @@ class _ListCustomizationSettingsState extends State<ListCustomizationSettings> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             widget.l10n.translate('list_style'),
-            style: TextStyle(
+            style: AppTypography.sans(
               color: AppConstants.textColor,
               fontSize: 14,
               fontWeight: FontWeight.bold,

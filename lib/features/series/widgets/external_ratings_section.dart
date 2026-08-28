@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
@@ -56,7 +57,7 @@ class ExternalRatingsSection extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               avg.toStringAsFixed(1),
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textColor,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -69,7 +70,7 @@ class ExternalRatingsSection extends StatelessWidget {
       if (sources.isNotEmpty) {
         items.add(Text(
           '•',
-          style: TextStyle(
+          style: AppTypography.sans(
             color: AppConstants.textMutedColor.withValues(alpha: 0.5),
             fontSize: 16,
           ),
@@ -83,7 +84,7 @@ class ExternalRatingsSection extends StatelessWidget {
       if (i < sources.length - 1) {
         items.add(Text(
           '•',
-          style: TextStyle(
+          style: AppTypography.sans(
             color: AppConstants.textMutedColor.withValues(alpha: 0.5),
             fontSize: 16,
           ),
@@ -116,7 +117,7 @@ class ExternalRatingsSection extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 rating.toString(),
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

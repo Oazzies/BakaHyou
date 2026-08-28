@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -71,7 +72,7 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
               width: 32,
               height: 4,
               decoration: BoxDecoration(
-                color: AppConstants.borderColor.withValues(alpha: 0.15),
+                color: AppConstants.tertiaryBackground,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -97,18 +98,17 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.title,
-                      style: TextStyle(
+                      widget.title.toUpperCase(),
+                      style: AppTypography.display(
                         color: AppConstants.textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 18,
                       ),
                     ),
                     if (widget.maxValue != 'null' && widget.maxValue.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
                         '${l10n.translate('total')}: ${widget.maxValue}',
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           color: AppConstants.textMutedColor,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -127,7 +127,7 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
               color: AppConstants.primaryBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppConstants.borderColor.withValues(alpha: 0.15),
+                color: AppConstants.tertiaryBackground,
                 width: 1.5,
               ),
             ),
@@ -143,10 +143,9 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
                     controller: _controller,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTypography.display(
                       color: AppConstants.textColor,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
                     ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -178,7 +177,7 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
                 ),
                 child: Text(
                   l10n.translate('cancel'),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textMutedColor,
                     fontWeight: FontWeight.w600,
                   ),
@@ -192,7 +191,7 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: AppConstants.accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppConstants.onAccent,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppConstants.pillRadius),
@@ -201,7 +200,7 @@ class _ProgressUpdateDialogState extends State<ProgressUpdateDialog> {
                 ),
                 child: Text(
                   l10n.translate('save'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: AppTypography.sans(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -221,7 +220,7 @@ class _IconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppConstants.borderColor.withValues(alpha: 0.1),
+      color: AppConstants.tertiaryBackground,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onPressed,

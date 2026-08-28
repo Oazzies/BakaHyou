@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 
 class SettingsCategoryScreen extends StatelessWidget {
@@ -36,12 +37,10 @@ class SettingsCategoryScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          title,
-          style: TextStyle(
+          title.toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: -0.5,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -109,10 +108,9 @@ class _CategoryDialog extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: TextStyle(
+                      style: AppTypography.display(
                         color: AppConstants.textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 18,
                         letterSpacing: -0.5,
                       ),
                     ),

@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 
@@ -47,7 +48,7 @@ class MiniBadge extends StatelessWidget {
           ],
           Text(
             text.toUpperCase(),
-            style: TextStyle(
+            style: AppTypography.sans(
               color: color ?? AppConstants.textColor,
               fontSize: 12,
               fontWeight: FontWeight.w800,

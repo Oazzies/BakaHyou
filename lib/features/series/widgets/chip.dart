@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -38,7 +39,7 @@ class ChipBase extends StatelessWidget {
       ),
       child: DefaultTextStyle(
         style: labelStyle ??
-            TextStyle(
+            AppTypography.sans(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppConstants.textColor,

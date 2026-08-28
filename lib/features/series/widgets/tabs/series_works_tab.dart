@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/series_work.dart';
@@ -139,7 +140,7 @@ class SeriesWorksTab extends StatelessWidget {
                     Expanded(
                       child: Text(
                         w.subTitle.isNotEmpty ? w.subTitle : l10n.translate('volume_title').replaceAll('{index}', w.sequenceString),
-                        style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: AppTypography.sans(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 15),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -149,7 +150,7 @@ class SeriesWorksTab extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 8),
                         child: Text(
                           w.priceString!,
-                          style: TextStyle(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: AppTypography.sans(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ),
                   ],
@@ -157,18 +158,18 @@ class SeriesWorksTab extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   l10n.translate('release_date').replaceAll('{date}', w.releaseDate),
-                  style: TextStyle(color: AppConstants.textMutedColor, fontSize: 13),
+                  style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(Icons.description_outlined, size: 14, color: AppConstants.textMutedColor),
                     const SizedBox(width: 4),
-                    Text(l10n.translate('pages_count').replaceAll('{count}', w.pages.toString()), style: TextStyle(color: AppConstants.textMutedColor, fontSize: 12)),
+                    Text(l10n.translate('pages_count').replaceAll('{count}', w.pages.toString()), style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 12)),
                     const SizedBox(width: 12),
                     Icon(Icons.label_outline, size: 14, color: AppConstants.textMutedColor),
                     const SizedBox(width: 4),
-                    Text(w.countType, style: TextStyle(color: AppConstants.textMutedColor, fontSize: 12)),
+                    Text(w.countType, style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 12)),
                   ],
                 ),
               ],
@@ -205,7 +206,7 @@ class SeriesWorksTab extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             w.subTitle.isNotEmpty ? w.subTitle : l10n.translate('volume_title').replaceAll('{index}', w.sequenceString),
-            style: TextStyle(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 13),
+            style: AppTypography.sans(color: AppConstants.textColor, fontWeight: FontWeight.bold, fontSize: 13),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -213,7 +214,7 @@ class SeriesWorksTab extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               w.priceString!,
-              style: TextStyle(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+              style: AppTypography.sans(color: AppConstants.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ],
         ],

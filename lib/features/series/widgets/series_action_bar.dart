@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/library/models/library_entry.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
@@ -122,7 +123,7 @@ class _ProgressButton extends StatelessWidget {
               Expanded(
                 child: Text(
                   '$value / $displayTotal',
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

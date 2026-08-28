@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 
@@ -19,12 +20,10 @@ class TranslationCreditsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          l10n.translate('translation_credits'),
-          style: TextStyle(
+          l10n.translate('translation_credits').toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: -0.5,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
@@ -52,16 +51,15 @@ class TranslationCreditsScreen extends StatelessWidget {
                       children: [
                         Text(
                           lang['name'],
-                          style: TextStyle(
+                          style: AppTypography.display(
                             color: AppConstants.textColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '(${lang['code']})',
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.textMutedColor,
                             fontSize: 14,
                           ),
@@ -79,7 +77,7 @@ class TranslationCreditsScreen extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             t,
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               color: AppConstants.textMutedColor,
                               fontSize: 15,
                             ),

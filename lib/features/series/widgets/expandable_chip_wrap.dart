@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 
@@ -76,7 +77,7 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
               ),
               child: Text(
                 e,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: widget.color ?? AppConstants.textColor,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -96,9 +97,8 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
           children: [
             Text(
               widget.label,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+              style: AppTypography.display(
+                fontSize: 20,
                 color: AppConstants.textColor,
                 letterSpacing: 0.5,
               ),
@@ -183,7 +183,7 @@ class _ExpandableChipWrapState extends State<ExpandableChipWrap> {
                         children: [
                           Text(
                             _expanded ? LocalizationService().translate('show_less') : LocalizationService().translate('show_all'),
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               color: AppConstants.accentColor,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,

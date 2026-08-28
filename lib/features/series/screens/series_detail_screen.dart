@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'dart:ui' show PathMetric;
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
@@ -13,7 +14,6 @@ import 'package:mangabaka_app/features/series/services/series_service.dart';
 import 'package:mangabaka_app/features/series/widgets/series_detail_app_bar.dart';
 
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/series/widgets/layouts/series_detail_mobile_layout.dart';
 import 'package:mangabaka_app/features/series/widgets/layouts/series_detail_wide_layout.dart';
 import 'package:mangabaka_app/features/series/widgets/series_detail_error_banner.dart';
@@ -428,7 +428,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
     final displayLoaded = isDataLoaded;
 
     return ListenableBuilder(
-      listenable: Listenable.merge([LocalizationService(), ThemeManager(), getIt<ProfileAuthService>()]),
+      listenable: Listenable.merge([LocalizationService(), getIt<ProfileAuthService>()]),
       builder: (context, _) {
         final l10n = LocalizationService();
         return PopScope(
@@ -644,7 +644,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
             ],
             border: Border(
               top: BorderSide(
-                color: AppConstants.borderColor.withValues(alpha: 0.5),
+                color: AppConstants.tertiaryBackground,
                 width: 1,
               ),
             ),
@@ -676,7 +676,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
             width: 32,
             height: 4,
             decoration: BoxDecoration(
-              color: AppConstants.borderColor.withValues(alpha: 0.15),
+              color: AppConstants.tertiaryBackground,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -690,7 +690,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
                 onPressed: _hideFilterMode,
                 child: Text(
                   l10n.translate('reset').toUpperCase(),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.textMutedColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -702,10 +702,9 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
                 _drawerFilters != null && _drawerFilters!.activeFiltersCount > 0
                     ? '${l10n.translate('filters')} (${_drawerFilters!.activeFiltersCount})'
                     : l10n.translate('filters'),
-                style: TextStyle(
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
               TextButton(
@@ -725,7 +724,7 @@ class SeriesDetailScreenState extends State<SeriesDetailScreen> with TickerProvi
                 ),
                 child: Text(
                   l10n.translate('search').toUpperCase(),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: AppConstants.accentColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

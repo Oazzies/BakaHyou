@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:path_provider/path_provider.dart';
@@ -103,12 +104,10 @@ class _LogsScreenState extends State<LogsScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          l10n.translate('logs'),
-          style: TextStyle(
+          l10n.translate('logs').toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: -0.5,
+            fontSize: 20,
           ),
         ),
         leading: IconButton(
@@ -140,7 +139,7 @@ class _LogsScreenState extends State<LogsScreen> {
                     ? Center(
                         child: Text(
                           'No logs recorded yet',
-                          style: TextStyle(color: AppConstants.textMutedColor),
+                          style: AppTypography.sans(color: AppConstants.textMutedColor),
                         ),
                       )
                     : ListView.builder(

@@ -1,3 +1,5 @@
+import 'package:mangabaka_app/core/motion/app_motion.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -34,27 +36,26 @@ class SelectionBottomSheet {
             children: [
               Center(
                 child: Container(
-                  width: 32,
+                  width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppConstants.borderColor.withValues(alpha: 0.15),
+                    color: AppConstants.tertiaryBackground,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
-                title,
-                style: TextStyle(
+                title.toUpperCase(),
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 19,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textMutedColor,
                   fontSize: 13,
                 ),
@@ -107,49 +108,54 @@ class SelectionBottomSheet {
     BuildContext context,
   ) {
     final isSelected = option == currentValue;
-    return GestureDetector(
+    return MbTappable(
+      pressedScale: 0.985,
       onTap: () {
         onSelected(option);
         Navigator.pop(context);
       },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 56,
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        curve: AppMotion.emphasized,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: AppConstants.borderColor.withValues(alpha: 0.05),
-              width: 1,
-            ),
-          ),
+          color: isSelected
+              ? AppConstants.accentColor.withValues(alpha: 0.14)
+              : AppConstants.tertiaryBackground,
+          borderRadius: BorderRadius.circular(AppConstants.denseRadius),
         ),
         child: Row(
           children: [
-            Text(
-              getLabel(option),
-              style: TextStyle(
-                color: isSelected
-                    ? AppConstants.textColor
-                    : AppConstants.textMutedColor,
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            Expanded(
+              child: Text(
+                getLabel(option),
+                style: AppTypography.sans(
+                  color: isSelected
+                      ? AppConstants.accentColor
+                      : AppConstants.textColor,
+                  fontSize: 15,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
-            const Spacer(),
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.fast,
+              transitionBuilder: (child, animation) => ScaleTransition(
+                scale: animation,
+                child: FadeTransition(opacity: animation, child: child),
+              ),
               child: isSelected
                   ? Icon(
-                      Icons.check_circle,
+                      Icons.check_circle_rounded,
                       key: const ValueKey('checked'),
                       color: AppConstants.accentColor,
-                      size: 24,
+                      size: 22,
                     )
-                  : Icon(
-                      Icons.circle_outlined,
-                      key: const ValueKey('unchecked'),
-                      color: AppConstants.borderColor.withValues(alpha: 0.3),
-                      size: 24,
+                  : const SizedBox(
+                      key: ValueKey('unchecked'),
+                      width: 22,
+                      height: 22,
                     ),
             ),
           ],

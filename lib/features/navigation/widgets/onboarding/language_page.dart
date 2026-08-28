@@ -1,7 +1,7 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 
 class LanguagePage extends StatelessWidget {
   const LanguagePage({super.key});
@@ -9,7 +9,7 @@ class LanguagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService()]),
+      listenable: LocalizationService(),
       builder: (context, _) {
         final localizationService = LocalizationService();
         final languages = localizationService.getLanguages();
@@ -25,17 +25,19 @@ class LanguagePage extends StatelessWidget {
                   children: [
                     const SizedBox(height: 32),
                     Text(
-                      localizationService.translate('onboarding_language_title'),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                      localizationService
+                          .translate('onboarding_language_title')
+                          .toUpperCase(),
+                      style: AppTypography.display(
+                        fontSize: 26,
                         color: AppConstants.textColor,
+                        height: 1.1,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       localizationService.translate('onboarding_language_subtitle'),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 16,
                         color: AppConstants.textMutedColor,
                       ),
@@ -73,7 +75,7 @@ class LanguagePage extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   lang['native_name'] ?? lang['name'],
-                                  style: TextStyle(
+                                  style: AppTypography.sans(
                                     fontSize: 16,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     color: isSelected ? AppConstants.accentColor : AppConstants.textColor,

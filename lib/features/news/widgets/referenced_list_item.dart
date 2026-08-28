@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
@@ -48,7 +49,7 @@ class ReferencedListItem extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               displayTitle,
-              style: TextStyle(
+              style: AppTypography.sans(
                 fontSize: compact ? 10 : 11,
                 fontWeight: FontWeight.bold,
                 color: AppConstants.textMutedColor,

@@ -54,7 +54,7 @@ class SeriesMyListCard extends StatelessWidget {
       trailing: pct != null
           ? Text(
               '${(pct * 100).round()}%',
-              style: AppTypography.mono(
+              style: AppTypography.sans(
                 color: AppConstants.accentColor,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
@@ -129,11 +129,10 @@ class _ProgressRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  label,
-                  style: AppTypography.sans(
+                  label.toUpperCase(),
+                  style: AppTypography.monoLabel(
                     color: AppConstants.textMutedColor,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -142,7 +141,7 @@ class _ProgressRow extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: '$value',
-                      style: AppTypography.mono(
+                      style: AppTypography.sans(
                         color: AppConstants.accentColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -150,7 +149,7 @@ class _ProgressRow extends StatelessWidget {
                     ),
                     TextSpan(
                       text: ' / $totalLabel',
-                      style: AppTypography.mono(
+                      style: AppTypography.sans(
                         color: AppConstants.textColor,
                         fontSize: 14,
                       ),
@@ -232,11 +231,10 @@ class _ScoreRow extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    label,
-                    style: AppTypography.sans(
+                    label.toUpperCase(),
+                    style: AppTypography.monoLabel(
                       color: AppConstants.textMutedColor,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -245,7 +243,7 @@ class _ScoreRow extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: rating > 0 ? '$rating' : '–',
-                        style: AppTypography.mono(
+                        style: AppTypography.sans(
                           color: AppConstants.accentColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -253,7 +251,7 @@ class _ScoreRow extends StatelessWidget {
                       ),
                       TextSpan(
                         text: ' / 100',
-                        style: AppTypography.mono(
+                        style: AppTypography.sans(
                           color: AppConstants.textColor,
                           fontSize: 14,
                         ),

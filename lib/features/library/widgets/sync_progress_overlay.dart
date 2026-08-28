@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/library/models/library_sync_status.dart';
 import 'package:mangabaka_app/features/library/services/library_service.dart';
@@ -120,7 +121,7 @@ class SyncProgressOverlay extends StatelessWidget {
                                       '{count}',
                                       status.currentEntries.toString(),
                                     ),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: hasError
                                 ? AppConstants.errorColor
                                 : AppConstants.textColor,
@@ -134,7 +135,7 @@ class SyncProgressOverlay extends StatelessWidget {
                               ? (status.error ??
                                     l10n.translate('an_error_occurred'))
                               : l10n.translate('keep_app_open'),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: hasError
                                 ? AppConstants.errorColor.withValues(
                                     alpha: 0.85,
@@ -176,7 +177,7 @@ class SyncProgressOverlay extends StatelessWidget {
                     children: [
                       Text(
                         l10n.translate('stop'),
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           color: AppConstants.errorColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,

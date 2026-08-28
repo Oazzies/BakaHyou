@@ -1,4 +1,5 @@
-﻿import 'dart:io' show Platform;
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +115,7 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> {
                 title: title != null
                     ? Text(
                         title,
-                        style: const TextStyle(
+                        style: AppTypography.sans(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -128,7 +129,7 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> {
                         padding: const EdgeInsets.only(right: 16),
                         child: Text(
                           '${_currentIndex + 1} / ${widget.imageUrls.length}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
+                          style: AppTypography.sans(color: Colors.white70, fontSize: 14),
                         ),
                       ),
                     ),
@@ -274,7 +275,7 @@ class _FullScreenImageScreenState extends State<FullScreenImageScreen> {
                       ),
                       child: Text(
                         note,
-                        style: const TextStyle(
+                        style: AppTypography.sans(
                           color: Colors.white,
                           fontSize: 14,
                           height: 1.4,

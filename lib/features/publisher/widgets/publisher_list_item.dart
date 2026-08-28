@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/publisher/models/publisher.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -48,7 +49,7 @@ class PublisherListItem extends StatelessWidget {
                   children: [
                     Text(
                       publisher.name,
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textColor,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -86,7 +87,7 @@ class PublisherListItem extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         publisher.description!,
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           color: AppConstants.textMutedColor,
                           fontSize: 13,
                         ),
@@ -117,7 +118,7 @@ class PublisherListItem extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: AppTypography.sans(
           color: AppConstants.accentColor,
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -130,7 +131,7 @@ class PublisherListItem extends StatelessWidget {
   Widget _buildInfoText(String text, {bool isError = false}) {
     return Text(
       text,
-      style: TextStyle(
+      style: AppTypography.sans(
         color: isError ? AppConstants.errorColor.withValues(alpha: 0.8) : AppConstants.textMutedColor,
         fontSize: 12,
         fontWeight: FontWeight.w500,

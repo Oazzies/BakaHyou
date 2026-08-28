@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -10,7 +11,6 @@ import 'package:mangabaka_app/features/navigation/screens/animated_splash_screen
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/features/series/services/metadata_service.dart';
@@ -58,24 +58,23 @@ void main() async {
   await getIt<MetadataService>().init();
 
   await Future.wait([
-    ThemeManager().init(),
     SettingsManager().init(),
     LocalizationService().init(),
   ]);
 
-  _updateSystemUI(ThemeManager().isDarkMode);
+  _updateSystemUI();
 
   runApp(const MangaBakaApp());
 }
 
-void _updateSystemUI(bool isDarkMode) {
+void _updateSystemUI() {
   SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+    const SystemUiOverlayStyle(
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarContrastEnforced: false,
-      systemNavigationBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: Brightness.light,
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 }
@@ -88,25 +87,20 @@ class MangaBakaApp extends StatefulWidget {
 }
 
 class _MangaBakaAppState extends State<MangaBakaApp> {
-  ThemeData? _cachedLightTheme;
-  ThemeData? _cachedDarkTheme;
+  ThemeData? _cachedTheme;
   bool? _lastShowTooltips;
-  AppTheme? _lastTheme;
-  bool? _lastIsDarkMode;
   bool _showSplash = true;
 
-  ThemeData _buildTheme(Brightness brightness, bool showTooltips) {
-    final isDark = brightness == Brightness.dark;
-    final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData(useMaterial3: true);
-    final textBase = isDark
-        ? Typography.material2021(platform: TargetPlatform.android).white
-        : Typography.material2021(platform: TargetPlatform.android).black;
+  ThemeData _buildTheme(bool showTooltips) {
+    final base = ThemeData.dark(useMaterial3: true);
+    final textBase =
+        Typography.material2021(platform: TargetPlatform.android).white;
 
     return base.copyWith(
       textTheme: AppTypography.textTheme(textBase),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppConstants.primaryAccent,
-        brightness: brightness,
+        brightness: Brightness.dark,
         surface: AppConstants.primaryBackground,
         primary: AppConstants.accentColor,
         error: AppConstants.errorColor,
@@ -119,8 +113,19 @@ class _MangaBakaAppState extends State<MangaBakaApp> {
       cardColor: AppConstants.secondaryBackground,
       dialogTheme: DialogThemeData(
         backgroundColor: AppConstants.secondaryBackground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.largeRadius),
+        ),
+        titleTextStyle: AppTypography.display(
+          color: AppConstants.textColor,
+          fontSize: 18,
+        ),
+        contentTextStyle: AppTypography.sans(
+          color: AppConstants.textMutedColor,
+          fontSize: 15,
+          height: 1.45,
         ),
       ),
       dividerColor: Colors.transparent,
@@ -137,6 +142,11 @@ class _MangaBakaAppState extends State<MangaBakaApp> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: AppConstants.textColor),
+        titleTextStyle: AppTypography.display(
+          color: AppConstants.textColor,
+          fontSize: 20,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -156,54 +166,170 @@ class _MangaBakaAppState extends State<MangaBakaApp> {
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppConstants.secondaryBackground,
-        side: BorderSide(color: AppConstants.borderColor, width: 1),
+        backgroundColor: AppConstants.tertiaryBackground,
+        selectedColor: AppConstants.accentColor,
+        side: BorderSide.none,
+        labelStyle: AppTypography.display(
+          color: AppConstants.textColor,
+          fontSize: 12,
+        ),
+        secondaryLabelStyle: AppTypography.display(
+          color: AppConstants.onAccent,
+          fontSize: 12,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-          side: BorderSide(color: AppConstants.borderColor, width: 1),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.cardRadius),
-          side: BorderSide(color: AppConstants.borderColor, width: 1),
         ),
         color: AppConstants.secondaryBackground,
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppConstants.secondaryBackground,
-        elevation: 0,
-        indicatorColor: AppConstants.accentColor.withValues(alpha: 0.15),
-        indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-        ),
-        labelTextStyle: WidgetStateProperty.all(
-          TextStyle(color: AppConstants.textColor, fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-        iconTheme: WidgetStateProperty.all(
-          IconThemeData(color: AppConstants.textColor, size: 26),
+      // Buttons: amber caps for affirmative actions, muted caps for the rest.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppConstants.accentColor,
+          textStyle: AppTypography.display(fontSize: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.pillRadius),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         ),
       ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: AppConstants.secondaryBackground,
-        indicatorColor: AppConstants.accentColor.withValues(alpha: 0.15),
-        indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.pillRadius),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.accentColor,
+          foregroundColor: AppConstants.onAccent,
+          elevation: 0,
+          textStyle: AppTypography.display(fontSize: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.pillRadius),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
         ),
-        labelType: NavigationRailLabelType.all,
-        unselectedLabelTextStyle: TextStyle(
-          color: AppConstants.textMutedColor,
-          fontSize: 11,
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppConstants.textColor,
+          side: BorderSide(color: AppConstants.borderColor),
+          textStyle: AppTypography.display(fontSize: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.pillRadius),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: AppConstants.textColor),
+      ),
+      // Amber is the "on" state everywhere a control has one.
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? AppConstants.onAccent
+                : AppConstants.textMutedColor),
+        trackColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? AppConstants.accentColor
+                : AppConstants.tertiaryBackground),
+        trackOutlineColor:
+            WidgetStateProperty.all(AppConstants.borderColor),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? AppConstants.accentColor
+                : Colors.transparent),
+        checkColor: WidgetStateProperty.all(AppConstants.onAccent),
+        side: BorderSide(color: AppConstants.borderColor, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? AppConstants.accentColor
+                : AppConstants.textMutedColor),
+      ),
+      sliderTheme: SliderThemeData(
+        activeTrackColor: AppConstants.accentColor,
+        inactiveTrackColor: AppConstants.tertiaryBackground,
+        thumbColor: AppConstants.accentColor,
+        overlayColor: AppConstants.accentColor.withValues(alpha: 0.16),
+        valueIndicatorColor: AppConstants.accentColor,
+        valueIndicatorTextStyle: AppTypography.display(
+          color: AppConstants.onAccent,
+          fontSize: 13,
+        ),
+        trackHeight: 4,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: AppConstants.accentColor,
+        linearTrackColor: AppConstants.tertiaryBackground,
+        circularTrackColor: Colors.transparent,
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppConstants.textColor,
+        unselectedLabelColor: AppConstants.textMutedColor,
+        labelStyle: AppTypography.display(fontSize: 13),
+        unselectedLabelStyle: AppTypography.display(fontSize: 13),
+        indicatorColor: AppConstants.accentColor,
+        dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppConstants.tertiaryBackground,
+        contentTextStyle: AppTypography.sans(
+          color: AppConstants.textColor,
+          fontSize: 14,
+        ),
+        actionTextColor: AppConstants.accentColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.denseRadius),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: AppConstants.secondaryBackground,
+        surfaceTintColor: Colors.transparent,
+        textStyle: AppTypography.sans(
+          color: AppConstants.textColor,
+          fontSize: 14,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.denseRadius),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: AppConstants.textMutedColor,
+        textColor: AppConstants.textColor,
+        titleTextStyle: AppTypography.sans(
+          color: AppConstants.textColor,
+          fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
-        selectedLabelTextStyle: TextStyle(
-          color: AppConstants.accentColor,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
+        subtitleTextStyle: AppTypography.sans(
+          color: AppConstants.textMutedColor,
+          fontSize: 13,
         ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.denseRadius),
+        ),
+      ),
+      // Page transitions match AppTransitions so system-pushed routes agree
+      // with the ones the app pushes itself.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
       ),
     );
   }
@@ -224,32 +350,17 @@ class _MangaBakaAppState extends State<MangaBakaApp> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([
-        ThemeManager(),
-        SettingsManager(),
+                SettingsManager(),
         getIt<ProfileAuthService>(),
       ]),
       builder: (context, _) {
-        final currentThemeMode = ThemeManager().currentThemeMode;
-        final isDark = ThemeManager().isDarkMode;
-        final currentTheme = ThemeManager().currentTheme;
         final hasCompletedOnboarding = SettingsManager().hasCompletedOnboarding;
         final isLoggedIn = getIt<ProfileAuthService>().isLoggedIn;
         final showTooltips = SettingsManager().showTooltips;
 
-        if (_cachedLightTheme == null ||
-            _cachedDarkTheme == null ||
-            _lastShowTooltips != showTooltips ||
-            _lastTheme != currentTheme ||
-            _lastIsDarkMode != isDark) {
+        if (_cachedTheme == null || _lastShowTooltips != showTooltips) {
           _lastShowTooltips = showTooltips;
-          _lastTheme = currentTheme;
-          _lastIsDarkMode = isDark;
-
-          // Re-apply the current theme palette values to AppConstants before rebuilding ThemeData
-          AppConstants.setAppTheme(currentTheme, isDark);
-
-          _cachedLightTheme = _buildTheme(Brightness.light, showTooltips);
-          _cachedDarkTheme = _buildTheme(Brightness.dark, showTooltips);
+          _cachedTheme = _buildTheme(showTooltips);
         }
 
         final Widget content = (hasCompletedOnboarding || isLoggedIn)
@@ -265,16 +376,14 @@ class _MangaBakaAppState extends State<MangaBakaApp> {
             builder: (context, child) {
               return AppShortcuts(child: child!);
             },
-            theme: _cachedLightTheme,
-            darkTheme: _cachedDarkTheme,
-            themeMode: currentThemeMode,
+            theme: _cachedTheme,
             home: AnnotatedRegion<SystemUiOverlayStyle>(
-              value: SystemUiOverlayStyle(
+              value: const SystemUiOverlayStyle(
                 systemNavigationBarColor: Colors.transparent,
                 systemNavigationBarContrastEnforced: false,
-                systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                systemNavigationBarIconBrightness: Brightness.light,
                 statusBarColor: Colors.transparent,
-                statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                statusBarIconBrightness: Brightness.light,
               ),
               child: Stack(
                 children: [

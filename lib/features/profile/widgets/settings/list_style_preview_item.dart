@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/settings/settings_enums.dart';
@@ -65,7 +66,7 @@ class ListStylePreviewItem extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: isSelected
                     ? AppConstants.textColor
                     : AppConstants.textMutedColor,

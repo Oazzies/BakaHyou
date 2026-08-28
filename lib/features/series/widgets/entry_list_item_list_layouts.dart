@@ -3,6 +3,8 @@ import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/features/series/widgets/entry_list_item_layouts.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:mangabaka_app/core/widgets/design/mb_rating_stars.dart';
 
 class MinimalListItem extends StatelessWidget {
   final Series series;
@@ -18,9 +20,8 @@ class MinimalListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppConstants.secondaryBackground,
-      margin: const EdgeInsets.symmetric(vertical: 4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: SizedBox(
         height: 64,
         child: Row(
@@ -31,11 +32,11 @@ class MinimalListItem extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 12, right: 110),
                 child: Text(
                   displayTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppConstants.textColor,
-                        fontSize: 16,
-                      ),
+                  style: AppTypography.sans(
+                    color: AppConstants.textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -64,9 +65,8 @@ class CompactListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppConstants.secondaryBackground,
-      margin: const EdgeInsets.symmetric(vertical: 4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: SizedBox(
         height: 84,
         child: Row(
@@ -81,21 +81,21 @@ class CompactListItem extends StatelessWidget {
                   children: [
                     Text(
                       displayTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppConstants.textColor,
-                            fontSize: 16,
-                          ),
+                      style: AppTypography.sans(
+                        color: AppConstants.textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${l10n.translate('type_${series.type.toLowerCase()}')} - ${l10n.translate('status_${series.status.toLowerCase()}')} - ${series.year}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppConstants.textMutedColor,
-                            fontSize: 14,
-                          ),
+                      '${l10n.translate('type_${series.type.toLowerCase()}')} · ${l10n.translate('status_${series.status.toLowerCase()}')} · ${series.year}',
+                      style: AppTypography.sans(
+                        color: AppConstants.textMutedColor,
+                        fontSize: 13,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -128,10 +128,8 @@ class ComfortableListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final ratingValue = double.tryParse(series.rating) ?? 0.0;
 
-    return Card(
-      color: AppConstants.secondaryBackground,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: SizedBox(
         height: 100,
         child: Row(
@@ -146,44 +144,27 @@ class ComfortableListItem extends StatelessWidget {
                   children: [
                     Text(
                       displayTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppConstants.textColor,
-                            fontSize: 16,
-                          ),
+                      style: AppTypography.sans(
+                        color: AppConstants.textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${l10n.translate('type_${series.type.toLowerCase()}')} • ${l10n.translate('status_${series.status.toLowerCase()}')} • ${series.year}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppConstants.accentColor.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w500,
-                          ),
+                      '${l10n.translate('type_${series.type.toLowerCase()}')} · ${l10n.translate('status_${series.status.toLowerCase()}')} · ${series.year}',
+                      style: AppTypography.sans(
+                        color: AppConstants.textMutedColor,
+                        fontSize: 13,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (ratingValue > 0) ...[
                       const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star_rounded,
-                            size: 14,
-                            color: AppConstants.textMutedColor.withValues(alpha: 0.5),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            ratingValue.toStringAsFixed(1),
-                            style: TextStyle(
-                              color: AppConstants.textMutedColor.withValues(alpha: 0.7),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      MbRatingStars(rating: ratingValue, fontSize: 12),
                     ],
                   ],
                 ),

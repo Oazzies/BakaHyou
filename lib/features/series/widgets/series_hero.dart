@@ -95,13 +95,12 @@ class SeriesTitleBlock extends StatelessWidget {
         GestureDetector(
           onTap: () => Clipboard.setData(ClipboardData(text: title)),
           child: Text(
-            title,
+            title.toUpperCase(),
             textAlign: textAlign,
-            style: AppTypography.serif(
+            style: AppTypography.display(
               color: AppConstants.textColor,
-              fontSize: isWide ? 42 : 27,
-              fontWeight: FontWeight.w500,
-              height: 1.04,
+              fontSize: isWide ? 38 : 25,
+              height: 1.08,
             ),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,

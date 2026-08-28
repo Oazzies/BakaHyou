@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -145,10 +146,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
             Expanded(
               child: Text(
                 release.displayName,
-                style: TextStyle(
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 18,
                 ),
               ),
             ),
@@ -163,7 +163,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
               Text(
                 'A new version (${release.tagName}) is available. '
                 'You have ${AppConstants.appVersion}.',
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textMutedColor,
                   fontSize: 13,
                   height: 1.4,
@@ -178,7 +178,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       release.body.trim().isEmpty
                           ? 'No release notes provided.'
                           : release.body.trim(),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textColor,
                         fontSize: 14,
                         height: 1.5,
@@ -216,7 +216,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       Platform.isWindows
                           ? 'Launching installer — the app will close.'
                           : 'Opening installer…',
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textMutedColor,
                         fontSize: 13,
                       ),
@@ -249,7 +249,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                         child: Text(
                           'Update failed. You can retry or download it '
                           'manually from the release page.',
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.errorColor.withValues(alpha: 0.9),
                             fontSize: 13,
                             height: 1.4,
@@ -271,7 +271,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
             child: Text(
               'Later',
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textMutedColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -282,7 +282,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             onPressed: _busy ? null : _onUpdateNow,
             style: FilledButton.styleFrom(
               backgroundColor: AppConstants.accentColor,
-              foregroundColor: Colors.white,
+              foregroundColor: AppConstants.onAccent,
               disabledBackgroundColor:
                   AppConstants.accentColor.withValues(alpha: 0.5),
               disabledForegroundColor: Colors.white70,
@@ -293,7 +293,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
             child: Text(
               _updateButtonLabel,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTypography.sans(fontWeight: FontWeight.bold),
             ),
           ),
         ],

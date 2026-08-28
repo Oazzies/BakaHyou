@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -178,7 +179,7 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
                           children: [
                             Text(
                               _tagsExpanded ? widget.l10n.translate('show_less') : widget.l10n.translate('show_all_tags'),
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 color: AppConstants.accentColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/navigation/widgets/onboarding/onboarding_hero_layout.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -9,7 +8,7 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService()]),
+      listenable: LocalizationService(),
       builder: (context, _) {
         final localization = LocalizationService();
         return LayoutBuilder(

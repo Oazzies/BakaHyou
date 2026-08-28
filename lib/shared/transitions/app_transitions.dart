@@ -1,20 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 
+/// Route transitions for the Ink & Amber system.
+///
+/// Every transition pairs movement with a fade, and pushes the outgoing page
+/// slightly away instead of leaving it static — so a push reads as one surface
+/// replacing another rather than a new screen sliding over a frozen one.
 abstract final class AppTransitions {
+  static Widget _fadeThroughOutgoing(Animation<double> secondary, Widget child) {
+    // The outgoing page dims and recedes a touch; barely perceptible on its
+    // own, but it is what stops a push from feeling flat.
+    final curved = CurvedAnimation(
+      parent: secondary,
+      curve: AppMotion.emphasized,
+    );
+    return AnimatedBuilder(
+      animation: curved,
+      builder: (context, inner) {
+        return Opacity(
+          opacity: 1 - (curved.value * 0.35),
+          child: Transform.scale(
+            scale: 1 - (curved.value * 0.02),
+            child: inner,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
   static Route<T> fade<T>(Widget page) {
     return PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final curved =
+            CurvedAnimation(parent: animation, curve: AppMotion.enter);
         return FadeTransition(
-          opacity: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.985, end: 1.0).animate(curved),
+            child: _fadeThroughOutgoing(secondaryAnimation, child),
           ),
-          child: child,
         );
       },
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: AppMotion.base,
+      reverseTransitionDuration: AppMotion.fast,
     );
   }
 
@@ -25,19 +55,24 @@ abstract final class AppTransitions {
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: AppMotion.enter,
+          reverseCurve: AppMotion.exit,
         );
         return SlideTransition(
           position: Tween<Offset>(
-            begin: const Offset(0, 1.0),
+            // A short rise rather than a full-height slide: the page is
+            // already fading in, so it does not need the distance.
+            begin: const Offset(0, 0.06),
             end: Offset.zero,
           ).animate(curved),
-          child: child,
+          child: FadeTransition(
+            opacity: curved,
+            child: _fadeThroughOutgoing(secondaryAnimation, child),
+          ),
         );
       },
-      transitionDuration: const Duration(milliseconds: 280),
-      reverseTransitionDuration: const Duration(milliseconds: 220),
+      transitionDuration: AppMotion.slow,
+      reverseTransitionDuration: AppMotion.base,
     );
   }
 
@@ -47,19 +82,22 @@ abstract final class AppTransitions {
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: AppMotion.enter,
+          reverseCurve: AppMotion.exit,
         );
         return SlideTransition(
           position: Tween<Offset>(
-            begin: const Offset(1.0, 0),
+            begin: const Offset(0.18, 0),
             end: Offset.zero,
           ).animate(curved),
-          child: child,
+          child: FadeTransition(
+            opacity: curved,
+            child: _fadeThroughOutgoing(secondaryAnimation, child),
+          ),
         );
       },
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: AppMotion.base,
+      reverseTransitionDuration: AppMotion.base,
     );
   }
 }

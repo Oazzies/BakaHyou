@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:mangabaka_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/widgets/chips/type_chip.dart';
@@ -166,7 +167,7 @@ class _HoverableTitleTextState extends State<_HoverableTitleText> {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = widget.style ?? const TextStyle();
+    final baseStyle = widget.style ?? AppTypography.sans();
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),

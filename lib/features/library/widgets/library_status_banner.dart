@@ -1,5 +1,5 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 
 class LibraryStatusBanner extends StatelessWidget {
   final String message;
@@ -19,12 +19,11 @@ class LibraryStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = ThemeManager().isDarkMode;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.12 : 0.18),
+        color: color.withValues(alpha: 0.12),
       ),
       child: Row(
         children: [
@@ -33,7 +32,7 @@ class LibraryStatusBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: color,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,

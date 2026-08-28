@@ -29,11 +29,10 @@ class ProfileStatisticsSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              l10n.translate('at_a_glance'),
-              style: AppTypography.serif(
+              l10n.translate('at_a_glance').toUpperCase(),
+              style: AppTypography.display(
                 color: AppConstants.textColor,
-                fontSize: 23,
-                fontWeight: FontWeight.w500,
+                fontSize: 20,
               ),
             ),
             TextButton(
@@ -47,7 +46,7 @@ class ProfileStatisticsSection extends StatelessWidget {
               },
               child: Text(
                 l10n.translate('see_more_stats'),
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.accentColor,
                   fontWeight: FontWeight.w600,
                 ),
@@ -58,7 +57,7 @@ class ProfileStatisticsSection extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           l10n.translate('overview_desc'),
-          style: TextStyle(color: AppConstants.textMutedColor),
+          style: AppTypography.sans(color: AppConstants.textMutedColor),
         ),
         const SizedBox(height: 16),
         Row(

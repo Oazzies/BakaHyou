@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -24,19 +25,32 @@ class StatisticCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppConstants.textColor, size: 22),
-          SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(color: AppConstants.textMutedColor, fontSize: 14),
+          // Amber icon in its own well, matching the settings/shortcut rows.
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppConstants.tertiaryBackground,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: AppConstants.accentColor, size: 18),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 14),
+          // The number leads, the label sits under it as a caps kicker — a
+          // statistic is read value-first.
           Text(
             value,
-            style: TextStyle(
+            style: AppTypography.display(
               color: AppConstants.textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label.toUpperCase(),
+            style: AppTypography.monoLabel(
+              color: AppConstants.textMutedColor,
+              fontSize: 11,
             ),
           ),
         ],

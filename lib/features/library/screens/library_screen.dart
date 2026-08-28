@@ -11,8 +11,8 @@ import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart'
 import 'package:mangabaka_app/features/series/models/series.dart' as api;
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
 import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
@@ -260,8 +260,7 @@ class LibraryScreenState extends State<LibraryScreen>
     return ListenableBuilder(
       listenable: Listenable.merge([
         LocalizationService(),
-        ThemeManager(),
-        SettingsManager(),
+                SettingsManager(),
       ]),
       builder: (context, _) {
         final settings = SettingsManager();
@@ -288,7 +287,7 @@ class LibraryScreenState extends State<LibraryScreen>
                         onPressed: _onRefresh,
                         child: Text(
                           LocalizationService().translate('retry'),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.errorColor,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -320,7 +319,7 @@ class LibraryScreenState extends State<LibraryScreen>
                         onPressed: () => _libraryService.importFullLibrary(),
                         child: Text(
                           LocalizationService().translate('re_import'),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.warningColor,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -437,21 +436,16 @@ class LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  /// Pill badge showing an entry count inside a tab label.
-  Widget _buildTabCountBadge(int count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppConstants.tertiaryBackground,
-        borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-      ),
-      child: Text(
-        NumberUtils.formatCount(count),
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: AppConstants.textMutedColor,
-        ),
+  /// Count shown after a tab label. On the selected (amber) pill it has to
+  /// invert to ink so it stays legible.
+  Widget _buildTabCountBadge(int count, bool selected) {
+    return Text(
+      NumberUtils.formatCount(count),
+      style: AppTypography.display(
+        fontSize: 12,
+        color: selected
+            ? AppConstants.onAccent.withValues(alpha: 0.6)
+            : AppConstants.textMutedColor,
       ),
     );
   }
@@ -479,25 +473,53 @@ class LibraryScreenState extends State<LibraryScreen>
             counts[entry.state] = (counts[entry.state] ?? 0) + 1;
           }
 
-          return TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: isLandscape ? TabAlignment.center : TabAlignment.start,
-            tabs: LibraryScreenConstants.tabs.map((tab) {
-              final count = counts[tab.key] ?? 0;
-              return Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.translate(tab.key)),
-                    if (settings.showLibraryTabCounts) ...[
-                      const SizedBox(width: 8),
-                      _buildTabCountBadge(count),
-                    ],
-                  ],
+          return AnimatedBuilder(
+            animation: _tabController,
+            builder: (context, _) {
+              return TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment:
+                    isLandscape ? TabAlignment.center : TabAlignment.start,
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  color: AppConstants.accentColor,
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.pillRadius),
                 ),
+                indicatorPadding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                labelPadding: EdgeInsets.zero,
+                labelColor: AppConstants.onAccent,
+                unselectedLabelColor: AppConstants.textColor,
+                labelStyle: AppTypography.display(fontSize: 13),
+                unselectedLabelStyle: AppTypography.display(fontSize: 13),
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                splashFactory: NoSplash.splashFactory,
+                tabs: List.generate(LibraryScreenConstants.tabs.length, (i) {
+                  final tab = LibraryScreenConstants.tabs[i];
+                  final count = counts[tab.key] ?? 0;
+                  final selected = _tabController.index == i;
+                  return Tab(
+                    height: 48,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.translate(tab.key).toUpperCase()),
+                          if (settings.showLibraryTabCounts) ...[
+                            const SizedBox(width: 8),
+                            _buildTabCountBadge(count, selected),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               );
-            }).toList(),
+            },
           );
         },
       ),

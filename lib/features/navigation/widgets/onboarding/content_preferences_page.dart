@@ -1,8 +1,8 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 
 /// Ordered content-rating options, from least to most explicit.
 const _kContentOptions = ['safe', 'suggestive', 'erotica', 'pornographic'];
@@ -25,7 +25,7 @@ class ContentPreferencesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ThemeManager(), LocalizationService(), SettingsManager()]),
+      listenable: Listenable.merge([LocalizationService(), SettingsManager()]),
       builder: (context, _) {
         final localization = LocalizationService();
         final labels = {
@@ -45,17 +45,19 @@ class ContentPreferencesPage extends StatelessWidget {
                   children: [
                     const SizedBox(height: 32),
                     Text(
-                      localization.translate('onboarding_content_title'),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                      localization
+                          .translate('onboarding_content_title')
+                          .toUpperCase(),
+                      style: AppTypography.display(
+                        fontSize: 26,
                         color: AppConstants.textColor,
+                        height: 1.1,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       localization.translate('onboarding_content_subtitle'),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 16,
                         color: AppConstants.textMutedColor,
                       ),
@@ -94,7 +96,7 @@ class ContentPreferencesPage extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   labels[option]!,
-                                  style: TextStyle(
+                                  style: AppTypography.sans(
                                     fontSize: 16,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     color: isSelected ? AppConstants.accentColor : AppConstants.textColor,

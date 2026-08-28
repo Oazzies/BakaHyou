@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/library/constants/library_screen_constants.dart';
@@ -47,7 +48,7 @@ class LibraryBody extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               '${l10n.translate('failed_to_load')}: $error',
-              style: TextStyle(color: AppConstants.errorColor),
+              style: AppTypography.sans(color: AppConstants.errorColor),
               textAlign: TextAlign.center,
             ),
           ],
@@ -72,7 +73,7 @@ class LibraryBody extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     l10n.translate('empty_library'),
-                    style: TextStyle(color: AppConstants.textMutedColor, fontSize: 16),
+                    style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 16),
                   ),
                 ],
               ),

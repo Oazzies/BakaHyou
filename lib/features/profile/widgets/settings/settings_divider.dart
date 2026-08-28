@@ -9,7 +9,7 @@ class SettingsDivider extends StatelessWidget {
     return Divider(
       height: 1,
       thickness: 1,
-      color: AppConstants.borderColor.withValues(alpha: 0.2),
+      color: AppConstants.borderColor,
       indent: 48,
     );
   }

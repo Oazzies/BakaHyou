@@ -87,20 +87,44 @@ class Series {
     // Titles
     if (patched['title'] == null || (patched['title'] as String).isEmpty) {
       final titlesList = patched['titles'] as List?;
-      if (titlesList != null) {
-        final primary = titlesList.firstWhere(
-          (t) => t['is_primary'] == true,
-          orElse: () => titlesList.isNotEmpty ? titlesList.first : null,
-        );
-        patched['title'] = primary?['title']?.toString() ?? '';
-        patched['native_title'] = (titlesList.firstWhere(
-              (t) => t['language'] == 'ja',
-              orElse: () => null,
-            ) as Map?)?['title']?.toString() ?? '';
-        patched['romanized_title'] = (titlesList.firstWhere(
-              (t) => t['language'] == 'ja-ro',
-              orElse: () => null,
-            ) as Map?)?['title']?.toString() ?? '';
+      if (titlesList != null && titlesList.isNotEmpty) {
+        String langOf(dynamic t) =>
+            (t is Map ? t['language']?.toString() : null)?.toLowerCase() ?? '';
+
+        bool isRomanized(dynamic t) {
+          final l = langOf(t);
+          return l.endsWith('-latn') ||
+              l.endsWith('-ro') ||
+              l.contains('hepburn') ||
+              l.contains('romaji');
+        }
+
+        Map<String, dynamic>? pick(bool Function(dynamic) test) {
+          for (final t in titlesList) {
+            if (t is Map && test(t)) return t.cast<String, dynamic>();
+          }
+          return null;
+        }
+
+        // The v2 "lean" shape flags *every* language entry `is_primary`, so a
+        // Latin title has to be chosen deliberately or the rails render native
+        // script. Prefer English, then a romanised form, then whatever leads.
+        final chosen = pick((t) => langOf(t) == 'en') ??
+            pick(isRomanized) ??
+            pick((t) => t is Map && t['is_primary'] == true) ??
+            (titlesList.first is Map
+                ? (titlesList.first as Map).cast<String, dynamic>()
+                : null);
+
+        patched['title'] = chosen?['title']?.toString() ?? '';
+        patched['native_title'] = (pick((t) {
+              final l = langOf(t);
+              return l == 'ja' || l == 'ko' || l == 'zh' || l.startsWith('zh-');
+            })?['title'])
+                ?.toString() ??
+            '';
+        patched['romanized_title'] =
+            pick(isRomanized)?['title']?.toString() ?? '';
       }
     }
 
