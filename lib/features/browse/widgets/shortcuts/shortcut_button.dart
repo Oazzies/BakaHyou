@@ -1,3 +1,5 @@
+import 'package:mangabaka_app/core/motion/app_motion.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -15,38 +17,46 @@ class ShortcutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppConstants.secondaryBackground,
-      borderRadius: BorderRadius.circular(AppConstants.largeRadius),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(AppConstants.largeRadius),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 20.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Icon(icon, color: AppConstants.textColor, size: 22),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: AppConstants.textColor,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+    return MbTappable(
+      onTap: onPressed,
+      pressedScale: 0.97,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppConstants.secondaryBackground,
+          borderRadius: BorderRadius.circular(AppConstants.cardRadius),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Icon well, matching the settings rows.
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppConstants.tertiaryBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppConstants.accentColor, size: 19),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label.toUpperCase(),
+                style: AppTypography.display(
+                  color: AppConstants.textColor,
+                  fontSize: 13,
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppConstants.textMutedColor,
-                size: 20,
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppConstants.textMutedColor,
+              size: 20,
+            ),
+          ],
         ),
       ),
     );

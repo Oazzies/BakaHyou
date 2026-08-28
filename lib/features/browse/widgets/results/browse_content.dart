@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/widgets/entry_list_item.dart';
@@ -65,7 +66,7 @@ class BrowseContent extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             error ?? 'An unexpected error occurred.',
-            style: TextStyle(color: AppConstants.errorColor),
+            style: AppTypography.sans(color: AppConstants.errorColor),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -263,7 +264,7 @@ class BrowseContent extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n.translate('no_results'),
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textMutedColor,
                       fontSize: 16,
                     ),

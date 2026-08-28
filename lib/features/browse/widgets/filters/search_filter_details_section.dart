@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
@@ -54,17 +55,17 @@ class SearchFilterDetailsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        l10n.translate('rating_range'),
-                        style: TextStyle(
+                        l10n.translate('rating_range').toUpperCase(),
+                        style: AppTypography.display(
                           color: AppConstants.textColor,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                       Text(
                         '${filters.ratingLower.toInt()} - ${filters.ratingUpper.toInt()}',
-                        style: TextStyle(
+                        style: AppTypography.display(
                           color: AppConstants.accentColor,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -97,17 +98,17 @@ class SearchFilterDetailsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        l10n.translate('publication_year'),
-                        style: TextStyle(
+                        l10n.translate('publication_year').toUpperCase(),
+                        style: AppTypography.display(
                           color: AppConstants.textColor,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                       Text(
                         '${filters.publishedYearLower ?? l10n.translate('any')} - ${filters.publishedYearUpper ?? l10n.translate('any')}',
-                        style: TextStyle(
+                        style: AppTypography.display(
                           color: AppConstants.accentColor,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
                         ),
                       ),
                     ],

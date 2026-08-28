@@ -265,10 +265,9 @@ class _HoverableLinkChip extends StatelessWidget {
                       ),
                       child: Text(
                         language!,
-                        style: AppTypography.mono(
+                        style: AppTypography.monoLabel(
                           color: AppConstants.textMutedColor,
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),

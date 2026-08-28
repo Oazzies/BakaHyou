@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 import 'package:mangabaka_app/features/browse/widgets/shortcuts/shortcut_button.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
@@ -85,11 +86,10 @@ class ShortcutSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                header,
-                style: AppTypography.serif(
+                header.toUpperCase(),
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 24,
+                  fontSize: 22,
                   height: 1.1,
                 ),
               ),
@@ -112,7 +112,10 @@ class ShortcutSection extends StatelessWidget {
                       crossAxisSpacing: 10,
                       mainAxisExtent: 64,
                     ),
-                    children: buttons,
+                    children: [
+                      for (var i = 0; i < buttons.length; i++)
+                        MbEntrance(index: i, child: buttons[i]),
+                    ],
                   );
                 },
               ),

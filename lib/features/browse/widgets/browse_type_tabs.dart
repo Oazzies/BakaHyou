@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/browse/models/browse_type.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -42,7 +43,7 @@ class BrowseTypeTabs extends StatelessWidget {
             color: AppConstants.secondaryBackground,
             borderRadius: BorderRadius.circular(25),
             border: Border.all(
-              color: AppConstants.borderColor.withValues(alpha: 0.15),
+              color: AppConstants.tertiaryBackground,
               width: 1.5,
             ),
           ),
@@ -73,7 +74,7 @@ class BrowseTypeTabs extends StatelessWidget {
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 150),
                           curve: Curves.easeInOut,
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: isSelected
                                 ? AppConstants.primaryBackground
                                 : AppConstants.textColor,

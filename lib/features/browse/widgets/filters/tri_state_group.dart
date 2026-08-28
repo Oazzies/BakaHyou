@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/browse/widgets/filters/tri_state_chip.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -44,7 +45,7 @@ class TriStateGroup extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Text(
               title,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textColor,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

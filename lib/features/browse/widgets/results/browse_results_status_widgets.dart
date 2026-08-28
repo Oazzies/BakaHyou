@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/series/widgets/series_list_skeleton.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -28,7 +29,7 @@ class BrowseResultsEmpty extends StatelessWidget {
     return Center(
       child: Text(
         LocalizationService().translate('no_results'),
-        style: TextStyle(color: AppConstants.textColor),
+        style: AppTypography.sans(color: AppConstants.textColor),
       ),
     );
   }
@@ -54,7 +55,7 @@ class BrowseResultsError extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             error,
-            style: TextStyle(color: AppConstants.errorColor),
+            style: AppTypography.sans(color: AppConstants.errorColor),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),

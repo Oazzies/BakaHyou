@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/series/models/autocomplete_series_result.dart';
@@ -112,7 +113,7 @@ class SearchSuggestionsPanel extends StatelessWidget {
                   children: [
                     Text(
                       result.title,
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         color: AppConstants.textColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -131,7 +132,7 @@ class SearchSuggestionsPanel extends StatelessWidget {
                         if (result.year != null)
                           Text(
                             '${result.year}',
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               color: AppConstants.textMutedColor,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -141,7 +142,7 @@ class SearchSuggestionsPanel extends StatelessWidget {
                             (result.type.isNotEmpty || result.year != null))
                           Text(
                             '  ·  ${result.genres.take(2).map((g) => g.isNotEmpty ? g[0].toUpperCase() + g.substring(1) : g).join(', ')}',
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               color: AppConstants.textMutedColor.withValues(
                                 alpha: 0.7,
                               ),
@@ -186,7 +187,7 @@ class SearchSuggestionsPanel extends StatelessWidget {
       ),
       child: Text(
         type.toUpperCase(),
-        style: TextStyle(
+        style: AppTypography.sans(
           color: color,
           fontSize: 9,
           fontWeight: FontWeight.w800,

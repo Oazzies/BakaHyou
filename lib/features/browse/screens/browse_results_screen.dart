@@ -3,12 +3,12 @@ import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
 import 'package:mangabaka_app/features/series/services/series_search_service.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/browse/widgets/results/browse_results_body.dart';
 import 'package:mangabaka_app/features/browse/controllers/browse_controller.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
@@ -234,7 +234,7 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: ThemeManager(),
+      listenable: LocalizationService(),
       builder: (context, _) {
         return Scaffold(
           backgroundColor: AppConstants.primaryBackground,
@@ -247,8 +247,12 @@ class _BrowseResultsScreenState extends State<BrowseResultsScreen> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              _buildTitleText(),
-              style: TextStyle(color: AppConstants.textColor, fontSize: 16),
+              _buildTitleText().toUpperCase(),
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.display(
+                color: AppConstants.textColor,
+                fontSize: 17,
+              ),
             ),
           ),
           body: ListenableBuilder(

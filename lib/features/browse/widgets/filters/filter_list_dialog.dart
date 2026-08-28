@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/widgets/filters/tri_state_chip.dart';
@@ -132,7 +133,7 @@ class _FilterListDialogState extends State<FilterListDialog> {
         width: 32,
         height: 4,
         decoration: BoxDecoration(
-          color: AppConstants.borderColor.withValues(alpha: 0.15),
+          color: AppConstants.tertiaryBackground,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -149,19 +150,18 @@ class _FilterListDialogState extends State<FilterListDialog> {
         children: [
           Text(
             widget.title,
-            style: TextStyle(
+            style: AppTypography.display(
               color: AppConstants.textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
           ),
           if (widget.showSearch) ...[
             const SizedBox(height: 16),
             TextField(
-              style: TextStyle(color: AppConstants.textColor),
+              style: AppTypography.sans(color: AppConstants.textColor),
               decoration: InputDecoration(
                 hintText: 'Search ${widget.title.toLowerCase()}...',
-                hintStyle: TextStyle(color: AppConstants.textMutedColor, fontSize: 15),
+                hintStyle: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 15),
                 prefixIcon: Icon(Icons.search, color: AppConstants.textMutedColor, size: 20),
                 filled: true,
                 fillColor: AppConstants.secondaryBackground,
@@ -185,7 +185,7 @@ class _FilterListDialogState extends State<FilterListDialog> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Divider(
-        color: AppConstants.borderColor.withValues(alpha: 0.05),
+        color: AppConstants.tertiaryBackground,
         height: 1,
       ),
     );

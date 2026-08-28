@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
@@ -34,11 +35,10 @@ class SortSelectionDialog {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  l10n.translate('sort_by'),
-                  style: TextStyle(
+                  l10n.translate('sort_by').toUpperCase(),
+                  style: AppTypography.display(
                     color: AppConstants.textColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
               ),
@@ -89,7 +89,7 @@ class SortSelectionDialog {
         width: 32,
         height: 4,
         decoration: BoxDecoration(
-          color: AppConstants.borderColor.withValues(alpha: 0.15),
+          color: AppConstants.tertiaryBackground,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -122,7 +122,7 @@ class _SelectionTile extends StatelessWidget {
               ? null
               : Border(
                   bottom: BorderSide(
-                    color: AppConstants.borderColor.withValues(alpha: 0.05),
+                    color: AppConstants.tertiaryBackground,
                     width: 1,
                   ),
                 ),
@@ -131,7 +131,7 @@ class _SelectionTile extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: isSelected ? AppConstants.textColor : AppConstants.textMutedColor,
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

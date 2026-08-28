@@ -150,8 +150,8 @@ class _MixScreenState extends State<MixScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          l10n.translate('mix'),
-          style: AppTypography.serif(
+          l10n.translate('mix').toUpperCase(),
+          style: AppTypography.display(
             color: AppConstants.textColor,
             fontWeight: FontWeight.w500,
             fontSize: 22,
@@ -192,7 +192,7 @@ class _MixScreenState extends State<MixScreen> {
           VerticalDivider(
             width: 1,
             thickness: 1,
-            color: AppConstants.borderColor.withValues(alpha: 0.15),
+            color: AppConstants.borderColor,
           ),
           // Right panel: results
           Expanded(
@@ -228,8 +228,8 @@ class _MixScreenState extends State<MixScreen> {
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
-        l10n.translate('mix'),
-        style: AppTypography.serif(
+        l10n.translate('mix').toUpperCase(),
+        style: AppTypography.display(
           color: AppConstants.textColor,
           fontWeight: FontWeight.w500,
           fontSize: 22,
@@ -272,11 +272,10 @@ class _MixScreenState extends State<MixScreen> {
                       color: AppConstants.accentColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    l10n.translate('mix_seeds'),
-                    style: TextStyle(
+                    l10n.translate('mix_seeds').toUpperCase(),
+                    style: AppTypography.display(
                       color: AppConstants.textColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
+                      fontSize: 16,
                       letterSpacing: -0.3,
                     ),
                   ),
@@ -362,7 +361,7 @@ class _MixScreenState extends State<MixScreen> {
                   constraints: const BoxConstraints(maxWidth: 120),
                   child: Text(
                     seed.title,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textColor,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -401,10 +400,10 @@ class _MixScreenState extends State<MixScreen> {
     return TextField(
       controller: _searchCtrl,
       focusNode: _searchFocus,
-      style: TextStyle(color: AppConstants.textColor, fontSize: 16),
+      style: AppTypography.sans(color: AppConstants.textColor, fontSize: 16),
       decoration: InputDecoration(
         hintText: l10n.translate('mix_add_seed'),
-        hintStyle: TextStyle(color: AppConstants.textMutedColor, fontSize: 16),
+        hintStyle: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 16),
         prefixIcon: Icon(Icons.search, color: AppConstants.textColor, size: 22),
         prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         suffixIcon: _searchCtrl.text.isNotEmpty
@@ -453,7 +452,7 @@ class _MixScreenState extends State<MixScreen> {
           const SizedBox(width: 10),
           Text(
             l10n.translate('mix_seed_suggestions'),
-            style: TextStyle(color: AppConstants.textMutedColor, fontSize: 13),
+            style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 13),
           ),
         ],
       );
@@ -471,7 +470,7 @@ class _MixScreenState extends State<MixScreen> {
             const SizedBox(width: 6),
             Text(
               l10n.translate('mix_seed_suggestions'),
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textMutedColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -529,7 +528,7 @@ class _MixScreenState extends State<MixScreen> {
             Expanded(
               child: Text(
                 sug.title,
-                style: TextStyle(
+                style: AppTypography.sans(
                   color: AppConstants.textColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -609,7 +608,7 @@ class _MixScreenState extends State<MixScreen> {
     return Divider(
       height: 1,
       thickness: 1,
-      color: AppConstants.borderColor.withValues(alpha: 0.15),
+      color: AppConstants.borderColor,
       indent: 16,
       endIndent: 16,
     );
@@ -640,7 +639,7 @@ class _MixScreenState extends State<MixScreen> {
             : AppConstants.accentColor, size: 20),
         title: Text(
           title,
-          style: TextStyle(
+          style: AppTypography.sans(
             color: effectiveColor,
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -648,7 +647,7 @@ class _MixScreenState extends State<MixScreen> {
         ),
         subtitle: Text(
           isLoggedInRequired ? 'Requires login' : subtitle,
-          style: TextStyle(
+          style: AppTypography.sans(
             color: AppConstants.textMutedColor.withValues(
               alpha: isLoggedInRequired ? 0.5 : 1.0,
             ),
@@ -688,18 +687,17 @@ class _MixScreenState extends State<MixScreen> {
               Icon(Icons.biotech_rounded, color: AppConstants.accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                l10n.translate('mix_dna'),
-                style: TextStyle(
+                l10n.translate('mix_dna').toUpperCase(),
+                style: AppTypography.display(
                   color: AppConstants.textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
+                  fontSize: 16,
                   letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 l10n.translate('mix_dna_subtitle'),
-                style: TextStyle(color: AppConstants.textMutedColor, fontSize: 12),
+                style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 12),
               ),
             ],
           ),
@@ -727,7 +725,7 @@ class _MixScreenState extends State<MixScreen> {
                           children: [
                             Text(
                               tag.name,
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 color: AppConstants.textColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -735,7 +733,7 @@ class _MixScreenState extends State<MixScreen> {
                             ),
                             Text(
                               '$percentage%',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 color: AppConstants.accentColor,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -786,12 +784,12 @@ class _MixScreenState extends State<MixScreen> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    color: AppConstants.borderColor.withValues(alpha: 0.1),
+                    color: AppConstants.borderColor,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Additional DNA elements:',
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       color: AppConstants.textMutedColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -810,7 +808,7 @@ class _MixScreenState extends State<MixScreen> {
                         ),
                         child: Text(
                           tag.name,
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             color: AppConstants.textColor.withValues(alpha: 0.8),
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -839,18 +837,17 @@ class _MixScreenState extends State<MixScreen> {
               color: AppConstants.accentColor, size: 20),
           const SizedBox(width: 8),
           Text(
-            l10n.translate('mix_results'),
-            style: TextStyle(
+            l10n.translate('mix_results').toUpperCase(),
+            style: AppTypography.display(
               color: AppConstants.textColor,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: 16,
               letterSpacing: -0.3,
             ),
           ),
           const SizedBox(width: 8),
           Text(
             '${_controller.results.length}',
-            style: TextStyle(
+            style: AppTypography.sans(
               color: AppConstants.textMutedColor,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -893,7 +890,7 @@ class _MixScreenState extends State<MixScreen> {
             padding: const EdgeInsets.all(32),
             child: Text(
               l10n.translate('mix_no_results'),
-              style: TextStyle(color: AppConstants.textMutedColor, fontSize: 15),
+              style: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 15),
               textAlign: TextAlign.center,
             ),
           ),
@@ -945,11 +942,10 @@ class _MixScreenState extends State<MixScreen> {
           children: [
             const SizedBox(height: 24),
             Text(
-              l10n.translate('mix_empty_title'),
-              style: TextStyle(
+              l10n.translate('mix_empty_title').toUpperCase(),
+              style: AppTypography.display(
                 color: AppConstants.textColor,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+                fontSize: 20,
                 letterSpacing: -0.5,
               ),
               textAlign: TextAlign.center,
@@ -957,7 +953,7 @@ class _MixScreenState extends State<MixScreen> {
             const SizedBox(height: 10),
             Text(
               l10n.translate('mix_empty_subtitle'),
-              style: TextStyle(
+              style: AppTypography.sans(
                 color: AppConstants.textMutedColor,
                 fontSize: 14,
                 height: 1.5,
@@ -986,7 +982,7 @@ class _MixScreenState extends State<MixScreen> {
           const SizedBox(height: 16),
           Text(
             l10n.translate('mix_generating'),
-            style: TextStyle(
+            style: AppTypography.sans(
               color: AppConstants.textMutedColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -1009,7 +1005,7 @@ class _MixScreenState extends State<MixScreen> {
             const SizedBox(height: 16),
             Text(
               l10n.translate('mix_error'),
-              style: TextStyle(
+              style: AppTypography.sans(
                   color: AppConstants.errorColor,
                   fontSize: 16,
                   fontWeight: FontWeight.w600),

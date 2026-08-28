@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/series/widgets/entry_list_item.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
@@ -58,11 +59,15 @@ class BrowseResultsList extends StatelessWidget {
                   }
 
                   final series = results[index];
-                  return InkWell(
-                    onTap: () => onSeriesTap(series),
-                    child: shouldShowRanking
-                        ? EntryListItem(series: series, ranking: index + 1, heroTagPrefix: heroTagPrefix)
-                        : EntryListItem(series: series, heroTagPrefix: heroTagPrefix),
+                  return MbEntrance(
+                    index: index,
+                    child: MbTappable(
+                      onTap: () => onSeriesTap(series),
+                      pressedScale: 0.98,
+                      child: shouldShowRanking
+                          ? EntryListItem(series: series, ranking: index + 1, heroTagPrefix: heroTagPrefix)
+                          : EntryListItem(series: series, heroTagPrefix: heroTagPrefix),
+                    ),
                   );
                 },
               );
@@ -91,11 +96,15 @@ class BrowseResultsList extends StatelessWidget {
                 }
 
                 final series = results[index];
-                return InkWell(
-                  onTap: () => onSeriesTap(series),
-                  child: shouldShowRanking
-                      ? EntryListItem(series: series, ranking: index + 1, heroTagPrefix: heroTagPrefix)
-                      : EntryListItem(series: series, heroTagPrefix: heroTagPrefix),
+                return MbEntrance(
+                  index: index,
+                  child: MbTappable(
+                    onTap: () => onSeriesTap(series),
+                    pressedScale: 0.98,
+                    child: shouldShowRanking
+                        ? EntryListItem(series: series, ranking: index + 1, heroTagPrefix: heroTagPrefix)
+                        : EntryListItem(series: series, heroTagPrefix: heroTagPrefix),
+                  ),
                 );
               },
             );

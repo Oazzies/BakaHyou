@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -55,14 +56,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.pop(context),
             ),
-            title: Text(l10n.translate('scan_isbn_barcode')),
+            title: Text(l10n.translate('scan_isbn_barcode').toUpperCase()),
             backgroundColor: Colors.transparent,
             elevation: 0,
             iconTheme: IconThemeData(color: AppConstants.textColor),
-            titleTextStyle: TextStyle(
+            titleTextStyle: AppTypography.display(
               color: AppConstants.textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
           ),
           body: Stack(
@@ -95,7 +95,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                     ),
                     child: Text(
                       l10n.translate('align_barcode'),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: AppTypography.sans(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ),

@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
@@ -7,7 +8,6 @@ import 'package:mangabaka_app/features/series/models/autocomplete_series_result.
 import 'package:mangabaka_app/features/series/services/series_autocomplete_service.dart';
 import 'package:mangabaka_app/core/settings/settings_manager.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/features/browse/widgets/search/search_suggestions_panel.dart';
 import 'package:mangabaka_app/features/browse/widgets/search/mb_search_bar_suffix.dart';
 import 'package:mangabaka_app/features/series/services/series_service.dart';
@@ -421,8 +421,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
       listenable: Listenable.merge([
         SettingsManager(),
         LocalizationService(),
-        ThemeManager(),
-      ]),
+              ]),
       builder: (context, _) {
         final autoSuggest = SettingsManager().autoSuggestBrowse;
         final effectiveShowSuggestions = _showSuggestions && autoSuggest;
@@ -457,7 +456,7 @@ class _MBSearchBarState extends State<MBSearchBar> {
       focusNode: _focusNode,
       decoration: InputDecoration(
         hintText: l10n.translate('search_hint'),
-        hintStyle: TextStyle(color: AppConstants.textMutedColor, fontSize: 16),
+        hintStyle: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 16),
         prefixIcon: Icon(Icons.search, color: AppConstants.textColor),
         prefixIconConstraints: const BoxConstraints(
           minWidth: 48,
@@ -480,9 +479,11 @@ class _MBSearchBarState extends State<MBSearchBar> {
           borderRadius: BorderRadius.circular(AppConstants.pillRadius),
           borderSide: BorderSide.none,
         ),
+        // Amber ring on focus: the pill is otherwise identical focused and
+        // unfocused, which leaves keyboard users with no cue at all.
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: AppConstants.accentColor, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 14,

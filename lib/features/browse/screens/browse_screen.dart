@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
@@ -9,7 +10,6 @@ import 'package:mangabaka_app/features/browse/screens/browse_results_screen.dart
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/screens/barcode_scanner_screen.dart';
-import 'package:mangabaka_app/core/theme/theme_manager.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
 import 'package:mangabaka_app/features/browse/controllers/browse_controller.dart';
@@ -192,8 +192,7 @@ class BrowseScreenState extends State<BrowseScreen> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         LocalizationService(),
-        ThemeManager(),
-        _controller,
+                _controller,
       ]),
       builder: (context, _) {
         return Actions(
@@ -278,7 +277,7 @@ class BrowseScreenState extends State<BrowseScreen> {
                               const SizedBox(width: 6),
                               Text(
                                 '${_controller.totalResults}${_controller.isTotalCapped ? '+' : ''} ${LocalizationService().translate(_controller.currentType.name)}',
-                                style: TextStyle(
+                                style: AppTypography.sans(
                                   color: AppConstants.textMutedColor,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,

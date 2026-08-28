@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 
@@ -40,7 +41,7 @@ class TriStateChip extends StatelessWidget {
     }
 
     return ActionChip(
-      label: Text(label, style: TextStyle(color: textColor)),
+      label: Text(label, style: AppTypography.sans(color: textColor)),
       backgroundColor: backgroundColor,
       side: BorderSide.none,
       avatar: icon != null ? Icon(icon, size: 16, color: textColor) : null,

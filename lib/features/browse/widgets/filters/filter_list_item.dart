@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/widgets/filters/tri_state_chip.dart';
@@ -30,7 +31,7 @@ class FilterListItem extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     color: state != TriState.off ? AppConstants.textColor : AppConstants.textMutedColor,
                     fontSize: 16,
                     fontWeight: state != TriState.off ? FontWeight.w600 : FontWeight.normal,

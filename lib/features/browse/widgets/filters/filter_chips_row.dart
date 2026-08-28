@@ -1,3 +1,4 @@
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
@@ -190,7 +191,7 @@ class FilterChipsRow extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         l10n.translate('reset').toUpperCase(),
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           color: AppConstants.errorColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -242,7 +243,7 @@ class FilterChipsRow extends StatelessWidget {
       deleteIcon: Icon(Icons.close_rounded, size: 14, color: color),
       backgroundColor: bgColor,
       side: BorderSide.none,
-      labelStyle: TextStyle(
+      labelStyle: AppTypography.sans(
         color: color,
         fontSize: 11,
         fontWeight: FontWeight.bold,

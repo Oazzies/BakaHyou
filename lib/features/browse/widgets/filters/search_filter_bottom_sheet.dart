@@ -1,3 +1,6 @@
+import 'package:mangabaka_app/core/widgets/design/mb_badge.dart';
+import 'package:mangabaka_app/core/motion/app_motion.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
@@ -121,10 +124,10 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
                 const SizedBox(height: 12),
                 Center(
                   child: Container(
-                    width: 32,
+                    width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppConstants.borderColor.withValues(alpha: 0.15),
+                      color: AppConstants.tertiaryBackground,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -138,47 +141,54 @@ class _SearchFilterBottomSheetState extends State<SearchFilterBottomSheet> {
                     TextButton(
                       onPressed: () =>
                           setState(() => _filters = SearchFilters()),
-                      child: Text(
-                        l10n.translate('reset').toUpperCase(),
-                        style: TextStyle(
-                          color: AppConstants.textMutedColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppConstants.textMutedColor,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                      ),
+                      child: Text(l10n.translate('reset').toUpperCase()),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.translate('filters').toUpperCase(),
+                          style: AppTypography.display(
+                            color: AppConstants.textColor,
+                            fontSize: 18,
+                          ),
                         ),
-                      ),
+                        // Active-filter count as an amber badge: countable
+                        // state gets the accent everywhere in the system.
+                        if (_filters.activeFiltersCount > 0) ...[
+                          const SizedBox(width: 8),
+                          MbBadge.accent(
+                            label: '${_filters.activeFiltersCount}',
+                          ),
+                        ],
+                      ],
                     ),
-                    Text(
-                      _filters.activeFiltersCount > 0
-                          ? '${l10n.translate('filters')} (${_filters.activeFiltersCount})'
-                          : l10n.translate('filters'),
-                      style: TextStyle(
-                        color: AppConstants.textColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
+                    MbTappable(
+                      pressedScale: 0.95,
+                      onTap: () {
                         widget.onApply(_filters);
                         Navigator.pop(context);
                       },
-                      style: TextButton.styleFrom(
-                        backgroundColor:
-                            AppConstants.accentColor.withValues(alpha: 0.15),
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.translate('apply').toUpperCase(),
-                        style: TextStyle(
+                            horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
                           color: AppConstants.accentColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          letterSpacing: 0.5,
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.pillRadius,
+                          ),
+                        ),
+                        child: Text(
+                          l10n.translate('apply').toUpperCase(),
+                          style: AppTypography.display(
+                            color: AppConstants.onAccent,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
