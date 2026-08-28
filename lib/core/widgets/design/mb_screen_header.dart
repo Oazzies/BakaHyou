@@ -22,9 +22,9 @@ PreferredSizeWidget mbScreenAppBar({
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     scrolledUnderElevation: 0,
-    centerTitle: !isRoot,
+    centerTitle: true,
     automaticallyImplyLeading: false,
-    titleSpacing: isRoot ? AppConstants.horizontalPadding : 0,
+    titleSpacing: 0,
     leading: isRoot
         ? null
         : Builder(

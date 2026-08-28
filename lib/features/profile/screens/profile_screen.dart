@@ -200,7 +200,6 @@ class _ProfileScreenState extends State<ProfileScreen> with ProfileDataMixin {
       listenable: LocalizationService(),
       builder: (context, _) {
         final l10n = LocalizationService();
-        final screenWidth = MediaQuery.of(context).size.width;
         final username = profile?.nickname?.isNotEmpty == true
             ? profile!.nickname
             : profile?.preferredUsername;
@@ -217,18 +216,11 @@ class _ProfileScreenState extends State<ProfileScreen> with ProfileDataMixin {
           ),
             ),
             actions: [
-              if (screenWidth < 600)
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => SettingsScreen.show(context),
+              ),
+              const SizedBox(width: 4),
             ],
           ),
           body: Actions(

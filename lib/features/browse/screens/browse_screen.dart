@@ -18,10 +18,12 @@ import 'package:mangabaka_app/features/series/models/autocomplete_series_result.
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
 import 'package:mangabaka_app/features/browse/widgets/filters/filter_chips_row.dart';
+import 'package:mangabaka_app/features/browse/models/search_filters.dart';
 import 'package:mangabaka_app/features/browse/widgets/browse_type_tabs.dart';
 import 'package:mangabaka_app/features/browse/models/browse_type.dart';
 import 'package:mangabaka_app/features/browse/screens/mix_screen.dart';
 import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
+import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
 
 
 class BrowseScreen extends StatefulWidget {
@@ -36,6 +38,14 @@ class BrowseScreenState extends State<BrowseScreen> {
   static final _logger = LoggingService.logger;
   late final BrowseController _controller;
   final FocusNode _searchFocusNode = FocusNode();
+  bool _isSearching = false;
+
+  void enterSearchMode() {
+    setState(() {
+      _isSearching = true;
+    });
+    _searchFocusNode.requestFocus();
+  }
 
   FocusNode get searchFocusNode => _searchFocusNode;
   BrowseController get controller => _controller;
@@ -199,7 +209,7 @@ class BrowseScreenState extends State<BrowseScreen> {
           actions: <Type, Action<Intent>>{
             SearchIntent: CallbackAction<SearchIntent>(
               onInvoke: (intent) {
-                _searchFocusNode.requestFocus();
+                enterSearchMode();
                 return null;
               },
             ),
@@ -210,118 +220,167 @@ class BrowseScreenState extends State<BrowseScreen> {
               },
             ),
           },
-          child: Scaffold(
-            backgroundColor: AppConstants.primaryBackground,
-            appBar: MainScreen.showSearchBarInTopNavBar(context)
-                ? null
-                : AppBar(
-                    automaticallyImplyLeading: false,
-                    centerTitle: true,
-                    title: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: MBSearchBar(
-                        focusNode: _searchFocusNode,
-                        controller: _controller.searchController,
-                        initialFilters: _controller.currentFilters,
-                        onScanTap: _handleBarcodeScan,
-                        onResultSelected: _handleResultSelected,
-                        onChanged: _controller.updateSearchQuery,
-                        onSubmitted: (_) => _controller.searchSeries(),
-                        onFilterApplied: _controller.updateFilters,
-                      ),
+          child: PopScope(
+            canPop: !_isSearching && !MainScreen.showSearchBarInTopNavBar(context),
+            onPopInvokedWithResult: (didPop, result) {
+              if (didPop) return;
+              setState(() {
+                _isSearching = false;
+              });
+              _controller.searchController.clear();
+              _controller.updateSearchQuery('');
+              _controller.updateFilters(SearchFilters());
+              _controller.resetSearchState();
+            },
+            child: Scaffold(
+              backgroundColor: AppConstants.primaryBackground,
+              appBar: MainScreen.showSearchBarInTopNavBar(context)
+                  ? null
+                  : _isSearching
+                      ? AppBar(
+                          automaticallyImplyLeading: false,
+                          centerTitle: true,
+                          title: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 800),
+                            child: MBSearchBar(
+                              focusNode: _searchFocusNode,
+                              controller: _controller.searchController,
+                              initialFilters: _controller.currentFilters,
+                              onScanTap: _handleBarcodeScan,
+                              onResultSelected: _handleResultSelected,
+                              onChanged: _controller.updateSearchQuery,
+                              onSubmitted: (_) => _controller.searchSeries(),
+                              onFilterApplied: _controller.updateFilters,
+                              onBackTap: () {
+                                setState(() {
+                                  _isSearching = false;
+                                });
+                                _controller.searchController.clear();
+                                _controller.updateSearchQuery('');
+                                _controller.updateFilters(SearchFilters());
+                                _controller.resetSearchState();
+                              },
+                            ),
+                          ),
+                        )
+                      : AppBar(
+                          centerTitle: true,
+                          leading: IconButton(
+                            icon: Icon(Icons.search, color: AppConstants.textColor),
+                            onPressed: () {
+                              setState(() {
+                                _isSearching = true;
+                              });
+                              _searchFocusNode.requestFocus();
+                            },
+                          ),
+                          title: Text(
+                            LocalizationService().translate('browse').toUpperCase(),
+                            style: AppTypography.display(
+                              color: AppConstants.textColor,
+                              fontSize: 20,
+                            ),
+                          ),
+                          actions: [
+                            IconButton(
+                              icon: const Icon(Icons.settings_outlined),
+                              onPressed: () => SettingsScreen.show(context),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                        ),
+              body: NotificationListener<ScrollMetricsNotification>(
+                onNotification: (notification) {
+                  _controller.checkScroll();
+                  return false;
+                },
+                child: WidgetUtils.responsiveConstraint(
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: AppConstants.horizontalPadding,
+                      right: AppConstants.horizontalPadding,
+                      top: 8.0,
+                      bottom: 8.0,
                     ),
-                  ),
-            body: NotificationListener<ScrollMetricsNotification>(
-              onNotification: (notification) {
-                _controller.checkScroll();
-                return false;
-              },
-              child: WidgetUtils.responsiveConstraint(
-                Padding(
-                  padding: EdgeInsets.only(
-                    left: AppConstants.horizontalPadding,
-                    right: AppConstants.horizontalPadding,
-                    top: 8.0,
-                    bottom: 8.0,
-                  ),
-                  child: Column(
-                    children: [
-                      if (_controller.isSearchMode &&
-                          _controller.currentFilters.isEmpty)
-                        BrowseTypeTabs(
-                          selectedType: _controller.currentType,
-                          onTypeChanged: _controller.setType,
-                        ),
-                      if (_controller.currentType == BrowseType.series)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: FilterChipsRow(
-                            filters: _controller.currentFilters,
-                            onFiltersChanged: _controller.updateFilters,
+                    child: Column(
+                      children: [
+                        if (_controller.isSearchMode &&
+                            _controller.currentFilters.isEmpty)
+                          BrowseTypeTabs(
+                            selectedType: _controller.currentType,
+                            onTypeChanged: _controller.setType,
                           ),
-                        ),
-                      if (_controller.isSearchMode &&
-                          _controller.totalResults > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            left: 4.0,
-                            bottom: 4.0,
+                        if (_controller.currentType == BrowseType.series)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: FilterChipsRow(
+                              filters: _controller.currentFilters,
+                              onFiltersChanged: _controller.updateFilters,
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.article_outlined,
-                                size: 14,
-                                color: AppConstants.textMutedColor,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${_controller.totalResults}${_controller.isTotalCapped ? '+' : ''} ${LocalizationService().translate(_controller.currentType.name)}',
-                                style: AppTypography.sans(
+                        if (_controller.isSearchMode &&
+                            _controller.totalResults > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 4.0,
+                              bottom: 4.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.article_outlined,
+                                  size: 14,
                                   color: AppConstants.textMutedColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.0,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${_controller.totalResults}${_controller.isTotalCapped ? '+' : ''} ${LocalizationService().translate(_controller.currentType.name)}',
+                                  style: AppTypography.sans(
+                                    color: AppConstants.textMutedColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        BrowseContent(
+                          searchResults: _controller.searchResults,
+                          browseType: _controller.currentType,
+                          isLoading: _controller.isLoading,
+                          isLoadingMore: _controller.isLoadingMore,
+                          scrollController: _controller.scrollController,
+                          error: _controller.error,
+                          onRetry: _controller.searchSeries,
+                          onNavigateToDetail: _navigateToDetail,
+                          onNavigateToResults: _navigateToBrowseResults,
+                          onNavigateToMix: _navigateToMix,
                         ),
-                      BrowseContent(
-                        searchResults: _controller.searchResults,
-                        browseType: _controller.currentType,
-                        isLoading: _controller.isLoading,
-                        isLoadingMore: _controller.isLoadingMore,
-                        scrollController: _controller.scrollController,
-                        error: _controller.error,
-                        onRetry: _controller.searchSeries,
-                        onNavigateToDetail: _navigateToDetail,
-                        onNavigateToResults: _navigateToBrowseResults,
-                        onNavigateToMix: _navigateToMix,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            floatingActionButton: _controller.showBackToTop
-                ? WidgetUtils.tooltip(
-                    message: LocalizationService().translate('back_to_top'),
-                    child: FloatingActionButton(
-                      onPressed: _controller.scrollToTop,
-                      backgroundColor: AppConstants.accentColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.pillRadius,
+              floatingActionButton: _controller.showBackToTop
+                  ? WidgetUtils.tooltip(
+                      message: LocalizationService().translate('back_to_top'),
+                      child: FloatingActionButton(
+                        onPressed: _controller.scrollToTop,
+                        backgroundColor: AppConstants.accentColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.pillRadius,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.arrow_upward,
+                          color: AppConstants.primaryBackground,
                         ),
                       ),
-                      child: Icon(
-                        Icons.arrow_upward,
-                        color: AppConstants.primaryBackground,
-                      ),
-                    ),
-                  )
-                : null,
+                    )
+                  : null,
+            ),
           ),
         );
       },

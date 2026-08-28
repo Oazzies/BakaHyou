@@ -10,10 +10,10 @@ import 'package:mangabaka_app/features/browse/screens/browse_results_screen.dart
 import 'package:mangabaka_app/features/home/services/home_service.dart';
 import 'package:mangabaka_app/features/home/widgets/home_rail.dart';
 import 'package:mangabaka_app/features/home/widgets/home_trending_section.dart';
-import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
 import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
+import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
 
 /// The Home feed: a rotating spotlight of what's hot, then progressively broader
 /// discovery — personalised, then trending, then the long tail. Mirrors the
@@ -147,12 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
             title: l10n.translate('home'),
             isRoot: true,
             actions: [
-              WidgetUtils.tooltip(
-                message: l10n.translate('search'),
-                child: IconButton(
-                  icon: Icon(Icons.search, color: AppConstants.textColor),
-                  onPressed: () => MainScreen.setTabIndex(2),
-                ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => SettingsScreen.show(context),
               ),
               const SizedBox(width: 4),
             ],

@@ -28,6 +28,7 @@ import 'package:mangabaka_app/features/library/helpers/library_filter_helper.dar
 import 'package:mangabaka_app/features/series/models/autocomplete_series_result.dart';
 import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
 import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
+import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   static final GlobalKey<LibraryScreenState> libraryScreenKey = GlobalKey<LibraryScreenState>();
@@ -53,6 +54,14 @@ class LibraryScreenState extends State<LibraryScreen>
   StreamSubscription<List<LibraryEntry>>? _entriesSubscription;
   List<LibraryEntry> _lastEntries = [];
   bool _isLibraryIncomplete = false;
+  bool _isSearching = false;
+
+  void enterSearchMode() {
+    setState(() {
+      _isSearching = true;
+    });
+    _searchFocusNode.requestFocus();
+  }
 
   FocusNode get searchFocusNode => _searchFocusNode;
   Stream<List<LibraryEntry>>? get entriesStream => _entriesStream;
@@ -268,119 +277,131 @@ class LibraryScreenState extends State<LibraryScreen>
             ? settings.libraryListStyle.isGrid
             : settings.currentListStyle.isGrid;
 
-        return Scaffold(
-          backgroundColor: LibraryScreenConstants.backgroundColor,
-          appBar: _buildAppBar(),
-          body: ValueListenableBuilder<LibrarySyncStatus>(
-            valueListenable: _libraryService.syncStatus,
-            builder: (context, status, _) {
-              final content = Column(
-                children: [
-                  if (status.isServerDown)
-                    LibraryStatusBanner(
-                      message: LocalizationService().translate(
-                        'server_unreachable_warning',
-                      ),
-                      icon: Icons.cloud_off_rounded,
-                      color: AppConstants.errorColor,
-                      action: TextButton(
-                        onPressed: _onRefresh,
-                        child: Text(
-                          LocalizationService().translate('retry'),
-                          style: AppTypography.sans(
-                            color: AppConstants.errorColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+        return PopScope(
+          canPop: !_isSearching,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            setState(() {
+              _isSearching = false;
+              _query = '';
+              _filters = SearchFilters();
+            });
+            _performAutoTabSwitching();
+          },
+          child: Scaffold(
+            backgroundColor: LibraryScreenConstants.backgroundColor,
+            appBar: _buildAppBar(),
+            body: ValueListenableBuilder<LibrarySyncStatus>(
+              valueListenable: _libraryService.syncStatus,
+              builder: (context, status, _) {
+                final content = Column(
+                  children: [
+                    if (status.isServerDown)
+                      LibraryStatusBanner(
+                        message: LocalizationService().translate(
+                          'server_unreachable_warning',
+                        ),
+                        icon: Icons.cloud_off_rounded,
+                        color: AppConstants.errorColor,
+                        action: TextButton(
+                          onPressed: _onRefresh,
+                          child: Text(
+                            LocalizationService().translate('retry'),
+                            style: AppTypography.sans(
+                              color: AppConstants.errorColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  if (!status.isServerDown && status.error != null)
-                    LibraryStatusBanner(
-                      message: LocalizationService()
-                          .translate('sync_failed')
-                          .replaceAll('{message}', status.error!),
-                      icon: Icons.error_outline_rounded,
-                      color: AppConstants.errorColor,
-                      onClose: () =>
-                          _libraryService.syncStatus.value = _libraryService
-                              .syncStatus
-                              .value
-                              .copyWith(clearError: true),
-                    ),
-                  if (_isLibraryIncomplete)
-                    LibraryStatusBanner(
-                      message: LocalizationService().translate(
-                        'library_limit_warning',
+                    if (!status.isServerDown && status.error != null)
+                      LibraryStatusBanner(
+                        message: LocalizationService()
+                            .translate('sync_failed')
+                            .replaceAll('{message}', status.error!),
+                        icon: Icons.error_outline_rounded,
+                        color: AppConstants.errorColor,
+                        onClose: () =>
+                            _libraryService.syncStatus.value = _libraryService
+                                .syncStatus
+                                .value
+                                .copyWith(clearError: true),
                       ),
-                      icon: Icons.warning_amber_rounded,
-                      color: AppConstants.warningColor,
-                      action: TextButton(
-                        onPressed: () => _libraryService.importFullLibrary(),
-                        child: Text(
-                          LocalizationService().translate('re_import'),
-                          style: AppTypography.sans(
-                            color: AppConstants.warningColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                    if (_isLibraryIncomplete)
+                      LibraryStatusBanner(
+                        message: LocalizationService().translate(
+                          'library_limit_warning',
+                        ),
+                        icon: Icons.warning_amber_rounded,
+                        color: AppConstants.warningColor,
+                        action: TextButton(
+                          onPressed: () => _libraryService.importFullLibrary(),
+                          child: Text(
+                            LocalizationService().translate('update'),
+                            style: AppTypography.sans(
+                              color: AppConstants.warningColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: FilterChipsRow(
+                        filters: _filters,
+                        onFiltersChanged: (filters) {
+                          setState(() => _filters = filters);
+                          _performAutoTabSwitching();
+                        },
+                      ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: FilterChipsRow(
-                      filters: _filters,
-                      onFiltersChanged: (filters) {
-                        setState(() => _filters = filters);
-                        _performAutoTabSwitching();
+                    Expanded(
+                      child: LibraryBody(
+                        loggedIn: _loggedIn,
+                        entriesStream: _entriesStream,
+                        query: _query,
+                        filters: _filters,
+                        tabController: _tabController,
+                        scrollControllers: _scrollControllers,
+                        onRefresh: _onRefresh,
+                        onLogin: _loginAndReload,
+                        onItemTap: _navigateToSeriesDetail,
+                      ),
+                    ),
+                  ],
+                );
+  
+                return Actions(
+                  actions: <Type, Action<Intent>>{
+                    SearchIntent: CallbackAction<SearchIntent>(
+                      onInvoke: (intent) {
+                        enterSearchMode();
+                        return null;
                       },
                     ),
-                  ),
-                  Expanded(
-                    child: LibraryBody(
-                      loggedIn: _loggedIn,
-                      entriesStream: _entriesStream,
-                      query: _query,
-                      filters: _filters,
-                      tabController: _tabController,
-                      scrollControllers: _scrollControllers,
-                      onRefresh: _onRefresh,
-                      onLogin: _loginAndReload,
-                      onItemTap: _navigateToSeriesDetail,
+                    RefreshIntent: CallbackAction<RefreshIntent>(
+                      onInvoke: (intent) {
+                        _onRefresh();
+                        return null;
+                      },
                     ),
+                  },
+                  child: WidgetUtils.responsiveConstraint(
+                    content,
+                    maxWidth: isGrid ? double.infinity : 800,
                   ),
-                ],
-              );
-
-              return Actions(
-                actions: <Type, Action<Intent>>{
-                  SearchIntent: CallbackAction<SearchIntent>(
-                    onInvoke: (intent) {
-                      _searchFocusNode.requestFocus();
-                      return null;
-                    },
-                  ),
-                  RefreshIntent: CallbackAction<RefreshIntent>(
-                    onInvoke: (intent) {
-                      _onRefresh();
-                      return null;
-                    },
-                  ),
-                },
-                child: WidgetUtils.responsiveConstraint(
-                  content,
-                  maxWidth: isGrid ? double.infinity : 800,
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         );
       },
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget? _buildAppBar() {
     final orientation = MediaQuery.of(context).orientation;
     final isLandscape = orientation == Orientation.landscape;
     final settings = SettingsManager();
@@ -391,49 +412,85 @@ class LibraryScreenState extends State<LibraryScreen>
         : settings.currentListStyle;
 
     final useTopNavBarSearch = MainScreen.showSearchBarInTopNavBar(context);
+    if (useTopNavBarSearch) return null;
 
-    return AppBar(
-      centerTitle: isLandscape && !useTopNavBarSearch,
-      title: useTopNavBarSearch
-          ? null
-          : ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: LibrarySearchBar(
-                focusNode: _searchFocusNode,
-                entriesStream: _entriesStream,
-                onResultSelected: _handleResultSelected,
-                onChanged: (value) {
-                  setState(() => _query = value);
-                  _performAutoTabSwitching();
-                },
-                initialFilters: _filters,
-                onFilterApplied: (filters) {
-                  setState(() => _filters = filters);
-                  _performAutoTabSwitching();
+    if (_isSearching) {
+      return AppBar(
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+        title: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: LibrarySearchBar(
+            focusNode: _searchFocusNode,
+            entriesStream: _entriesStream,
+            onResultSelected: _handleResultSelected,
+            onChanged: (value) {
+              setState(() => _query = value);
+              _performAutoTabSwitching();
+            },
+            initialFilters: _filters,
+            onFilterApplied: (filters) {
+              setState(() => _filters = filters);
+              _performAutoTabSwitching();
+            },
+            onBackTap: () {
+              setState(() {
+                _isSearching = false;
+                _query = '';
+                _filters = SearchFilters();
+              });
+              _performAutoTabSwitching();
+            },
+          ),
+        ),
+        bottom: _buildTabBar(isLandscape),
+      );
+    } else {
+      return AppBar(
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.search, color: AppConstants.textColor),
+          onPressed: () {
+            setState(() {
+              _isSearching = true;
+            });
+            _searchFocusNode.requestFocus();
+          },
+        ),
+        title: Text(
+          l10n.translate('library').toUpperCase(),
+          style: AppTypography.display(
+            color: AppConstants.textColor,
+            fontSize: 20,
+          ),
+        ),
+        actions: [
+          if (isLandscape) ...[
+            WidgetUtils.tooltip(
+              message: l10n.translate('toggle_layout'),
+              child: IconButton(
+                icon: Icon(currentStyle.icon, color: AppConstants.textColor),
+                onPressed: () {
+                  final nextStyle = currentStyle.next;
+                  if (settings.separateListStyles) {
+                    settings.setLibraryListStyle(nextStyle);
+                  } else {
+                    settings.setListStyle(nextStyle);
+                  }
                 },
               ),
             ),
-      actions: isLandscape
-          ? [
-              WidgetUtils.tooltip(
-                message: l10n.translate('toggle_layout'),
-                child: IconButton(
-                  icon: Icon(currentStyle.icon, color: AppConstants.textColor),
-                  onPressed: () {
-                    final nextStyle = currentStyle.next;
-                    if (settings.separateListStyles) {
-                      settings.setLibraryListStyle(nextStyle);
-                    } else {
-                      settings.setListStyle(nextStyle);
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-            ]
-          : null,
-      bottom: _buildTabBar(isLandscape),
-    );
+            const SizedBox(width: 8),
+          ],
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => SettingsScreen.show(context),
+          ),
+          const SizedBox(width: 4),
+        ],
+        bottom: _buildTabBar(isLandscape),
+      );
+    }
   }
 
   /// Count shown after a tab label. On the selected pill it has to

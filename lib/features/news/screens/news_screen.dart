@@ -225,16 +225,11 @@ class _NewsScreenState extends State<NewsScreen> {
               },
             ),
           ),
-        if (screenWidth < 600)
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
-              );
-            },
-          ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => SettingsScreen.show(context),
+        ),
+        const SizedBox(width: 4),
       ],
     );
   }

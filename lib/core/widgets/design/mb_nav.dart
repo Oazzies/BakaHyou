@@ -52,20 +52,12 @@ class _MbNavItem extends StatelessWidget {
               color: selected ? AppConstants.accentColor : Colors.transparent,
               shape: BoxShape.circle,
             ),
-            child: AnimatedSwitcher(
-              duration: AppMotion.fast,
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(scale: animation, child: child),
-              ),
-              child: Icon(
-                selected ? destination.selectedIcon : destination.icon,
-                key: ValueKey(selected),
-                size: 23,
-                color: selected
-                    ? AppConstants.onAccent
-                    : AppConstants.textMutedColor,
-              ),
+            child: Icon(
+              selected ? destination.selectedIcon : destination.icon,
+              size: 23,
+              color: selected
+                  ? AppConstants.onAccent
+                  : AppConstants.textMutedColor,
             ),
           ),
         ),

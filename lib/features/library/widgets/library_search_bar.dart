@@ -19,6 +19,7 @@ class LibrarySearchBar extends StatefulWidget {
   final FocusNode? focusNode;
   final Stream<List<LibraryEntry>>? entriesStream;
   final ValueChanged<AutocompleteSeriesResult>? onResultSelected;
+  final VoidCallback? onBackTap;
 
   const LibrarySearchBar({
     super.key,
@@ -28,6 +29,7 @@ class LibrarySearchBar extends StatefulWidget {
     this.focusNode,
     this.entriesStream,
     this.onResultSelected,
+    this.onBackTap,
   });
 
   @override
@@ -440,7 +442,15 @@ class _LibrarySearchBarState extends State<LibrarySearchBar> {
       decoration: InputDecoration(
         hintText: l10n.translate('search_hint'),
         hintStyle: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 16),
-        prefixIcon: Icon(Icons.search, color: AppConstants.textColor),
+        prefixIcon: widget.onBackTap != null
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_rounded, color: AppConstants.textColor),
+                onPressed: () {
+                  _clear();
+                  widget.onBackTap?.call();
+                },
+              )
+            : Icon(Icons.search, color: AppConstants.textColor),
         prefixIconConstraints: const BoxConstraints(
           minWidth: 48,
           minHeight: 48,

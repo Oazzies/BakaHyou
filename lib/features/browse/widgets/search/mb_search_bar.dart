@@ -22,6 +22,7 @@ class MBSearchBar extends StatefulWidget {
   final FocusNode? focusNode;
   final VoidCallback? onScanTap;
   final ValueChanged<AutocompleteSeriesResult>? onResultSelected;
+  final VoidCallback? onBackTap;
 
   const MBSearchBar({
     super.key,
@@ -33,6 +34,7 @@ class MBSearchBar extends StatefulWidget {
     this.focusNode,
     this.onScanTap,
     this.onResultSelected,
+    this.onBackTap,
   });
 
   @override
@@ -457,7 +459,15 @@ class _MBSearchBarState extends State<MBSearchBar> {
       decoration: InputDecoration(
         hintText: l10n.translate('search_hint'),
         hintStyle: AppTypography.sans(color: AppConstants.textMutedColor, fontSize: 16),
-        prefixIcon: Icon(Icons.search, color: AppConstants.textColor),
+        prefixIcon: widget.onBackTap != null
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_rounded, color: AppConstants.textColor),
+                onPressed: () {
+                  _clear();
+                  widget.onBackTap?.call();
+                },
+              )
+            : Icon(Icons.search, color: AppConstants.textColor),
         prefixIconConstraints: const BoxConstraints(
           minWidth: 48,
           minHeight: 48,
