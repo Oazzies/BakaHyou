@@ -1,36 +1,29 @@
-import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/features/series/models/series.dart';
-import 'package:mangabaka_app/features/series/models/tag_chip_data.dart';
-import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
-import 'package:mangabaka_app/features/series/services/metadata_service.dart';
-import 'package:mangabaka_app/features/series/widgets/series_tag_group.dart';
-import 'package:mangabaka_app/features/series/widgets/mb_card.dart';
-import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
+import 'package:mangabaka_app/core/localization/localization_service.dart';
+import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
-
-/// One resolved tag header, with its tags bucketed by subheader.
-class _TagGroup {
-  final String header;
-  final Map<String, List<TagChipData>> subGroups;
-
-  const _TagGroup(this.header, this.subGroups);
-}
+import 'package:mangabaka_app/features/series/models/series.dart';
+import 'package:mangabaka_app/features/series/models/tag_group.dart';
+import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
+import 'package:mangabaka_app/features/series/services/metadata_service.dart';
+import 'package:mangabaka_app/features/series/widgets/mb_card.dart';
+import 'package:mangabaka_app/features/series/widgets/series_tag_group.dart';
+import 'package:mangabaka_app/features/series/widgets/tags_placeholder.dart';
 
 /// The tags card on the series detail page.
 ///
 /// Tags are the heaviest part of that page — a well-tagged series carries a
 /// couple of hundred chips, each of which has to be resolved through
-/// [MetadataService] and laid out as rich text. Doing that in the same frame as
-/// the rest of the page is what made opening a series feel like a stall of up
-/// to a second, while untagged series opened instantly.
+/// [MetadataService] and laid out as rich text. Doing that in the same frame
+/// as the rest of the page is what made opening a series feel like a stall of
+/// up to a second, while untagged series opened instantly.
 ///
-/// So this widget draws in two passes: the first frame gets a cheap placeholder
-/// card, and the tags themselves are resolved and built on the following frame.
-/// The page is on screen before any tag work starts.
+/// So this widget draws in two passes: the first frame gets a cheap
+/// placeholder card, and the tags themselves are resolved and built on the
+/// following frame. The page is on screen before any tag work starts.
 class SeriesGroupedTags extends StatefulWidget {
   final Series series;
   final LocalizationService l10n;
@@ -46,28 +39,28 @@ class SeriesGroupedTags extends StatefulWidget {
 }
 
 class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
-  /// How many chips the collapsed card is allowed to build.
-  ///
-  /// Collapsed, the card clips to 400px — roughly a dozen rows, so three or
-  /// four dozen chips. Everything past that was still being built, laid out
-  /// and measured, only to be thrown away behind the `ClipRect`: a series with
-  /// 250 tags paid for 250 chips to show about 35. This budget is comfortably
-  /// more than fills the clip, and bounds the cost of opening a series no
-  /// matter how heavily tagged it is. Expanding builds the rest.
+  /// How many chips the collapsed card is allowed to build. Comfortably more
+  /// than fills [_collapsedMaxHeight] — see [TagGrouping.trimTo].
   static const int _collapsedChipBudget = 60;
+
+  /// Height the collapsed card clips to, about a dozen rows of chips.
+  static const double _collapsedMaxHeight = 400.0;
 
   bool _tagsExpanded = false;
 
   /// Resolved tag data. Null until the deferred second pass has run.
-  List<_TagGroup>? _groups;
+  List<TagGroup>? _groups;
   int _totalChips = 0;
+
+  /// Built chip groups, rebuilt only when the selection or the expanded state
+  /// actually changes — not on every parent rebuild.
   List<Widget>? _cachedContent;
   bool _cachedExpanded = false;
+  SearchFilters? _lastDrawerFilters;
 
   final GlobalKey _contentKey = GlobalKey();
   bool _needsShowMore = false;
   double _contentHeight = 0.0;
-  SearchFilters? _lastDrawerFilters;
 
   /// True when the collapsed card cannot show everything — either because the
   /// budget trimmed it, or because what did fit still overflows the clip.
@@ -76,6 +69,21 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
   @override
   void initState() {
     super.initState();
+    _scheduleResolve();
+  }
+
+  @override
+  void didUpdateWidget(SeriesGroupedTags oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Compare contents, not list identity: the network `fullSeries` swaps in a
+    // fresh Series a moment after open, and its tags are almost always the
+    // same ones we already resolved.
+    if (listEquals(widget.series.tags, oldWidget.series.tags)) return;
+    _groups = null;
+    _totalChips = 0;
+    _cachedContent = null;
+    _needsShowMore = false;
+    _contentHeight = 0.0;
     _scheduleResolve();
   }
 
@@ -91,101 +99,44 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
       await SeriesDetailScreen.of(context)?.transitionSettled;
       if (!mounted || _groups != null) return;
       setState(() {
-        _groups = _resolveGroups();
+        _groups = TagGrouping.resolve(
+          widget.series.tags,
+          getIt<MetadataService>(),
+        );
+        _totalChips = widget.series.tags.length;
         _cachedContent = null;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _measureContent());
     });
   }
 
+  /// Measures the built chips to find out whether they overflow the collapsed
+  /// clip — the budget bounds the count, but chip widths vary, so whether the
+  /// result actually overflows can only be known after layout.
   void _measureContent() {
     if (!mounted) return;
-    final renderBox = _contentKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      final height = renderBox.size.height;
-      final needsShowMore = height > 400.0;
-      if (needsShowMore != _needsShowMore || height != _contentHeight) {
-        setState(() {
-          _needsShowMore = needsShowMore;
-          _contentHeight = height;
-        });
-      }
-    }
+    final box = _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final height = box.size.height;
+    final needsShowMore = height > _collapsedMaxHeight;
+    if (needsShowMore == _needsShowMore && height == _contentHeight) return;
+    setState(() {
+      _needsShowMore = needsShowMore;
+      _contentHeight = height;
+    });
   }
 
-  /// Resolves every tag through [MetadataService] exactly once: its path drives
-  /// both the grouping and the chip's display label, and its id drives the
-  /// selected state, so none of that is redone per rebuild.
-  List<_TagGroup> _resolveGroups() {
-    final metadataService = getIt<MetadataService>();
-    final Map<String, Map<String, List<TagChipData>>> grouped = {};
-
-    for (final tag in widget.series.tags) {
-      final path = metadataService.getTagPath(tag) ?? tag;
-      final parts = path.split(' > ');
-
-      String header = 'Other';
-      String subheader = '';
-
-      if (parts.length >= 2) {
-        header = parts[0];
-        if (parts.length >= 3) {
-          subheader = parts[1];
-        }
-      }
-
-      List<String> labelParts = <String>[tag];
-      if (parts.length == 2) {
-        labelParts = <String>[parts[1]];
-      } else if (parts.length >= 3) {
-        labelParts = parts.sublist(2);
-      }
-
-      grouped.putIfAbsent(header, () => {});
-      grouped[header]!.putIfAbsent(subheader, () => []);
-      grouped[header]![subheader]!.add(TagChipData(
-        tag: tag,
-        tagId: metadataService.getTagId(tag) ?? tag,
-        labelParts: labelParts,
-      ));
-    }
-
-    _totalChips = widget.series.tags.length;
-    final sortedHeaders = grouped.keys.toList()..sort();
-    return [
-      for (final header in sortedHeaders) _TagGroup(header, grouped[header]!),
-    ];
-  }
-
-  /// The groups to actually build. Collapsed, this is a prefix of the tags that
-  /// fills the clip and no more; expanded, it is everything.
-  List<_TagGroup> _groupsToBuild() {
-    if (_tagsExpanded || _totalChips <= _collapsedChipBudget) return _groups!;
-
-    final trimmed = <_TagGroup>[];
-    var remaining = _collapsedChipBudget;
-
-    for (final group in _groups!) {
-      if (remaining <= 0) break;
-      final subGroups = <String, List<TagChipData>>{};
-      for (final entry in group.subGroups.entries) {
-        if (remaining <= 0) break;
-        subGroups[entry.key] = entry.value.length <= remaining
-            ? entry.value
-            : entry.value.sublist(0, remaining);
-        remaining -= subGroups[entry.key]!.length;
-      }
-      trimmed.add(_TagGroup(group.header, subGroups));
-    }
-    return trimmed;
-  }
-
+  /// Tapping a chip normally runs a search for it — but while the filter
+  /// drawer is open it toggles the tag in the drawer instead, so building a
+  /// filter set does not keep navigating away.
   void _handleTagTap(String tag) {
-    final detailState = SeriesDetailScreen.of(context);
-    if (detailState?.drawerFilters != null) {
-      detailState?.handleTagLongPress(tag);
+    final state = SeriesDetailScreen.of(context);
+    if (state == null) return;
+    if (state.drawerFilters != null) {
+      state.handleTagLongPress(tag);
     } else {
-      detailState?.handleTagTap(tag);
+      state.handleTagTap(tag);
     }
   }
 
@@ -193,46 +144,33 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
       SeriesDetailScreen.of(context)?.handleTagLongPress(tag);
 
   void _ensureContent() {
-    final detailState = SeriesDetailScreen.of(context);
-    final currentFilters = detailState?.drawerFilters;
-    if (currentFilters != _lastDrawerFilters || _cachedExpanded != _tagsExpanded) {
+    final filters = SeriesDetailScreen.of(context)?.drawerFilters;
+    if (filters != _lastDrawerFilters || _cachedExpanded != _tagsExpanded) {
       _cachedContent = null;
-      _lastDrawerFilters = currentFilters;
+      _lastDrawerFilters = filters;
       _cachedExpanded = _tagsExpanded;
     }
-
     if (_cachedContent != null) return;
 
-    final selectedTagIds = currentFilters?.tag.toSet() ?? const <String>{};
+    final selectedTagIds = filters?.tag.toSet() ?? const <String>{};
+    final groups = _tagsExpanded || _totalChips <= _collapsedChipBudget
+        ? _groups!
+        : TagGrouping.trimTo(_groups!, _collapsedChipBudget);
 
-    _cachedContent = _groupsToBuild().map((group) {
-      return SeriesTagGroup(
-        header: group.header,
-        subGroups: group.subGroups,
-        selectedTagIds: selectedTagIds,
-        onTagTap: _handleTagTap,
-        onTagLongPress: _handleTagLongPress,
-        onToggle: () {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _measureContent());
-        },
-      );
-    }).toList();
-  }
-
-  @override
-  void didUpdateWidget(SeriesGroupedTags oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Compare contents, not list identity: the network `fullSeries` swaps in a
-    // fresh Series a moment after open, and its tags are almost always the same
-    // ones we already resolved.
-    if (!listEquals(widget.series.tags, oldWidget.series.tags)) {
-      _groups = null;
-      _totalChips = 0;
-      _cachedContent = null;
-      _needsShowMore = false;
-      _contentHeight = 0.0;
-      _scheduleResolve();
-    }
+    _cachedContent = [
+      for (final group in groups)
+        SeriesTagGroup(
+          header: group.header,
+          subGroups: group.subGroups,
+          selectedTagIds: selectedTagIds,
+          onTagTap: _handleTagTap,
+          onTagLongPress: _handleTagLongPress,
+          // Expanding a subgroup changes the height, so the overflow check has
+          // to run again.
+          onToggle: () => WidgetsBinding.instance
+              .addPostFrameCallback((_) => _measureContent()),
+        ),
+    ];
   }
 
   @override
@@ -241,145 +179,127 @@ class _SeriesGroupedTagsState extends State<SeriesGroupedTags> {
 
     // First pass: the page draws without paying for any tag work.
     if (_groups == null) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 24),
-        child: MbCard(
-          label: widget.l10n.translate('tags'),
-          child: const _TagsPlaceholder(),
-        ),
-      );
+      return _card(const TagsPlaceholder());
     }
 
     _ensureContent();
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // A width change can reflow the chips into a different number of rows.
         WidgetsBinding.instance.addPostFrameCallback((_) => _measureContent());
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: MbCard(
-            label: widget.l10n.translate('tags'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: _needsShowMore && !_tagsExpanded
-                        ? const BoxConstraints(maxHeight: 400)
-                        : const BoxConstraints(),
-                    child: ClipRect(
-                      child: Stack(
-                        children: [
-                          SingleChildScrollView(
-                            physics: const NeverScrollableScrollPhysics(),
-                            child: Column(
-                              key: _contentKey,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: _cachedContent!,
-                            ),
-                          ),
-                          if (!_tagsExpanded && _needsShowMore)
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      AppConstants.secondaryBackground.withValues(alpha: 0),
-                                      AppConstants.secondaryBackground,
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (_hasMore) ...[
-                  const SizedBox(height: 12),
-                  Center(
-                    child: InkWell(
-                      onTap: () => setState(() => _tagsExpanded = !_tagsExpanded),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _tagsExpanded ? widget.l10n.translate('show_less') : widget.l10n.translate('show_all_tags'),
-                              style: AppTypography.sans(
-                                color: AppConstants.accentColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              _tagsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                              color: AppConstants.accentColor,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+        return _card(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _clippedContent(),
+              if (_hasMore) ...[
+                const SizedBox(height: 12),
+                Center(child: _showMoreButton()),
               ],
-            ),
+            ],
           ),
         );
       },
     );
   }
+
+  Widget _card(Widget child) => Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: MbCard(label: widget.l10n.translate('tags'), child: child),
+      );
+
+  Widget _clippedContent() {
+    final isClipped = _needsShowMore && !_tagsExpanded;
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: isClipped
+            ? const BoxConstraints(maxHeight: _collapsedMaxHeight)
+            : const BoxConstraints(),
+        child: ClipRect(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                // Not scrollable: the scroll view is here only so the content
+                // can exceed the clip without overflowing.
+                physics: const NeverScrollableScrollPhysics(),
+                child: Column(
+                  key: _contentKey,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _cachedContent!,
+                ),
+              ),
+              // Fades the cut-off row out rather than slicing it, so the clip
+              // reads as "there is more" instead of as a rendering fault.
+              if (isClipped) const _FadeOut(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _showMoreButton() {
+    return InkWell(
+      onTap: () => setState(() => _tagsExpanded = !_tagsExpanded),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.l10n.translate(
+                _tagsExpanded ? 'show_less' : 'show_all_tags',
+              ),
+              style: AppTypography.sans(
+                color: AppConstants.accentColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _tagsExpanded
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              color: AppConstants.accentColor,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-/// Cheap stand-in shown for the one frame before the real tags are built — a
-/// couple of rows of pill outlines so the card doesn't pop in from nothing.
-class _TagsPlaceholder extends StatelessWidget {
-  const _TagsPlaceholder();
-
-  static const _rows = <List<double>>[
-    [90, 130, 70],
-    [110, 80, 150],
-  ];
+class _FadeOut extends StatelessWidget {
+  const _FadeOut();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final row in _rows) ...[
-          Row(
-            children: [
-              for (final width in row) ...[
-                Container(
-                  width: width,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: AppConstants.tertiaryBackground.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(AppConstants.pillRadius),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppConstants.secondaryBackground.withValues(alpha: 0),
+              AppConstants.secondaryBackground,
             ],
           ),
-          if (row != _rows.last) const SizedBox(height: 8),
-        ],
-      ],
+        ),
+      ),
     );
   }
 }
