@@ -5,7 +5,6 @@ class AppConstants {
   static const String appVersion = '0.3.1';
   static const String baseApiUrl = 'https://api.mangabaka.org/v1';
 
-  // GitHub repository used by the in-app update system.
   static const String githubOwner = 'Oazzies';
   static const String githubRepo = 'MangaBaka-App';
   static const String githubReleasesApi =
