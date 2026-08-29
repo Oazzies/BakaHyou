@@ -1,37 +1,42 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/features/library/widgets/library_search_bar.dart';
-import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
+import 'package:mangabaka_app/core/di/service_locator.dart';
+import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
+import 'package:mangabaka_app/core/localization/localization_service.dart';
+import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/core/settings/settings_enums.dart';
+import 'package:mangabaka_app/core/settings/settings_manager.dart';
+import 'package:mangabaka_app/core/utils/widget_utils.dart';
+import 'package:mangabaka_app/features/browse/models/search_filters.dart';
+import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
+import 'package:mangabaka_app/features/browse/widgets/filters/filter_chips_row.dart';
+import 'package:mangabaka_app/features/library/constants/library_screen_constants.dart';
+import 'package:mangabaka_app/features/library/helpers/library_filter_helper.dart';
 import 'package:mangabaka_app/features/library/models/library_entry.dart';
 import 'package:mangabaka_app/features/library/models/library_sync_status.dart';
-import 'package:mangabaka_app/features/library/constants/library_screen_constants.dart';
 import 'package:mangabaka_app/features/library/services/library_service.dart';
-import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
-import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
-import 'package:mangabaka_app/features/series/models/series.dart' as api;
-import 'package:mangabaka_app/core/di/service_locator.dart';
-import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/theme/app_typography.dart';
-import 'package:mangabaka_app/core/localization/localization_service.dart';
-import 'package:mangabaka_app/core/exceptions/app_exceptions.dart';
-import 'package:mangabaka_app/features/browse/models/search_filters.dart';
-import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
-import 'package:mangabaka_app/core/utils/widget_utils.dart';
-import 'package:mangabaka_app/features/library/widgets/library_status_banner.dart';
+import 'package:mangabaka_app/features/library/widgets/library_app_bar.dart';
 import 'package:mangabaka_app/features/library/widgets/library_body.dart';
-import 'package:mangabaka_app/core/logging/logging_service.dart';
-import 'package:mangabaka_app/core/settings/settings_manager.dart';
-import 'package:mangabaka_app/core/settings/settings_enums.dart';
-import 'package:mangabaka_app/core/utils/number_utils.dart';
-import 'package:mangabaka_app/features/browse/widgets/filters/filter_chips_row.dart';
-import 'package:mangabaka_app/features/library/helpers/library_filter_helper.dart';
-import 'package:mangabaka_app/features/series/models/autocomplete_series_result.dart';
-import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
+import 'package:mangabaka_app/features/library/widgets/library_status_banners.dart';
+import 'package:mangabaka_app/features/library/widgets/library_tab_bar.dart';
 import 'package:mangabaka_app/features/navigation/screens/main_screen.dart';
-import 'package:mangabaka_app/features/profile/screens/settings_screen.dart';
+import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
+import 'package:mangabaka_app/features/series/models/autocomplete_series_result.dart';
+import 'package:mangabaka_app/features/series/models/series.dart' as api;
+import 'package:mangabaka_app/features/series/screens/series_detail_screen.dart';
+import 'package:mangabaka_app/shared/transitions/app_transitions.dart';
+import 'package:mangabaka_app/shared/widgets/app_shortcuts.dart';
 
+/// The user's library, tabbed by reading status.
+///
+/// Owns the entries stream, the search and filter state, and the tab
+/// controller. The app bar, tab bar and status banners are their own widgets;
+/// what stays here is the state they all read from and the sync lifecycle.
 class LibraryScreen extends StatefulWidget {
-  static final GlobalKey<LibraryScreenState> libraryScreenKey = GlobalKey<LibraryScreenState>();
+  static final GlobalKey<LibraryScreenState> libraryScreenKey =
+      GlobalKey<LibraryScreenState>();
+
   const LibraryScreen({super.key});
 
   @override
@@ -41,70 +46,71 @@ class LibraryScreen extends StatefulWidget {
 class LibraryScreenState extends State<LibraryScreen>
     with TickerProviderStateMixin {
   static final _logger = LoggingService.logger;
+
+  /// Widest the list grows before it is centred. Grids are left unbounded —
+  /// they use the extra width for more columns, where a list would just get
+  /// unreadably long lines.
+  static const double _maxListWidth = 800;
+
   late final ProfileAuthService _auth;
   late final LibraryService _libraryService;
-  late TabController _tabController;
+  late final TabController _tabController;
   late final Map<String, ScrollController> _scrollControllers;
+
   final FocusNode _searchFocusNode = FocusNode();
 
   late bool _loggedIn;
   String _query = '';
   SearchFilters _filters = SearchFilters();
-  Stream<List<LibraryEntry>>? _entriesStream;
-  StreamSubscription<List<LibraryEntry>>? _entriesSubscription;
-  List<LibraryEntry> _lastEntries = [];
-  bool _isLibraryIncomplete = false;
   bool _isSearching = false;
 
-  void enterSearchMode() {
-    setState(() {
-      _isSearching = true;
-    });
-    _searchFocusNode.requestFocus();
-  }
+  Stream<List<LibraryEntry>>? _entriesStream;
+  StreamSubscription<List<LibraryEntry>>? _entriesSubscription;
+
+  /// The most recent entries, kept so auto tab switching can look across every
+  /// tab without waiting for another stream event.
+  List<LibraryEntry> _lastEntries = const [];
+
+  bool _isLibraryIncomplete = false;
+
+  // ─── Public surface, driven by MainScreen's shared top nav bar ───────────
 
   FocusNode get searchFocusNode => _searchFocusNode;
   Stream<List<LibraryEntry>>? get entriesStream => _entriesStream;
   SearchFilters get filters => _filters;
   String get query => _query;
 
+  void enterSearchMode() {
+    setState(() => _isSearching = true);
+    _searchFocusNode.requestFocus();
+  }
+
   void updateQuery(String value) {
-    setState(() {
-      _query = value;
-    });
+    setState(() => _query = value);
     _performAutoTabSwitching();
   }
 
   void updateFilters(SearchFilters filters) {
-    setState(() {
-      _filters = filters;
-    });
+    setState(() => _filters = filters);
     _performAutoTabSwitching();
   }
 
-  void handleResultSelected(AutocompleteSeriesResult result) => _handleResultSelected(result);
+  void handleResultSelected(AutocompleteSeriesResult result) {
+    _logger.info('Library autocomplete result selected: ${result.title}');
+    _navigateToSeriesDetail(BrowseHelpers.convertAutocompleteToSeries(result));
+  }
+
+  // ─── Lifecycle ───────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
     _logger.info('Library screen initialized');
-    _initializeServices();
-    _auth.addListener(_onAuthStateChanged);
-    _initializeControllers();
-    _bootstrap();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.findAncestorStateOfType<MainScreenState>()?.updateTopNavBar();
-      }
-    });
-  }
 
-  void _initializeServices() {
     _auth = getIt<ProfileAuthService>();
     _libraryService = getIt<LibraryService>();
-  }
+    _auth.addListener(_onAuthStateChanged);
 
-  void _initializeControllers() {
     _tabController = TabController(
       length: LibraryScreenConstants.tabs.length,
       vsync: this,
@@ -114,12 +120,17 @@ class LibraryScreenState extends State<LibraryScreen>
       for (final tab in LibraryScreenConstants.tabs)
         tab.key: ScrollController(),
     };
-  }
 
-  void _handleTabSelection() {
-    if (_tabController.indexIsChanging) {
-      _logger.info('Library tab switched to: ${_tabController.index}');
-    }
+    _loggedIn = _auth.isLoggedIn;
+    _logger.fine('Library bootstrap: loggedIn=$_loggedIn');
+    if (_loggedIn) _setupStreamAndSync();
+
+    // The shared top nav bar hosts this screen's search field on wide
+    // layouts, and can only pick it up once this screen is mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.findAncestorStateOfType<MainScreenState>()?.updateTopNavBar();
+    });
   }
 
   @override
@@ -127,28 +138,17 @@ class LibraryScreenState extends State<LibraryScreen>
     _auth.removeListener(_onAuthStateChanged);
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
-    for (var c in _scrollControllers.values) {
-      c.dispose();
+    for (final controller in _scrollControllers.values) {
+      controller.dispose();
     }
     _searchFocusNode.dispose();
     _entriesSubscription?.cancel();
     super.dispose();
   }
 
-  void _bootstrap() {
-    _loggedIn = _auth.isLoggedIn;
-    _logger.fine('Library bootstrap: loggedIn=$_loggedIn');
-
-    if (_loggedIn) {
-      _setupStreamAndSync();
-    }
-  }
-
-  /// Cancels the active stream subscription and clears stream references.
-  void _tearDownStream() {
-    _entriesStream = null;
-    _entriesSubscription?.cancel();
-    _entriesSubscription = null;
+  void _handleTabSelection() {
+    if (!_tabController.indexIsChanging) return;
+    _logger.info('Library tab switched to: ${_tabController.index}');
   }
 
   void _onAuthStateChanged() {
@@ -158,69 +158,33 @@ class LibraryScreenState extends State<LibraryScreen>
     );
     setState(() {
       _loggedIn = _auth.isLoggedIn;
-      if (!_loggedIn) {
-        _tearDownStream();
-      } else {
+      if (_loggedIn) {
         _setupStreamAndSync();
+      } else {
+        _tearDownStream();
       }
     });
   }
 
-  void _handleResultSelected(AutocompleteSeriesResult result) {
-    _logger.info('Library autocomplete result selected: ${result.title}');
-    final series = BrowseHelpers.convertAutocompleteToSeries(result);
-    _navigateToSeriesDetail(series);
+  void _setupStreamAndSync() {
+    _logger.info('Setting up library entries stream and sync tasks');
+    _entriesStream = _libraryService.watchEntriesFromDb();
+    _entriesSubscription?.cancel();
+    _entriesSubscription = _entriesStream?.listen(_onEntriesUpdate);
+    // Full import only on first load; later calls do an incremental catch-up.
+    _runInitialSync();
+  }
+
+  void _tearDownStream() {
+    _entriesStream = null;
+    _entriesSubscription?.cancel();
+    _entriesSubscription = null;
   }
 
   void _onEntriesUpdate(List<LibraryEntry> entries) {
     if (!mounted) return;
     _lastEntries = entries;
     _performAutoTabSwitching();
-  }
-
-  void _performAutoTabSwitching() {
-    if (!mounted ||
-        (_query.isEmpty && _filters.isEmpty) ||
-        _tabController.indexIsChanging) {
-      return;
-    }
-
-    final currentTabKey = LibraryScreenConstants.tabs[_tabController.index].key;
-
-    final filterHelper = LibraryFilterHelper(
-      allEntries: _lastEntries,
-      query: _query,
-      contentPreferences: SettingsManager().contentPreferences,
-      filters: _filters,
-    );
-
-    final resultsInCurrentTab = filterHelper.getByTab(currentTabKey);
-
-    if (resultsInCurrentTab.isEmpty) {
-      _logger.info(
-        'Current tab ($currentTabKey) is empty while searching. Looking for other tabs...',
-      );
-      // Try to find first tab with results
-      for (int i = 0; i < LibraryScreenConstants.tabs.length; i++) {
-        final tabKey = LibraryScreenConstants.tabs[i].key;
-        if (filterHelper.getByTab(tabKey).isNotEmpty) {
-          _logger.info('Auto-switching to tab: $tabKey (index $i)');
-          _tabController.animateTo(i);
-          break;
-        }
-      }
-    }
-  }
-
-  void _setupStreamAndSync() {
-    _logger.info('Setting up library entries stream and sync tasks');
-    setState(() {
-      _entriesStream = _libraryService.watchEntriesFromDb();
-      _entriesSubscription?.cancel();
-      _entriesSubscription = _entriesStream?.listen(_onEntriesUpdate);
-    });
-    // Full import only on first load; subsequent calls do an incremental catch-up.
-    _runInitialSync();
   }
 
   Future<void> _runInitialSync() async {
@@ -230,6 +194,8 @@ class LibraryScreenState extends State<LibraryScreen>
       final incomplete = await _libraryService.isLibraryIncomplete();
       if (mounted) setState(() => _isLibraryIncomplete = incomplete);
     } catch (e) {
+      // The local copy is still usable; the banner and a manual retry cover
+      // it, so a failed sync must not take the screen down.
       _logger.severe('Initial sync task failed: $e');
     }
   }
@@ -240,13 +206,14 @@ class LibraryScreenState extends State<LibraryScreen>
       await _auth.login();
       if (!mounted) return;
       _logger.info('Login successful in library screen');
-      setState(() => _loggedIn = true);
-      _setupStreamAndSync();
+      setState(() {
+        _loggedIn = true;
+        _setupStreamAndSync();
+      });
+    } on AuthCancelledException {
+      // The user backed out of the browser flow; nothing to report.
+      _logger.info('Login cancelled by user in library screen');
     } catch (e) {
-      if (e is AuthCancelledException) {
-        _logger.info('Login cancelled by user in library screen');
-        return;
-      }
       _logger.severe('Login failed in library screen: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -259,139 +226,107 @@ class LibraryScreenState extends State<LibraryScreen>
 
   Future<void> _onRefresh() async {
     _logger.info('User triggered manual library refresh from screen');
-    _libraryService.syncLibrary().catchError((e) {
+    _libraryService.syncLibrary().catchError((Object e) {
+      // Reported through syncStatus, which raises the banner.
       _logger.severe('Manual refresh failed: $e');
     });
   }
 
+  // ─── Search ──────────────────────────────────────────────────────────────
+
+  void _exitSearch() {
+    setState(() {
+      _isSearching = false;
+      _query = '';
+      _filters = SearchFilters();
+    });
+    _performAutoTabSwitching();
+  }
+
+  /// Moves to the first tab that has matches when the current one has none.
+  ///
+  /// Searching within a single status is rarely what the user meant: a query
+  /// that matches nothing in "Reading" but three things in "Completed" should
+  /// show those, not an empty tab.
+  void _performAutoTabSwitching() {
+    if (!mounted ||
+        (_query.isEmpty && _filters.isEmpty) ||
+        _tabController.indexIsChanging) {
+      return;
+    }
+
+    final helper = _filterHelper(_lastEntries);
+    final currentTabKey =
+        LibraryScreenConstants.tabs[_tabController.index].key;
+    if (helper.getByTab(currentTabKey).isNotEmpty) return;
+
+    _logger.info(
+      'Current tab ($currentTabKey) is empty while searching. '
+      'Looking for other tabs...',
+    );
+    for (var i = 0; i < LibraryScreenConstants.tabs.length; i++) {
+      final tabKey = LibraryScreenConstants.tabs[i].key;
+      if (helper.getByTab(tabKey).isEmpty) continue;
+      _logger.info('Auto-switching to tab: $tabKey (index $i)');
+      _tabController.animateTo(i);
+      return;
+    }
+  }
+
+  LibraryFilterHelper _filterHelper(List<LibraryEntry> entries) =>
+      LibraryFilterHelper(
+        allEntries: entries,
+        query: _query,
+        contentPreferences: SettingsManager().contentPreferences,
+        filters: _filters,
+      );
+
+  void _navigateToSeriesDetail(api.Series series) {
+    Navigator.of(context)
+        .push(AppTransitions.slideUp(SeriesDetailScreen(series: series)));
+  }
+
+  // ─── Build ───────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([
-        LocalizationService(),
-                SettingsManager(),
-      ]),
+      listenable: Listenable.merge([LocalizationService(), SettingsManager()]),
       builder: (context, _) {
-        final settings = SettingsManager();
-        final isGrid = settings.resolvedLibraryListStyle.isGrid;
+        final isGrid = SettingsManager().resolvedLibraryListStyle.isGrid;
 
         return PopScope(
+          // Back leaves search before it leaves the tab.
           canPop: !_isSearching,
-          onPopInvokedWithResult: (didPop, result) {
+          onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            setState(() {
-              _isSearching = false;
-              _query = '';
-              _filters = SearchFilters();
-            });
-            _performAutoTabSwitching();
+            _exitSearch();
           },
           child: Scaffold(
             backgroundColor: LibraryScreenConstants.backgroundColor,
-            appBar: _buildAppBar(),
+            appBar: _buildAppBar(context),
             body: ValueListenableBuilder<LibrarySyncStatus>(
               valueListenable: _libraryService.syncStatus,
-              builder: (context, status, _) {
-                final content = Column(
-                  children: [
-                    if (status.isServerDown)
-                      LibraryStatusBanner(
-                        message: LocalizationService().translate(
-                          'server_unreachable_warning',
-                        ),
-                        icon: Icons.cloud_off_rounded,
-                        color: AppConstants.errorColor,
-                        action: TextButton(
-                          onPressed: _onRefresh,
-                          child: Text(
-                            LocalizationService().translate('retry'),
-                            style: AppTypography.sans(
-                              color: AppConstants.errorColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!status.isServerDown && status.error != null)
-                      LibraryStatusBanner(
-                        message: LocalizationService()
-                            .translate('sync_failed')
-                            .replaceAll('{message}', status.error!),
-                        icon: Icons.error_outline_rounded,
-                        color: AppConstants.errorColor,
-                        onClose: () =>
-                            _libraryService.syncStatus.value = _libraryService
-                                .syncStatus
-                                .value
-                                .copyWith(clearError: true),
-                      ),
-                    if (_isLibraryIncomplete)
-                      LibraryStatusBanner(
-                        message: LocalizationService().translate(
-                          'library_limit_warning',
-                        ),
-                        icon: Icons.warning_amber_rounded,
-                        color: AppConstants.warningColor,
-                        action: TextButton(
-                          onPressed: () => _libraryService.importFullLibrary(),
-                          child: Text(
-                            LocalizationService().translate('update'),
-                            style: AppTypography.sans(
-                              color: AppConstants.warningColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: FilterChipsRow(
-                        filters: _filters,
-                        onFiltersChanged: (filters) {
-                          setState(() => _filters = filters);
-                          _performAutoTabSwitching();
-                        },
-                      ),
-                    ),
-                    Expanded(
-                      child: LibraryBody(
-                        loggedIn: _loggedIn,
-                        entriesStream: _entriesStream,
-                        query: _query,
-                        filters: _filters,
-                        tabController: _tabController,
-                        scrollControllers: _scrollControllers,
-                        onRefresh: _onRefresh,
-                        onLogin: _loginAndReload,
-                        onItemTap: _navigateToSeriesDetail,
-                      ),
-                    ),
-                  ],
-                );
-  
-                return Actions(
-                  actions: <Type, Action<Intent>>{
-                    SearchIntent: CallbackAction<SearchIntent>(
-                      onInvoke: (intent) {
-                        enterSearchMode();
-                        return null;
-                      },
-                    ),
-                    RefreshIntent: CallbackAction<RefreshIntent>(
-                      onInvoke: (intent) {
-                        _onRefresh();
-                        return null;
-                      },
-                    ),
-                  },
-                  child: WidgetUtils.responsiveConstraint(
-                    content,
-                    maxWidth: isGrid ? double.infinity : 800,
+              builder: (context, status, _) => Actions(
+                actions: <Type, Action<Intent>>{
+                  SearchIntent: CallbackAction<SearchIntent>(
+                    onInvoke: (_) {
+                      enterSearchMode();
+                      return null;
+                    },
                   ),
-                );
-              },
+                  RefreshIntent: CallbackAction<RefreshIntent>(
+                    onInvoke: (_) {
+                      _onRefresh();
+                      return null;
+                    },
+                  ),
+                },
+                child: WidgetUtils.responsiveConstraint(
+                  _buildContent(status),
+                  maxWidth: isGrid ? double.infinity : _maxListWidth,
+                ),
+              ),
             ),
           ),
         );
@@ -399,208 +334,86 @@ class LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  PreferredSizeWidget? _buildAppBar() {
-    final orientation = MediaQuery.of(context).orientation;
-    final isLandscape = orientation == Orientation.landscape;
-    final settings = SettingsManager();
-    final l10n = LocalizationService();
-
-    final currentStyle = settings.resolvedLibraryListStyle;
-
-    final useTopNavBarSearch = MainScreen.showSearchBarInTopNavBar(context);
-    if (useTopNavBarSearch) return null;
-
-    if (_isSearching) {
-      return AppBar(
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: LibrarySearchBar(
-            focusNode: _searchFocusNode,
+  Widget _buildContent(LibrarySyncStatus status) {
+    return Column(
+      children: [
+        LibraryStatusBanners(
+          status: status,
+          isIncomplete: _isLibraryIncomplete,
+          onRetrySync: _onRefresh,
+          onDismissError: () => _libraryService.syncStatus.value =
+              _libraryService.syncStatus.value.copyWith(clearError: true),
+          onImportFullLibrary: _libraryService.importFullLibrary,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: FilterChipsRow(
+            filters: _filters,
+            onFiltersChanged: updateFilters,
+          ),
+        ),
+        Expanded(
+          child: LibraryBody(
+            loggedIn: _loggedIn,
             entriesStream: _entriesStream,
-            onResultSelected: _handleResultSelected,
-            onChanged: (value) {
-              setState(() => _query = value);
-              _performAutoTabSwitching();
-            },
-            initialFilters: _filters,
-            onFilterApplied: (filters) {
-              setState(() => _filters = filters);
-              _performAutoTabSwitching();
-            },
-            onBackTap: () {
-              setState(() {
-                _isSearching = false;
-                _query = '';
-                _filters = SearchFilters();
-              });
-              _performAutoTabSwitching();
-            },
+            query: _query,
+            filters: _filters,
+            tabController: _tabController,
+            scrollControllers: _scrollControllers,
+            onRefresh: _onRefresh,
+            onLogin: _loginAndReload,
+            onItemTap: _navigateToSeriesDetail,
           ),
         ),
-        bottom: _buildTabBar(isLandscape),
-      );
-    } else {
-      return AppBar(
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.search, color: AppConstants.textColor),
-          onPressed: () {
-            setState(() {
-              _isSearching = true;
-            });
-            _searchFocusNode.requestFocus();
-          },
-        ),
-        title: Text(
-          l10n.translate('library').toUpperCase(),
-          style: AppTypography.display(
-            color: AppConstants.textColor,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          if (isLandscape) ...[
-            WidgetUtils.tooltip(
-              message: l10n.translate('toggle_layout'),
-              child: IconButton(
-                icon: Icon(currentStyle.icon, color: AppConstants.textColor),
-                onPressed: () {
-                  final nextStyle = currentStyle.next;
-                  if (settings.separateListStyles) {
-                    settings.setLibraryListStyle(nextStyle);
-                  } else {
-                    settings.setListStyle(nextStyle);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => SettingsScreen.show(context),
-          ),
-          const SizedBox(width: 4),
-        ],
-        bottom: _buildTabBar(isLandscape),
-      );
-    }
-  }
-
-  /// Count shown after a tab label. On the selected pill it has to
-  /// invert to status ink so it stays legible.
-  Widget _buildTabCountBadge(int count, double activeWeight, String tabKey) {
-    final selectedColor = AppConstants.getOnColorForState(tabKey).withValues(alpha: 0.6);
-    final unselectedColor = AppConstants.textMutedColor;
-    final color = Color.lerp(unselectedColor, selectedColor, activeWeight) ?? unselectedColor;
-    return Text(
-      NumberUtils.formatCount(count),
-      style: AppTypography.display(
-        fontSize: 12,
-        color: color,
-      ),
+      ],
     );
   }
 
-  PreferredSizeWidget _buildTabBar(bool isLandscape) {
-    final l10n = LocalizationService();
+  /// Null when the shared top nav bar is hosting the search field instead —
+  /// two search fields on one screen would be a confusing duplicate.
+  PreferredSizeWidget? _buildAppBar(BuildContext context) {
+    if (MainScreen.showSearchBarInTopNavBar(context)) return null;
+
+    return LibraryAppBar(
+      isSearching: _isSearching,
+      isLandscape:
+          MediaQuery.orientationOf(context) == Orientation.landscape,
+      searchFocusNode: _searchFocusNode,
+      entriesStream: _entriesStream,
+      filters: _filters,
+      onEnterSearch: enterSearchMode,
+      onExitSearch: _exitSearch,
+      onQueryChanged: updateQuery,
+      onFiltersChanged: updateFilters,
+      onResultSelected: handleResultSelected,
+      bottom: _buildTabBar(context),
+    );
+  }
+
+  PreferredSizeWidget _buildTabBar(BuildContext context) {
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+
     return PreferredSize(
       preferredSize: const Size.fromHeight(48),
       child: StreamBuilder<List<LibraryEntry>>(
         stream: _entriesStream,
-        builder: (context, snapshot) {
-          final entries = snapshot.data ?? [];
-          final settings = SettingsManager();
-
-          final filterHelper = LibraryFilterHelper(
-            allEntries: entries,
-            query: _query,
-            contentPreferences: settings.contentPreferences,
-            filters: _filters,
-          );
-          final filteredEntries = filterHelper.getFilteredAndSorted();
-
-          final counts = <String, int>{};
-          for (final entry in filteredEntries) {
-            counts[entry.state] = (counts[entry.state] ?? 0) + 1;
-          }
-
-          return AnimatedBuilder(
-            animation: _tabController.animation ?? _tabController,
-            builder: (context, _) {
-              final animationValue = _tabController.animation?.value ?? _tabController.index.toDouble();
-              final maxIndex = LibraryScreenConstants.tabs.length - 1;
-              final index1 = animationValue.floor().clamp(0, maxIndex);
-              final index2 = animationValue.ceil().clamp(0, maxIndex);
-              final t = (animationValue - index1).clamp(0.0, 1.0);
-
-              final color1 = AppConstants.getColorForState(LibraryScreenConstants.tabs[index1].key);
-              final color2 = AppConstants.getColorForState(LibraryScreenConstants.tabs[index2].key);
-              final tabColor = Color.lerp(color1, color2, t) ?? color1;
-
-              return TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabAlignment:
-                    isLandscape ? TabAlignment.center : TabAlignment.start,
-                dividerColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: tabColor,
-                  borderRadius:
-                      BorderRadius.circular(AppConstants.pillRadius),
-                ),
-                indicatorPadding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
-                labelPadding: EdgeInsets.zero,
-                overlayColor: WidgetStateProperty.all(Colors.transparent),
-                splashFactory: NoSplash.splashFactory,
-                tabs: List.generate(LibraryScreenConstants.tabs.length, (i) {
-                  final tab = LibraryScreenConstants.tabs[i];
-                  final count = counts[tab.key] ?? 0;
-                  
-                  // Compute selection weight (1.0 = fully selected, 0.0 = completely unselected)
-                  final weight = (1.0 - (animationValue - i).abs()).clamp(0.0, 1.0);
-                  
-                  // Interpolate label text color
-                  final textColor = Color.lerp(AppConstants.textColor, AppConstants.getOnColorForState(tab.key), weight) ?? AppConstants.textColor;
-
-                  return Tab(
-                    height: 48,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.translate(tab.key).toUpperCase(),
-                            style: AppTypography.display(
-                              fontSize: 13,
-                              color: textColor,
-                            ),
-                          ),
-                          if (settings.showLibraryTabCounts) ...[
-                            const SizedBox(width: 8),
-                            _buildTabCountBadge(count, weight, tab.key),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              );
-            },
-          );
-        },
+        builder: (context, snapshot) => LibraryTabBar(
+          controller: _tabController,
+          counts: _countsByState(snapshot.data ?? const []),
+          isLandscape: isLandscape,
+        ),
       ),
     );
   }
 
-  void _navigateToSeriesDetail(api.Series series) {
-    Navigator.of(
-      context,
-    ).push(AppTransitions.slideUp(SeriesDetailScreen(series: series)));
+  /// Counts per status, over the same filtered set the list shows — a tab's
+  /// badge has to agree with what opening it produces.
+  Map<String, int> _countsByState(List<LibraryEntry> entries) {
+    final counts = <String, int>{};
+    for (final entry in _filterHelper(entries).getFilteredAndSorted()) {
+      counts[entry.state] = (counts[entry.state] ?? 0) + 1;
+    }
+    return counts;
   }
 }
