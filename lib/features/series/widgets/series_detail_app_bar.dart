@@ -1,21 +1,23 @@
-import 'dart:ui';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/features/series/models/series.dart';
-import 'package:mangabaka_app/features/library/models/library_entry.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/localization/localization_service.dart';
 import 'package:mangabaka_app/core/theme/app_typography.dart';
 import 'package:mangabaka_app/core/utils/widget_utils.dart';
-import 'package:mangabaka_app/features/series/widgets/series_hero_cover.dart';
-import 'package:mangabaka_app/features/series/widgets/series_hero.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:mangabaka_app/features/library/models/library_entry.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
+import 'package:mangabaka_app/features/series/widgets/app_bar/glass_control.dart';
+import 'package:mangabaka_app/features/series/widgets/app_bar/series_app_bar_metrics.dart';
+import 'package:mangabaka_app/features/series/widgets/app_bar/series_banner_background.dart';
 
-/// Banner hero for the series detail page: a full-bleed blurred cover that fades
-/// into the page background, with the cover artwork and serif title block
-/// floating at its base, plus a glass "Back" pill and (portrait only) transparent
-/// share / delete icons. Landscape shows the back pill only. The remaining
-/// content (tabs, cards, synopsis) lives below.
+/// Banner hero for the series detail page: a full-bleed blurred cover that
+/// fades into the page background, with the cover artwork and serif title
+/// block floating at its base, plus a glass "Back" pill and share / delete
+/// controls. The remaining content (tabs, cards, synopsis) lives below.
+///
+/// Stateful only to know when the route transition has settled — both the
+/// banner blur and the controls' backdrop filters are held off until then, so
+/// they never compete with the slide for frames.
 class SeriesDetailAppBar extends StatefulWidget {
   final Series series;
   final String title;
@@ -56,27 +58,24 @@ class _SeriesDetailAppBarState extends State<SeriesDetailAppBar> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_listenerAdded) {
-      _listenerAdded = true;
-      final route = ModalRoute.of(context);
-      if (route != null) {
-        _routeAnimation = route.animation;
-        if (_routeAnimation != null && !_routeAnimation!.isCompleted) {
-          _routeAnimation!.addStatusListener(_onStatus);
-        } else {
-          _transitionComplete = true;
-        }
-      } else {
-        _transitionComplete = true;
-      }
+    if (_listenerAdded) return;
+    _listenerAdded = true;
+
+    _routeAnimation = ModalRoute.of(context)?.animation;
+    final animation = _routeAnimation;
+    if (animation == null || animation.isCompleted) {
+      // Pushed without a transition, or it has already finished.
+      _transitionComplete = true;
+      return;
     }
+    animation.addStatusListener(_onStatus);
   }
 
   void _onStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      setState(() => _transitionComplete = true);
-      _routeAnimation?.removeStatusListener(_onStatus);
-    }
+    if (status != AnimationStatus.completed) return;
+    _routeAnimation?.removeStatusListener(_onStatus);
+    if (!mounted) return;
+    setState(() => _transitionComplete = true);
   }
 
   @override
@@ -87,353 +86,159 @@ class _SeriesDetailAppBarState extends State<SeriesDetailAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    final orientation = MediaQuery.of(context).orientation;
-    final isLandscape = orientation == Orientation.landscape;
-
-    final double expandedHeight = widget.isWide
-        ? (isLandscape ? 330 : 380)
-        : (isLandscape ? 220 : 300);
-    final double coverHeight = widget.isWide
-        ? (isLandscape ? 190 : 230)
-        : (isLandscape ? 140 : 172);
-    final double coverWidth = coverHeight * 0.7;
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
 
     return SliverLayoutBuilder(
       builder: (context, constraints) {
-        final double layoutWidth = constraints.crossAxisExtent;
-        // Calculate the margin needed to center the app bar contents on screens wider than 1400px
-        final double horizontalMargin = math.max(0.0, (layoutWidth - 1400) / 2);
-
-        final double offset = constraints.scrollOffset;
-        final double fadeStart = expandedHeight * 0.45;
-        final double fadeEnd = expandedHeight - kToolbarHeight;
-        final double titleOpacity =
-            ((offset - fadeStart) / (fadeEnd - fadeStart)).clamp(0.0, 1.0);
+        final metrics = SeriesAppBarMetrics(
+          isWide: widget.isWide,
+          isLandscape: isLandscape,
+          layoutWidth: constraints.crossAxisExtent,
+          scrollOffset: constraints.scrollOffset,
+          horizontalPadding: widget.horizontalPadding,
+          hasEntry: widget.entry != null,
+        );
 
         return SliverAppBar(
-          expandedHeight: expandedHeight,
+          expandedHeight: metrics.expandedHeight,
           pinned: true,
           backgroundColor: AppConstants.primaryBackground,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
-          // Always reserve space for the "Back" text pill.
-          leadingWidth: (widget.isWide ? 150 : 120) + horizontalMargin,
-          leading: Padding(
-            padding: EdgeInsets.only(
-              left: widget.horizontalPadding + horizontalMargin,
-              top: 6,
-              bottom: 6,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AppTooltip(
-                message: LocalizationService().translate('go_back'),
-                child: _GlassControl(
-                  onTap: widget.onBack,
-                  icon: Icons.arrow_back,
-                  // Design: "Back" label in both portrait and landscape.
-                  label: LocalizationService().translate('back'),
-                  showBg: titleOpacity < 0.5,
-                  // Skip the backdrop blur until the route slide finishes;
-                  // BackdropFilter defeats layer caching and forces a full
-                  // re-render every frame of the transition.
-                  blurEnabled: _transitionComplete,
-                ).animate().fadeIn(duration: 400.ms),
-              ),
-            ),
-          ),
-          // Wide portrait: no banner icons (they live in the wide layout below).
-          // Landscape (any width) and narrow portrait: show share + delete.
-          actions: (widget.isWide && !isLandscape)
-              ? [
-                  Padding(
-                    padding: EdgeInsets.only(right: horizontalMargin + 16),
-                    child: const SizedBox(width: 16),
-                  )
-                ]
-              : [
-                  AppTooltip(
-                    message: LocalizationService().translate('share_series'),
-                    child: _SubbarIcon(
-                      onTap: widget.onShare,
-                      icon: Icons.share_outlined,
-                      showBg: titleOpacity < 0.5,
-                      blurEnabled: _transitionComplete,
-                    ).animate().fadeIn(delay: 80.ms, duration: 400.ms),
-                  ),
-                  if (widget.entry != null) ...[
-                    const SizedBox(width: 8),
-                    AppTooltip(
-                      message: LocalizationService().translate('delete_from_library'),
-                      child: _SubbarIcon(
-                        onTap: widget.onDelete,
-                        icon: Icons.delete_outline,
-                        showBg: titleOpacity < 0.5,
-                        blurEnabled: _transitionComplete,
-                      ).animate().fadeIn(delay: 160.ms, duration: 400.ms),
-                    ),
-                  ],
-                  Padding(
-                    padding: EdgeInsets.only(right: horizontalMargin + 8),
-                    child: const SizedBox(width: 8),
-                  ),
-                ],
+          leadingWidth: metrics.leadingWidth,
+          leading: _buildBackButton(metrics),
+          actions: _buildActions(metrics),
           flexibleSpace: FlexibleSpaceBar(
             titlePadding: EdgeInsetsDirectional.only(
-              start: (widget.isWide ? 166 : 136) + horizontalMargin,
+              start: metrics.titleStartPadding,
               bottom: 16,
-              end: (widget.isWide && !isLandscape
-                      ? 16.0
-                      : widget.entry != null
-                          ? 104.0
-                          : 60.0) +
-                  horizontalMargin,
+              end: metrics.titleEndPadding,
             ),
             centerTitle: false,
-            title: IgnorePointer(
-              ignoring: titleOpacity == 0,
-              child: Opacity(
-                opacity: titleOpacity,
-                child: Text(
-                  widget.title,
-                  style: AppTypography.display(
-                    color: AppConstants.textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 19,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            background: RepaintBoundary(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(color: AppConstants.tertiaryBackground),
-                  // Defer the expensive blur until after the route transition
-                  // completes to avoid GPU contention during the slide animation.
-                  if (widget.series.coverUrl.isNotEmpty)
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 600),
-                      curve: Curves.easeOut,
-                      opacity: _transitionComplete ? 1.0 : 0.0,
-                      child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-                        child: seriesBannerImage(widget.series, memCacheWidth: widget.isWide ? 1200 : 800),
-                      ),
-                    ),
-                  Container(
-                    color: AppConstants.primaryBackground.withValues(alpha: 0.2),
-                  ),
-                  IgnorePointer(
-                    child: CustomPaint(
-                      painter: _HatchPainter(
-                        color: AppConstants.textColor.withValues(alpha: 0.04),
-                      ),
-                    ),
-                  ),
-                  // Fade into the page background toward the bottom.
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppConstants.primaryBackground.withValues(alpha: 0.0),
-                          AppConstants.primaryBackground.withValues(alpha: 0.4),
-                          AppConstants.primaryBackground.withValues(alpha: 0.92),
-                          AppConstants.primaryBackground,
-                        ],
-                        stops: const [0.25, 0.55, 0.85, 1.0],
-                      ),
-                    ),
-                  ),
-                  // Cover + serif title block floating at the base.
-                  if (widget.showCover)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 18,
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1400),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                SeriesHeroCover(
-                                  series: widget.series,
-                                  height: coverHeight,
-                                  width: coverWidth,
-                                  heroTagPrefix: widget.heroTagPrefix,
-                                ),
-                                SizedBox(width: widget.isWide ? 22 : 16),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: SeriesTitleBlock(
-                                      series: widget.series,
-                                      title: widget.title,
-                                      isWide: widget.isWide,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+            title: _buildCollapsedTitle(metrics),
+            background: SeriesBannerBackground(
+              series: widget.series,
+              title: widget.title,
+              isWide: widget.isWide,
+              showCover: widget.showCover,
+              horizontalPadding: widget.horizontalPadding,
+              coverHeight: metrics.coverHeight,
+              coverWidth: metrics.coverWidth,
+              transitionComplete: _transitionComplete,
+              heroTagPrefix: widget.heroTagPrefix,
             ),
           ),
         );
       },
     );
   }
-}
 
-/// A frosted-glass control (back pill / icon button) that floats on the banner.
-class _GlassControl extends StatelessWidget {
-  final VoidCallback onTap;
-  final IconData icon;
-  final String? label;
-  final bool showBg;
-  final bool blurEnabled;
-
-  const _GlassControl({
-    required this.onTap,
-    required this.icon,
-    this.label,
-    this.showBg = true,
-    this.blurEnabled = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(999);
-    // Only blur when the pill has a visible background AND we're not mid-route
-    // transition. A BackdropFilter can't be raster-cached, so leaving it active
-    // during the slide forces a full re-render every frame.
-    final useBlur = showBg && blurEnabled;
-    Widget body = Container(
-      height: 40,
-      padding: EdgeInsets.symmetric(horizontal: label != null ? 14 : 0),
-      width: label != null ? null : 40,
-      decoration: BoxDecoration(
-        color: showBg
-            ? AppConstants.secondaryBackground.withValues(alpha: 0.55)
-            : Colors.transparent,
-        borderRadius: radius,
+  Widget _buildBackButton(SeriesAppBarMetrics metrics) {
+    final l10n = LocalizationService();
+    return Padding(
+      padding: EdgeInsets.only(
+        left: widget.horizontalPadding + metrics.horizontalMargin,
+        top: 6,
+        bottom: 6,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 19, color: AppConstants.textColor),
-          if (label != null) ...[
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label!,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.sans(
-                  color: AppConstants.textColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ],
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: AppTooltip(
+          message: l10n.translate('go_back'),
+          child: GlassControl(
+            onTap: widget.onBack,
+            icon: Icons.arrow_back,
+            // Labelled in both orientations, per the design.
+            label: l10n.translate('back'),
+            showBg: metrics.controlsNeedBackground,
+            blurEnabled: _transitionComplete,
+          ).animate().fadeIn(duration: 400.ms),
+        ),
       ),
-    );
-
-    final child = ClipRRect(
-      borderRadius: radius,
-      child: useBlur
-          ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: body,
-            )
-          : body,
-    );
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(onTap: onTap, borderRadius: radius, child: child),
     );
   }
-}
 
-/// Frosted-glass circular icon button for portrait banner right-side controls.
-class _SubbarIcon extends StatelessWidget {
-  final VoidCallback onTap;
-  final IconData icon;
-  final bool showBg;
-  final bool blurEnabled;
-
-  const _SubbarIcon({
-    required this.onTap,
-    required this.icon,
-    this.showBg = true,
-    this.blurEnabled = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(999);
-    final useBlur = showBg && blurEnabled;
-    Widget body = Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: showBg
-            ? AppConstants.secondaryBackground.withValues(alpha: 0.55)
-            : Colors.transparent,
-        borderRadius: radius,
-      ),
-      child: Center(
-        child: Icon(icon, size: 20, color: AppConstants.textColor),
-      ),
-    );
-
-    final child = ClipRRect(
-      borderRadius: radius,
-      child: useBlur
-          ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: body,
-            )
-          : body,
-    );
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(onTap: onTap, borderRadius: radius, child: child),
-    );
-  }
-}
-
-class _HatchPainter extends CustomPainter {
-  final Color color;
-  _HatchPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    const gap = 14.0;
-    for (double x = -size.height; x < size.width; x += gap) {
-      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), paint);
+  List<Widget> _buildActions(SeriesAppBarMetrics metrics) {
+    // Wide portrait puts share and delete in the layout below instead, so the
+    // banner carries only the trailing inset that keeps the title clear.
+    if (!metrics.showsBannerActions) {
+      return [
+        Padding(
+          padding: EdgeInsets.only(right: metrics.horizontalMargin + 16),
+          child: const SizedBox(width: 16),
+        ),
+      ];
     }
+
+    final l10n = LocalizationService();
+    return [
+      AppTooltip(
+        message: l10n.translate('share_series'),
+        child: _actionIcon(
+          icon: Icons.share_outlined,
+          onTap: widget.onShare,
+          metrics: metrics,
+          // Staggered behind the back pill so the controls arrive in reading
+          // order rather than all at once.
+          delay: 80.ms,
+        ),
+      ),
+      // Nothing to delete unless the series is in the library.
+      if (widget.entry != null) ...[
+        const SizedBox(width: 8),
+        AppTooltip(
+          message: l10n.translate('delete_from_library'),
+          child: _actionIcon(
+            icon: Icons.delete_outline,
+            onTap: widget.onDelete,
+            metrics: metrics,
+            delay: 160.ms,
+          ),
+        ),
+      ],
+      Padding(
+        padding: EdgeInsets.only(right: metrics.horizontalMargin + 8),
+        child: const SizedBox(width: 8),
+      ),
+    ];
   }
 
-  @override
-  bool shouldRepaint(covariant _HatchPainter old) => old.color != color;
+  Widget _actionIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+    required SeriesAppBarMetrics metrics,
+    required Duration delay,
+  }) {
+    return GlassControl(
+      onTap: onTap,
+      icon: icon,
+      showBg: metrics.controlsNeedBackground,
+      blurEnabled: _transitionComplete,
+      size: 36,
+      iconSize: 20,
+    ).animate().fadeIn(delay: delay, duration: 400.ms);
+  }
+
+  Widget _buildCollapsedTitle(SeriesAppBarMetrics metrics) {
+    return IgnorePointer(
+      // Fully faded out it is still laid out, and would otherwise swallow taps
+      // meant for the banner beneath it.
+      ignoring: metrics.titleOpacity == 0,
+      child: Opacity(
+        opacity: metrics.titleOpacity,
+        child: Text(
+          widget.title,
+          style: AppTypography.display(
+            color: AppConstants.textColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 19,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
 }
