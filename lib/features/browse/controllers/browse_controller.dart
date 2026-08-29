@@ -1,27 +1,41 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:mangabaka_app/features/series/models/series.dart';
-import 'package:mangabaka_app/features/browse/models/search_filters.dart';
-import 'package:mangabaka_app/features/series/services/series_search_service.dart';
-import 'package:mangabaka_app/features/profile/services/profile_auth_service.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
 import 'package:mangabaka_app/core/di/service_locator.dart';
-import 'package:mangabaka_app/core/settings/settings_manager.dart';
-import 'package:mangabaka_app/features/browse/services/book_lookup_service.dart';
-import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
 import 'package:mangabaka_app/features/browse/models/browse_type.dart';
+import 'package:mangabaka_app/features/browse/models/search_filters.dart';
+import 'package:mangabaka_app/features/browse/services/book_lookup_service.dart';
+import 'package:mangabaka_app/features/browse/services/browse_search_gateway.dart';
+import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
+import 'package:mangabaka_app/features/browse/utils/staff_aggregator.dart';
 import 'package:mangabaka_app/features/publisher/models/publisher.dart';
-import 'package:mangabaka_app/features/publisher/services/publisher_search_service.dart';
+import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/staff/models/staff.dart';
 
+/// Drives the Browse screen: the query, the filters, the active result type,
+/// and the accumulated pages.
+///
+/// Fetching itself belongs to [BrowseSearchGateway]; what stays here is the
+/// state around it — which page is next, whether more exist, and the
+/// generation guard that keeps a slow response from an abandoned search out of
+/// the current results.
 class BrowseController extends ChangeNotifier {
   static final _logger = LoggingService.logger;
-  final SeriesSearchService _searchService = getIt<SeriesSearchService>();
-  final PublisherSearchService _publisherSearchService =
-      getIt<PublisherSearchService>();
+
+  /// Scroll offset past which the back-to-top button appears.
+  static const double _backToTopOffset = 500;
+
+  final BrowseSearchGateway _gateway;
+
   final ScrollController scrollController = ScrollController();
   final TextEditingController searchController = TextEditingController();
+
+  BrowseController({BrowseSearchGateway? gateway})
+      : _gateway = gateway ?? BrowseSearchGateway() {
+    scrollController.addListener(_onScroll);
+  }
 
   BrowseType _currentType = BrowseType.series;
   BrowseType get currentType => _currentType;
@@ -35,7 +49,8 @@ class BrowseController extends ChangeNotifier {
   List<Staff> _staffResults = [];
   List<Staff> get staffResults => _staffResults;
 
-  // For backward compatibility or general access
+  /// The results for whichever type is active, for callers that do not care
+  /// which it is.
   List<dynamic> get searchResults {
     switch (_currentType) {
       case BrowseType.series:
@@ -45,7 +60,7 @@ class BrowseController extends ChangeNotifier {
       case BrowseType.staff:
         return _staffResults;
       default:
-        return [];
+        return const [];
     }
   }
 
@@ -63,8 +78,10 @@ class BrowseController extends ChangeNotifier {
 
   int _currentPage = 1;
   bool _hasMore = true;
+
   int _totalResults = 0;
   int get totalResults => _totalResults;
+
   bool _isTotalCapped = false;
   bool get isTotalCapped => _isTotalCapped;
 
@@ -87,9 +104,8 @@ class BrowseController extends ChangeNotifier {
   bool _showBackToTop = false;
   bool get showBackToTop => _showBackToTop;
 
-  BrowseController() {
-    scrollController.addListener(_onScroll);
-  }
+  bool get _hasSearchContext =>
+      _currentSearchQuery.isNotEmpty || _currentFilters.toMap().isNotEmpty;
 
   @override
   void dispose() {
@@ -99,59 +115,80 @@ class BrowseController extends ChangeNotifier {
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!scrollController.hasClients || scrollController.positions.length != 1) return;
+  // ─── Scrolling ───────────────────────────────────────────────────────────
 
-    final isNearEnd =
-        scrollController.position.pixels >=
+  void _onScroll() {
+    // Two attached positions means the list is mid-rebuild between routes;
+    // reading `position` would throw.
+    if (!scrollController.hasClients ||
+        scrollController.positions.length != 1) {
+      return;
+    }
+
+    final isNearEnd = scrollController.position.pixels >=
         scrollController.position.maxScrollExtent -
             AppConstants.scrollThresholdPx;
 
-    if (isNearEnd &&
-        _hasMore &&
-        !_isLoadingMore &&
-        (_currentSearchQuery.isNotEmpty ||
-            _currentFilters.toMap().isNotEmpty)) {
+    if (isNearEnd && _hasMore && !_isLoadingMore && _hasSearchContext) {
       _logger.fine(
-        'Near end of scroll, loading more results for query: "$_currentSearchQuery"',
+        'Near end of scroll, loading more results for query: '
+        '"$_currentSearchQuery"',
       );
       loadMoreResults();
     }
 
-    final showBackToTop = scrollController.offset > 500;
-    if (showBackToTop != _showBackToTop) {
-      _showBackToTop = showBackToTop;
-      notifyListeners();
-    }
+    final showBackToTop = scrollController.offset > _backToTopOffset;
+    if (showBackToTop == _showBackToTop) return;
+    _showBackToTop = showBackToTop;
+    notifyListeners();
   }
 
-  void checkScroll() {
-    _onScroll();
+  void checkScroll() => _onScroll();
+
+  void scrollToTop() {
+    scrollController.animateTo(
+      0,
+      duration: AppConstants.mediumAnimationDuration,
+      curve: Curves.easeInOut,
+    );
   }
+
+  /// After a page loads, schedules a scroll check so the list auto-loads the
+  /// next page if the content is short enough to fit on screen.
+  void _scheduleScrollCheckIfNeeded() {
+    if (!_hasMore) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => checkScroll());
+  }
+
+  // ─── Search context ──────────────────────────────────────────────────────
 
   void resetSearchState() {
     _logger.fine('Resetting search state');
     _requestGeneration++;
+    _clearResults();
+    _error = null;
+    _currentSearchQuery = '';
+    _isLoading = false;
+    _isLoadingMore = false;
+    notifyListeners();
+  }
+
+  void _clearResults() {
     _seriesResults = [];
     _publisherResults = [];
     _staffResults = [];
-    _error = null;
-    _currentSearchQuery = '';
     _currentPage = 1;
     _hasMore = true;
-    _isLoading = false;
-    _isLoadingMore = false;
     _totalResults = 0;
     _isTotalCapped = false;
-    notifyListeners();
   }
 
   void setType(BrowseType type) {
     if (_currentType == type) return;
     _logger.info('Switching browse type to: $type');
     _currentType = type;
-    // When switching, we might want to re-trigger search if there's a query
-    if (_currentSearchQuery.isNotEmpty || _currentFilters.toMap().isNotEmpty) {
+    // Carry an active search across the tab switch rather than dropping it.
+    if (_hasSearchContext) {
       searchSeries();
     } else {
       resetSearchState();
@@ -160,15 +197,14 @@ class BrowseController extends ChangeNotifier {
 
   void updateSearchQuery(String text) {
     _currentSearchQuery = text;
-    if (text.isEmpty && _currentFilters.toMap().isEmpty) {
-      resetSearchState();
-    }
+    if (text.isEmpty && _currentFilters.toMap().isEmpty) resetSearchState();
   }
 
   void updateFilters(SearchFilters filters) {
     _logger.info('Filters updated: ${filters.toMap()}');
     _currentFilters = filters;
-    // When filters are active, Publishers/Staff tabs are hidden — fall back to Series.
+    // Filters only apply to series; the Publishers and Staff tabs are hidden
+    // while any are set, so an active one has to fall back.
     if (!filters.isEmpty &&
         (_currentType == BrowseType.publishers ||
             _currentType == BrowseType.staff)) {
@@ -179,24 +215,23 @@ class BrowseController extends ChangeNotifier {
 
   void startTagSearch(List<String> tagIds) {
     _logger.info('Starting tag search with tag IDs: $tagIds');
-    searchController.clear();
-    _currentSearchQuery = '';
-    _currentType = BrowseType.series;
-    _currentFilters = SearchFilters(tag: tagIds);
-    searchSeries();
+    _startFilteredSearch(SearchFilters(tag: tagIds));
   }
 
   void startGenreSearch(String genre) {
     _logger.info('Starting genre search with genre: $genre');
-    searchController.clear();
-    _currentSearchQuery = '';
-    _currentType = BrowseType.series;
-    _currentFilters = SearchFilters(genre: [genre]);
-    searchSeries();
+    _startFilteredSearch(SearchFilters(genre: [genre]));
   }
 
   void startSearchWithFilters(SearchFilters filters) {
     _logger.info('Starting search with filters: ${filters.toMap()}');
+    _startFilteredSearch(filters);
+  }
+
+  /// Replaces the whole search context with [filters] and runs it. The text
+  /// query is cleared: these entry points come from tapping a chip elsewhere
+  /// in the app, where a leftover query would silently narrow the results.
+  void _startFilteredSearch(SearchFilters filters) {
     searchController.clear();
     _currentSearchQuery = '';
     _currentType = BrowseType.series;
@@ -204,30 +239,28 @@ class BrowseController extends ChangeNotifier {
     searchSeries();
   }
 
+  // ─── Fetching ────────────────────────────────────────────────────────────
+
   Future<void> searchSeries() async {
-    if (_currentSearchQuery.trim().isEmpty && _currentFilters.toMap().isEmpty) {
+    if (_currentSearchQuery.trim().isEmpty &&
+        _currentFilters.toMap().isEmpty) {
       _logger.fine('Search query and filters are empty, skipping search');
       resetSearchState();
       return;
     }
 
     _logger.info(
-      'Starting new search for $_currentType with query: "$_currentSearchQuery" with filters: ${_currentFilters.toMap()}',
+      'Starting new search for $_currentType with query: '
+      '"$_currentSearchQuery" with filters: ${_currentFilters.toMap()}',
     );
     _requestGeneration++;
     _isLoading = true;
-    _error = null;
-    _seriesResults = [];
-    _publisherResults = [];
-    _staffResults = [];
-    _currentPage = 1;
-    _hasMore = true;
     _isLoadingMore = false;
-    _totalResults = 0;
-    _isTotalCapped = false;
+    _error = null;
+    _clearResults();
     notifyListeners();
 
-    await _fetchSearchResults();
+    await _fetchPage();
   }
 
   Future<void> loadMoreResults() async {
@@ -237,35 +270,62 @@ class BrowseController extends ChangeNotifier {
     if (_isLoading || _isLoadingMore || !_hasMore) return;
 
     _logger.info(
-      'Loading more results for query: "$_currentSearchQuery", page: ${_currentPage + 1}',
+      'Loading more results for query: "$_currentSearchQuery", '
+      'page: ${_currentPage + 1}',
     );
     _isLoadingMore = true;
     notifyListeners();
 
     _currentPage++;
-    await _fetchSearchResults();
+    await _fetchPage();
   }
 
-  Future<void> _fetchSearchResults() async {
+  Future<void> _fetchPage() async {
     final generation = _requestGeneration;
     try {
-      if (_currentType == BrowseType.series) {
-        await _fetchSeriesResults(generation);
-      } else if (_currentType == BrowseType.publishers) {
-        await _fetchPublisherResults(generation);
-      } else if (_currentType == BrowseType.staff) {
-        await _fetchStaffResults(generation);
-      } else {
-        // Not implemented yet
-        _hasMore = false;
-        _isLoading = false;
-        _isLoadingMore = false;
-        notifyListeners();
+      switch (_currentType) {
+        case BrowseType.series:
+          _applySeries(
+            await _gateway.fetchSeries(
+              query: _currentSearchQuery,
+              page: _currentPage,
+              filters: _currentFilters,
+              alreadyLoaded: _seriesResults.length,
+            ),
+            generation,
+          );
+        case BrowseType.publishers:
+          _applyPublishers(
+            await _gateway.fetchPublishers(
+              query: _currentSearchQuery,
+              page: _currentPage,
+              filters: _currentFilters,
+              alreadyLoaded: _publisherResults.length,
+            ),
+            generation,
+          );
+        case BrowseType.staff:
+          _applyStaff(
+            await _gateway.fetchStaff(
+              query: _currentSearchQuery,
+              page: _currentPage,
+              filters: _currentFilters,
+            ),
+            generation,
+          );
+        default:
+          // A type with no backing endpoint yet: settle into an empty,
+          // non-loading state rather than spinning forever.
+          _hasMore = false;
+          _isLoading = false;
+          _isLoadingMore = false;
+          notifyListeners();
       }
     } catch (e) {
       if (generation != _requestGeneration) return;
       _logger.severe(
-        'Failed to fetch search results for type $_currentType, query "$_currentSearchQuery" at page $_currentPage: $e',
+        'Failed to fetch search results for type $_currentType, query '
+        '"$_currentSearchQuery" at page $_currentPage: $e',
       );
       _isLoading = false;
       _isLoadingMore = false;
@@ -274,210 +334,57 @@ class BrowseController extends ChangeNotifier {
     }
   }
 
-  /// After a page loads, schedules a scroll check so the list auto-loads the
-  /// next page if the content is short enough to fit on screen.
-  void _scheduleScrollCheckIfNeeded() {
-    if (_hasMore) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => checkScroll());
-    }
+  void _applySeries(BrowsePage<Series> page, int generation) {
+    if (_isStale(generation, 'series')) return;
+    _totalResults = page.total;
+    _isTotalCapped = page.isTotalCapped;
+    _seriesResults.addAll(page.items);
+    _finishPage(page.hasMore);
   }
 
-  /// Resolves the current user ID when the "hide library series" setting is on.
-  String? _getExcludeUserId() {
-    if (!SettingsManager().hideLibrarySeriesInBrowse) return null;
-    final auth = getIt<ProfileAuthService>();
-    if (!auth.isLoggedIn) return null;
-    final profile = auth.cachedProfile;
-    if (profile == null) return null;
-    final userId = profile.id.replaceAll('-', '');
-    _logger.fine('Hiding library series for user: $userId');
-    return userId.isEmpty ? null : userId;
+  void _applyPublishers(BrowsePage<Publisher> page, int generation) {
+    if (_isStale(generation, 'publisher')) return;
+    _totalResults = page.total;
+    _publisherResults.addAll(page.items);
+    _finishPage(page.hasMore);
   }
 
-  Future<void> _fetchSeriesResults(int generation) async {
-    final userId = _getExcludeUserId();
-
-    final requestParams = <String, dynamic>{
-      'page': _currentPage,
-      'limit': AppConstants.defaultPageLimit,
-      ..._currentFilters.toMap(),
-      if (userId != null) 'exclude_user_library': userId,
-    };
-
-    final result = await _searchService.searchSeries(
-      _currentSearchQuery,
-      sortBy: _currentFilters.sortBy,
-      type: _currentFilters.type.isNotEmpty ? _currentFilters.type.first : null,
-      extraParams: requestParams,
-    );
-
-    if (generation != _requestGeneration) {
-      _logger.fine('Discarding stale series results for superseded search');
-      return;
-    }
-
-    final newResults = result.series;
-
-    // API sometimes returns 0 even with data; fall back to a calculated total.
-    if (result.total > 0) {
-      _totalResults = result.total;
-      _isTotalCapped = false;
-    } else if (newResults.length < AppConstants.defaultPageLimit) {
-      _totalResults = _seriesResults.length + newResults.length;
-      _isTotalCapped = false;
-    } else {
-      _totalResults = 1000;
-      _isTotalCapped = true;
-    }
-
-    _logger.info(
-      'Fetched ${newResults.length} series results for page $_currentPage (Total: $_totalResults)',
-    );
-
-    // HYBRID SORT: When a query and a custom sort are both active, the API
-    // may prioritise relevance over the requested sort order. We apply the
-    // sort locally on each page so the user's chosen order is always honoured.
-    if (_currentSearchQuery.isNotEmpty && _currentFilters.sortBy != null) {
-      final sortBy = _currentFilters.sortBy!;
-      _logger.fine('Applying local sort for query "$_currentSearchQuery": $sortBy');
-      newResults.sort((a, b) {
-        if (sortBy.startsWith('score_')) {
-          final rA = double.tryParse(a.rating) ?? 0.0;
-          final rB = double.tryParse(b.rating) ?? 0.0;
-          return sortBy == 'score_desc' ? rB.compareTo(rA) : rA.compareTo(rB);
-        } else if (sortBy.startsWith('name_')) {
-          return sortBy == 'name_desc'
-              ? b.title.compareTo(a.title)
-              : a.title.compareTo(b.title);
-        } else if (sortBy.startsWith('chapters_')) {
-          final cA = int.tryParse(a.totalChapters) ?? 0;
-          final cB = int.tryParse(b.totalChapters) ?? 0;
-          return sortBy == 'chapters_desc' ? cB.compareTo(cA) : cA.compareTo(cB);
-        }
-        // popularity_ and others: keep API order (no reliable local field)
-        return 0;
-      });
-    }
-
-    _hasMore = newResults.length == AppConstants.defaultPageLimit;
-    _isLoading = false;
-    _isLoadingMore = false;
-    _seriesResults.addAll(newResults);
-    notifyListeners();
-    _scheduleScrollCheckIfNeeded();
-  }
-
-  Future<void> _fetchPublisherResults(int generation) async {
-    final result = await _publisherSearchService.search({
-      'q': _currentSearchQuery,
-      'page': _currentPage,
-      'limit': AppConstants.defaultPageLimit,
-      ..._currentFilters.toMap(),
-    });
-
-    if (generation != _requestGeneration) {
-      _logger.fine('Discarding stale publisher results for superseded search');
-      return;
-    }
-
-    final newResults = result.publishers;
-    _totalResults = result.total > 0
-        ? result.total
-        : _publisherResults.length + newResults.length;
-
-    _logger.info(
-      'Fetched ${newResults.length} publisher results for page $_currentPage (Total: $_totalResults)',
-    );
-
-    _hasMore = newResults.length == AppConstants.defaultPageLimit;
-    _isLoading = false;
-    _isLoadingMore = false;
-    _publisherResults.addAll(newResults);
-    notifyListeners();
-    _scheduleScrollCheckIfNeeded();
-  }
-
-  Future<void> _fetchStaffResults(int generation) async {
-    final newSeriesResults = await _searchService.searchSeriesByName(
-      '',
-      extraParams: {
-        'staff': _currentSearchQuery,
-        'page': _currentPage,
-        'limit': AppConstants.defaultPageLimit,
-        ..._currentFilters.toMap(),
-      },
-    );
-
-    if (generation != _requestGeneration) {
-      _logger.fine('Discarding stale staff results for superseded search');
-      return;
-    }
-
-    // Deduplicate staff across all series on this page.
-    // If the same person appears as both author and artist, their role is
-    // promoted to 'Author / Artist'.
-    final staffMap = <String, Staff>{};
-    final queryLower = _currentSearchQuery.toLowerCase();
-
-    void upsertStaff(String name, String initialRole) {
-      if (queryLower.isNotEmpty && !name.toLowerCase().contains(queryLower)) {
-        return;
-      }
-      final existing = staffMap[name];
-      final resolvedRole = existing == null
-          ? initialRole
-          : (existing.role == initialRole ? existing.role : 'Author / Artist');
-      staffMap[name] = Staff(
-        id: existing?.id ?? name.hashCode,
-        name: name,
-        role: resolvedRole,
-        seriesCount: null,
-      );
-    }
-
-    for (final series in newSeriesResults) {
-      for (final author in series.authors) { upsertStaff(author, 'Author'); }
-      for (final artist in series.artists) { upsertStaff(artist, 'Artist'); }
-    }
-
-    final newResults = staffMap.values.toList()
-      ..sort((a, b) => (b.seriesCount ?? 0).compareTo(a.seriesCount ?? 0));
-
-    _logger.info(
-      'Fetched ${newResults.length} staff results extracted from ${newSeriesResults.length} series for page $_currentPage',
-    );
-
-    _hasMore = newSeriesResults.length == AppConstants.defaultPageLimit;
-    _isLoading = false;
-    _isLoadingMore = false;
-
-    // Merge with results from previous pages, promoting role when needed.
-    for (final staff in newResults) {
-      final index = _staffResults.indexWhere((s) => s.name == staff.name);
-      if (index != -1) {
-        final existing = _staffResults[index];
-        if (existing.role != staff.role) {
-          _staffResults[index] = Staff(
-            id: existing.id,
-            name: existing.name,
-            role: 'Author / Artist',
-            seriesCount: null,
-          );
-        }
-      } else {
-        _staffResults.add(staff);
-      }
-    }
-
+  void _applyStaff(BrowsePage<Staff> page, int generation) {
+    if (_isStale(generation, 'staff')) return;
+    // Staff accumulate by identity rather than by appending: the same person
+    // appears on many series, and a later page can reveal that someone
+    // credited as author is also the artist.
+    StaffAggregator.merge(_staffResults, page.items);
     _totalResults = _staffResults.length;
+    _finishPage(page.hasMore);
+  }
+
+  bool _isStale(int generation, String label) {
+    if (generation == _requestGeneration) return false;
+    _logger.fine('Discarding stale $label results for superseded search');
+    return true;
+  }
+
+  void _finishPage(bool hasMore) {
+    _hasMore = hasMore;
+    _isLoading = false;
+    _isLoadingMore = false;
     notifyListeners();
     _scheduleScrollCheckIfNeeded();
   }
 
-  static double generateRandomSeed() {
-    return Random().nextDouble();
-  }
+  // ─── Barcode ─────────────────────────────────────────────────────────────
 
+  static double generateRandomSeed() => Random().nextDouble();
+
+  /// Looks an ISBN up and searches for the title it resolves to.
+  ///
+  /// Returns null on success, or a localisation key naming what went wrong —
+  /// the caller shows it, since only the UI knows how.
+  ///
+  /// A scanned title often carries volume numbers and edition text that no
+  /// series is filed under, so a fruitless search is retried against a cleaned
+  /// version before giving up.
   Future<String?> handleBarcodeScan(String isbn) async {
     if (isbn.isEmpty) return null;
 
@@ -486,56 +393,45 @@ class BrowseController extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    final String? title;
     try {
-      final lookupService = getIt<BookLookupService>();
-      final title = await lookupService.lookupTitleByIsbn(isbn);
-
-      if (title != null && title.isNotEmpty) {
-        _logger.info('Found title from ISBN: $title');
-        searchController.text = title;
-        _currentSearchQuery = title;
-        await searchSeries();
-
-        if (_seriesResults.isNotEmpty) {
-          _logger.info('Successfully found series for ISBN title: $title');
-          return null;
-        } else {
-          final cleanedTitle = BrowseHelpers.cleanTitle(title);
-          if (cleanedTitle != title && cleanedTitle.isNotEmpty) {
-            _logger.info(
-              'No results for raw title, trying cleaned title: $cleanedTitle',
-            );
-            searchController.text = cleanedTitle;
-            _currentSearchQuery = cleanedTitle;
-            await searchSeries();
-            if (_seriesResults.isNotEmpty) {
-              return null;
-            }
-          }
-          _logger.warning(
-            'No series found for title associated with ISBN: $isbn (Title: $title)',
-          );
-          return 'no_series_found_for';
-        }
-      } else {
-        _logger.warning('No title found for ISBN: $isbn');
-        _isLoading = false;
-        notifyListeners();
-        return 'barcode_not_found';
-      }
+      title = await getIt<BookLookupService>().lookupTitleByIsbn(isbn);
     } catch (e) {
       _logger.severe('Error handling barcode scan for ISBN $isbn: $e');
       _isLoading = false;
       notifyListeners();
       return 'barcode_lookup_failed';
     }
+
+    if (title == null || title.isEmpty) {
+      _logger.warning('No title found for ISBN: $isbn');
+      _isLoading = false;
+      notifyListeners();
+      return 'barcode_not_found';
+    }
+
+    _logger.info('Found title from ISBN: $title');
+    if (await _searchFor(title)) return null;
+
+    final cleaned = BrowseHelpers.cleanTitle(title);
+    if (cleaned != title && cleaned.isNotEmpty) {
+      _logger.info(
+        'No results for raw title, trying cleaned title: $cleaned',
+      );
+      if (await _searchFor(cleaned)) return null;
+    }
+
+    _logger.warning(
+      'No series found for title associated with ISBN: $isbn (Title: $title)',
+    );
+    return 'no_series_found_for';
   }
 
-  void scrollToTop() {
-    scrollController.animateTo(
-      0,
-      duration: AppConstants.mediumAnimationDuration,
-      curve: Curves.easeInOut,
-    );
+  /// Runs [title] as a search, returning whether it matched anything.
+  Future<bool> _searchFor(String title) async {
+    searchController.text = title;
+    _currentSearchQuery = title;
+    await searchSeries();
+    return _seriesResults.isNotEmpty;
   }
 }
