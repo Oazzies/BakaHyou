@@ -2,25 +2,24 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:mangabaka_app/core/constants/app_constants.dart';
-import 'package:mangabaka_app/core/di/service_locator.dart';
 import 'package:mangabaka_app/core/logging/logging_service.dart';
+import 'package:mangabaka_app/features/browse/controllers/browse_results.dart';
 import 'package:mangabaka_app/features/browse/models/browse_type.dart';
 import 'package:mangabaka_app/features/browse/models/search_filters.dart';
-import 'package:mangabaka_app/features/browse/services/book_lookup_service.dart';
+import 'package:mangabaka_app/features/browse/services/barcode_search.dart';
 import 'package:mangabaka_app/features/browse/services/browse_search_gateway.dart';
-import 'package:mangabaka_app/features/browse/utils/browse_helpers.dart';
-import 'package:mangabaka_app/features/browse/utils/staff_aggregator.dart';
 import 'package:mangabaka_app/features/publisher/models/publisher.dart';
 import 'package:mangabaka_app/features/series/models/series.dart';
 import 'package:mangabaka_app/features/staff/models/staff.dart';
 
 /// Drives the Browse screen: the query, the filters, the active result type,
-/// and the accumulated pages.
+/// and the loading lifecycle.
 ///
-/// Fetching itself belongs to [BrowseSearchGateway]; what stays here is the
-/// state around it — which page is next, whether more exist, and the
-/// generation guard that keeps a slow response from an abandoned search out of
-/// the current results.
+/// Fetching belongs to [BrowseSearchGateway] and the accumulated pages to
+/// [BrowseResults]; what stays here is the state binding them together — what
+/// is being searched for, whether a request is in flight, and the generation
+/// guard that keeps a slow response from an abandoned search out of the
+/// current results.
 class BrowseController extends ChangeNotifier {
   static final _logger = LoggingService.logger;
 
@@ -28,41 +27,33 @@ class BrowseController extends ChangeNotifier {
   static const double _backToTopOffset = 500;
 
   final BrowseSearchGateway _gateway;
+  final BarcodeSearch _barcode;
+  final BrowseResults _results = BrowseResults();
 
   final ScrollController scrollController = ScrollController();
   final TextEditingController searchController = TextEditingController();
 
-  BrowseController({BrowseSearchGateway? gateway})
-      : _gateway = gateway ?? BrowseSearchGateway() {
+  BrowseController({
+    BrowseSearchGateway? gateway,
+    BarcodeSearch? barcodeSearch,
+  })  : _gateway = gateway ?? BrowseSearchGateway(),
+        _barcode = barcodeSearch ?? BarcodeSearch() {
     scrollController.addListener(_onScroll);
   }
 
   BrowseType _currentType = BrowseType.series;
   BrowseType get currentType => _currentType;
 
-  List<Series> _seriesResults = [];
-  List<Series> get seriesResults => _seriesResults;
-
-  List<Publisher> _publisherResults = [];
-  List<Publisher> get publisherResults => _publisherResults;
-
-  List<Staff> _staffResults = [];
-  List<Staff> get staffResults => _staffResults;
+  List<Series> get seriesResults => _results.series;
+  List<Publisher> get publisherResults => _results.publishers;
+  List<Staff> get staffResults => _results.staff;
 
   /// The results for whichever type is active, for callers that do not care
   /// which it is.
-  List<dynamic> get searchResults {
-    switch (_currentType) {
-      case BrowseType.series:
-        return _seriesResults;
-      case BrowseType.publishers:
-        return _publisherResults;
-      case BrowseType.staff:
-        return _staffResults;
-      default:
-        return const [];
-    }
-  }
+  List<dynamic> get searchResults => _results.forType(_currentType);
+
+  int get totalResults => _results.total;
+  bool get isTotalCapped => _results.isTotalCapped;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -75,15 +66,6 @@ class BrowseController extends ChangeNotifier {
 
   String _currentSearchQuery = '';
   String get currentSearchQuery => _currentSearchQuery;
-
-  int _currentPage = 1;
-  bool _hasMore = true;
-
-  int _totalResults = 0;
-  int get totalResults => _totalResults;
-
-  bool _isTotalCapped = false;
-  bool get isTotalCapped => _isTotalCapped;
 
   SearchFilters _currentFilters = SearchFilters();
   SearchFilters get currentFilters => _currentFilters;
@@ -129,7 +111,7 @@ class BrowseController extends ChangeNotifier {
         scrollController.position.maxScrollExtent -
             AppConstants.scrollThresholdPx;
 
-    if (isNearEnd && _hasMore && !_isLoadingMore && _hasSearchContext) {
+    if (isNearEnd && _results.hasMore && !_isLoadingMore && _hasSearchContext) {
       _logger.fine(
         'Near end of scroll, loading more results for query: '
         '"$_currentSearchQuery"',
@@ -153,34 +135,17 @@ class BrowseController extends ChangeNotifier {
     );
   }
 
-  /// After a page loads, schedules a scroll check so the list auto-loads the
-  /// next page if the content is short enough to fit on screen.
-  void _scheduleScrollCheckIfNeeded() {
-    if (!_hasMore) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) => checkScroll());
-  }
-
   // ─── Search context ──────────────────────────────────────────────────────
 
   void resetSearchState() {
     _logger.fine('Resetting search state');
     _requestGeneration++;
-    _clearResults();
+    _results.clear();
     _error = null;
     _currentSearchQuery = '';
     _isLoading = false;
     _isLoadingMore = false;
     notifyListeners();
-  }
-
-  void _clearResults() {
-    _seriesResults = [];
-    _publisherResults = [];
-    _staffResults = [];
-    _currentPage = 1;
-    _hasMore = true;
-    _totalResults = 0;
-    _isTotalCapped = false;
   }
 
   void setType(BrowseType type) {
@@ -257,7 +222,7 @@ class BrowseController extends ChangeNotifier {
     _isLoading = true;
     _isLoadingMore = false;
     _error = null;
-    _clearResults();
+    _results.clear();
     notifyListeners();
 
     await _fetchPage();
@@ -267,16 +232,16 @@ class BrowseController extends ChangeNotifier {
     // _isLoading guards against the initial page still being in flight: an
     // empty list has maxScrollExtent 0, which counts as "near end", so the
     // scroll listener could otherwise fire page 2 concurrently with page 1.
-    if (_isLoading || _isLoadingMore || !_hasMore) return;
+    if (_isLoading || _isLoadingMore || !_results.hasMore) return;
 
     _logger.info(
       'Loading more results for query: "$_currentSearchQuery", '
-      'page: ${_currentPage + 1}',
+      'page: ${_results.page + 1}',
     );
     _isLoadingMore = true;
     notifyListeners();
 
-    _currentPage++;
+    _results.advancePage();
     await _fetchPage();
   }
 
@@ -285,47 +250,45 @@ class BrowseController extends ChangeNotifier {
     try {
       switch (_currentType) {
         case BrowseType.series:
-          _applySeries(
-            await _gateway.fetchSeries(
-              query: _currentSearchQuery,
-              page: _currentPage,
-              filters: _currentFilters,
-              alreadyLoaded: _seriesResults.length,
-            ),
-            generation,
+          final page = await _gateway.fetchSeries(
+            query: _currentSearchQuery,
+            page: _results.page,
+            filters: _currentFilters,
+            alreadyLoaded: _results.loadedCount(BrowseType.series),
           );
+          if (_isStale(generation, 'series')) return;
+          _results.addSeries(page);
+
         case BrowseType.publishers:
-          _applyPublishers(
-            await _gateway.fetchPublishers(
-              query: _currentSearchQuery,
-              page: _currentPage,
-              filters: _currentFilters,
-              alreadyLoaded: _publisherResults.length,
-            ),
-            generation,
+          final page = await _gateway.fetchPublishers(
+            query: _currentSearchQuery,
+            page: _results.page,
+            filters: _currentFilters,
+            alreadyLoaded: _results.loadedCount(BrowseType.publishers),
           );
+          if (_isStale(generation, 'publisher')) return;
+          _results.addPublishers(page);
+
         case BrowseType.staff:
-          _applyStaff(
-            await _gateway.fetchStaff(
-              query: _currentSearchQuery,
-              page: _currentPage,
-              filters: _currentFilters,
-            ),
-            generation,
+          final page = await _gateway.fetchStaff(
+            query: _currentSearchQuery,
+            page: _results.page,
+            filters: _currentFilters,
           );
+          if (_isStale(generation, 'staff')) return;
+          _results.addStaff(page);
+
         default:
           // A type with no backing endpoint yet: settle into an empty,
           // non-loading state rather than spinning forever.
-          _hasMore = false;
-          _isLoading = false;
-          _isLoadingMore = false;
-          notifyListeners();
+          _results.markExhausted();
       }
+      _finishPage();
     } catch (e) {
       if (generation != _requestGeneration) return;
       _logger.severe(
         'Failed to fetch search results for type $_currentType, query '
-        '"$_currentSearchQuery" at page $_currentPage: $e',
+        '"$_currentSearchQuery" at page ${_results.page}: $e',
       );
       _isLoading = false;
       _isLoadingMore = false;
@@ -334,97 +297,47 @@ class BrowseController extends ChangeNotifier {
     }
   }
 
-  void _applySeries(BrowsePage<Series> page, int generation) {
-    if (_isStale(generation, 'series')) return;
-    _totalResults = page.total;
-    _isTotalCapped = page.isTotalCapped;
-    _seriesResults.addAll(page.items);
-    _finishPage(page.hasMore);
-  }
-
-  void _applyPublishers(BrowsePage<Publisher> page, int generation) {
-    if (_isStale(generation, 'publisher')) return;
-    _totalResults = page.total;
-    _publisherResults.addAll(page.items);
-    _finishPage(page.hasMore);
-  }
-
-  void _applyStaff(BrowsePage<Staff> page, int generation) {
-    if (_isStale(generation, 'staff')) return;
-    // Staff accumulate by identity rather than by appending: the same person
-    // appears on many series, and a later page can reveal that someone
-    // credited as author is also the artist.
-    StaffAggregator.merge(_staffResults, page.items);
-    _totalResults = _staffResults.length;
-    _finishPage(page.hasMore);
-  }
-
   bool _isStale(int generation, String label) {
     if (generation == _requestGeneration) return false;
     _logger.fine('Discarding stale $label results for superseded search');
     return true;
   }
 
-  void _finishPage(bool hasMore) {
-    _hasMore = hasMore;
+  void _finishPage() {
     _isLoading = false;
     _isLoadingMore = false;
     notifyListeners();
-    _scheduleScrollCheckIfNeeded();
+    // A short page may not fill the viewport, leaving nothing to scroll and so
+    // no way to ask for the next one; re-check once it has been laid out.
+    if (!_results.hasMore) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => checkScroll());
   }
 
   // ─── Barcode ─────────────────────────────────────────────────────────────
 
   static double generateRandomSeed() => Random().nextDouble();
 
-  /// Looks an ISBN up and searches for the title it resolves to.
+  /// Looks a scanned ISBN up and searches for the title it resolves to.
   ///
   /// Returns null on success, or a localisation key naming what went wrong —
   /// the caller shows it, since only the UI knows how.
-  ///
-  /// A scanned title often carries volume numbers and edition text that no
-  /// series is filed under, so a fruitless search is retried against a cleaned
-  /// version before giving up.
   Future<String?> handleBarcodeScan(String isbn) async {
     if (isbn.isEmpty) return null;
 
-    _logger.info('Handling barcode scan for ISBN: $isbn');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    final String? title;
-    try {
-      title = await getIt<BookLookupService>().lookupTitleByIsbn(isbn);
-    } catch (e) {
-      _logger.severe('Error handling barcode scan for ISBN $isbn: $e');
+    final failure = await _barcode.run(isbn, search: _searchFor);
+    if (failure == null) return null;
+
+    // A search that ran and found nothing has already settled the flags; a
+    // lookup that never got that far has not.
+    if (_isLoading) {
       _isLoading = false;
       notifyListeners();
-      return 'barcode_lookup_failed';
     }
-
-    if (title == null || title.isEmpty) {
-      _logger.warning('No title found for ISBN: $isbn');
-      _isLoading = false;
-      notifyListeners();
-      return 'barcode_not_found';
-    }
-
-    _logger.info('Found title from ISBN: $title');
-    if (await _searchFor(title)) return null;
-
-    final cleaned = BrowseHelpers.cleanTitle(title);
-    if (cleaned != title && cleaned.isNotEmpty) {
-      _logger.info(
-        'No results for raw title, trying cleaned title: $cleaned',
-      );
-      if (await _searchFor(cleaned)) return null;
-    }
-
-    _logger.warning(
-      'No series found for title associated with ISBN: $isbn (Title: $title)',
-    );
-    return 'no_series_found_for';
+    return failure.messageKey;
   }
 
   /// Runs [title] as a search, returning whether it matched anything.
@@ -432,6 +345,6 @@ class BrowseController extends ChangeNotifier {
     searchController.text = title;
     _currentSearchQuery = title;
     await searchSeries();
-    return _seriesResults.isNotEmpty;
+    return _results.series.isNotEmpty;
   }
 }
